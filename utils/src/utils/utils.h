@@ -1,0 +1,74 @@
+#ifndef UTILS_H_
+#define UTILS_H_
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdint.h>
+#include<sys/socket.h>
+#include<unistd.h>
+#include<netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include<commons/log.h>
+#include<commons/collections/list.h>
+#include<commons/config.h>
+#include<string.h>
+#include<assert.h>
+#include<signal.h>
+#include <errno.h>
+#include<pthread.h>
+
+typedef  enum 
+{
+//----------------BASICOS--------------------------------
+    HANDSHAKE = 1,
+    HANDSHAKE_OK,
+
+
+//---------------CPU-KERNEL-------------------
+
+
+//---------------CPU-MEMORIA-------------------
+
+
+//---------------FILESYSTEM-KERNEL-------------------
+
+
+//----------------KERNEL-MEMORIA
+
+//---------------FILESYSTEM-MEMORIA-------------------
+
+}op_code; 
+
+typedef struct {
+    uint32_t size; // Tamaño del payload
+    uint32_t offset; // Desplazamiento dentro del payload
+    void* stream; // Payload
+} t_buffer;
+
+typedef struct
+{
+	op_code codigo_operacion;
+	t_buffer* buffer;
+} t_paquete;
+
+void* recibir_buffer(int*, int);
+int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
+int esperar_cliente(t_log *logger, const char *name, int socket_servidor);
+int crear_conexion(t_log *logger, const char *server_name, char *ip, char *puerto);
+t_list* recibir_paquete(int);
+int recibir_operacion(int);
+void agregar_a_buffer(t_buffer* un_buffer, void* valor, int tamanio);
+void eliminar_buffer(t_buffer* un_buffer);
+t_paquete* crear_paquete(op_code codigo_operacion);
+void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
+void enviar_paquete(t_paquete* paquete, int socket_cliente);
+void liberar_conexion(int socket_cliente);
+void eliminar_paquete(t_paquete* paquete);
+void iterator(char* value);
+void terminar_programa(int conexion, t_log* logger, t_config* config);
+t_config* iniciar_config(char* path_config, t_log*);
+void crear_servidor(t_log* logger);
+void handshake_cliente(t_config* config, t_log* logger, int conexion);
+#endif /* UTILS_H_ */
