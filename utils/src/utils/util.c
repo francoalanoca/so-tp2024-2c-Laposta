@@ -1,5 +1,11 @@
 #include "utils.h"
 
+
+
+#define handle_error(msg) \
+           do { perror(msg); exit(EXIT_FAILURE); } while (0)
+		   
+
 int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
     //printf("ip: %s, puerto: %s", ip, puerto);
     log_info(logger, "comienza iniciar_servidor");

@@ -66,6 +66,7 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
+bool config_has_all_properties(t_config *cfg, char **properties);
 void iterator(char* value);
 void terminar_programa(int conexion, t_log* logger, t_config* config);
 t_config* iniciar_config(char* path_config, t_log*);
