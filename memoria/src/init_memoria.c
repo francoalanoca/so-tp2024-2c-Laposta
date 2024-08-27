@@ -57,13 +57,6 @@ int init(char *path_config){
     //inicializo estructura de configuracion
     cfg_memoria = cfg_memoria_start();
 
-    logger_memoria = log_create("memoria.log", "Memoria", true, LOG_LEVEL_INFO);
-
-    //Si hubo un error al crear el logger se informara por consola
-    if (logger_memoria == NULL) {
-        printf("No pude crear el logger");
-        return false;
-    }
 
     //inicializo el archivo de configuracion
     file_cfg_memoria = iniciar_config(path_config,logger_memoria);
@@ -83,7 +76,7 @@ int checkProperties(char *path_config){
 
     //Si no pudo ser abierto el config sera informado por consola
     if (config == NULL) {
-        log_error(logger_memoria, "Ocurrió un error al intentar abrir el archivo config");
+        printf("Ocurrió un error al intentar abrir el archivo config\n");
         return false;
     }
 
@@ -103,7 +96,7 @@ int checkProperties(char *path_config){
 
     //Verifico si falta alguna de las propiedades en confid
     if (!config_has_all_properties(config, properties)) {
-        log_error(logger_memoria, "Propiedades faltantes en el archivo de configuracion");
+        printf("Propiedades faltantes en el archivo de configuracion\n");
         return false;
     }
 
@@ -123,37 +116,37 @@ int cargar_configuracion(char *path_config){
 
     //Cargo en la variable tipo config las configuraciones iniciales
     cfg_memoria->PUERTO_ESCUCHA = config_get_int_value(file_cfg_memoria, "PUERTO_ESCUCHA");
-    log_info(logger_memoria, "PUERTO_ESCUCHA cargado correctamente: %d", cfg_memoria->PUERTO_ESCUCHA);
+    printf("PUERTO_ESCUCHA cargado correctamente: %d\n", cfg_memoria->PUERTO_ESCUCHA);
 
     cfg_memoria->IP_FILESYSTEM = strdup(config_get_string_value(file_cfg_memoria, "IP_FILESYSTEM"));
-    log_info(logger_memoria, "IP_FILESYSTEM cargado correctamente: %s", cfg_memoria->IP_FILESYSTEM);
+    printf("IP_FILESYSTEM cargado correctamente: %s\n", cfg_memoria->IP_FILESYSTEM);
 
     cfg_memoria->PUERTO_FILESYSTEM = config_get_int_value(file_cfg_memoria, "PUERTO_FILESYSTEM");
-    log_info(logger_memoria, "PUERTO_FILESYSTEM cargado correctamente: %d", cfg_memoria->PUERTO_FILESYSTEM);
+    printf("PUERTO_FILESYSTEM cargado correctamente: %d\n", cfg_memoria->PUERTO_FILESYSTEM);
 
     cfg_memoria->TAM_MEMORIA = config_get_int_value(file_cfg_memoria, "TAM_MEMORIA");
-    log_info(logger_memoria, "TAM_MEMORIA cargado correctamente: %d", cfg_memoria->TAM_MEMORIA);
+    printf("TAM_MEMORIA cargado correctamente: %d\n", cfg_memoria->TAM_MEMORIA);
 
     cfg_memoria->PATH_INSTRUCCIONES = strdup(config_get_string_value(file_cfg_memoria, "PATH_INSTRUCCIONES"));
-    log_info(logger_memoria, "PATH_INSTRUCCIONES cargado correctamente: %s", cfg_memoria->PATH_INSTRUCCIONES);
+    printf("PATH_INSTRUCCIONES cargado correctamente: %s\n", cfg_memoria->PATH_INSTRUCCIONES);
 
     cfg_memoria->RETARDO_RESPUESTA = config_get_int_value(file_cfg_memoria, "RETARDO_RESPUESTA");
-    log_info(logger_memoria, "RETARDO_RESPUESTA cargado correctamente: %d", cfg_memoria->RETARDO_RESPUESTA);
+    printf("RETARDO_RESPUESTA cargado correctamente: %d\n", cfg_memoria->RETARDO_RESPUESTA);
 
     cfg_memoria->ESQUEMA = strdup(config_get_string_value(file_cfg_memoria, "ESQUEMA"));
-    log_info(logger_memoria, "ESQUEMA cargado correctamente: %s", cfg_memoria->ESQUEMA);
+    printf("ESQUEMA cargado correctamente: %s\n", cfg_memoria->ESQUEMA);
 
     cfg_memoria->ALGORITMO_BUSQUEDA = strdup(config_get_string_value(file_cfg_memoria, "ALGORITMO_BUSQUEDA"));
-    log_info(logger_memoria, "ALGORITMO_BUSQUEDA cargado correctamente: %s", cfg_memoria->ALGORITMO_BUSQUEDA);
+    printf("ALGORITMO_BUSQUEDA cargado correctamente: %s\n", cfg_memoria->ALGORITMO_BUSQUEDA);
 
     cfg_memoria->PARTICIONES = config_get_array_value(file_cfg_memoria, "PARTICIONES");
 
     cfg_memoria->LOG_LEVEL = strdup(config_get_string_value(file_cfg_memoria, "LOG_LEVEL"));
-    log_info(logger_memoria, "LOG_LEVEL cargado correctamente: %s", cfg_memoria->LOG_LEVEL);
+    printf("LOG_LEVEL cargado correctamente: %s\n", cfg_memoria->LOG_LEVEL);
 
 
 
-    log_info(logger_memoria, "Archivo de configuracion cargado correctamente");
+    printf("Archivo de configuracion cargado correctamente\n");
     config_destroy(file_cfg_memoria);
     return true;
 }
@@ -162,17 +155,23 @@ int cargar_configuracion(char *path_config){
 
 //-------------------Variables---------------------------
 //Funcion que inicia las variables necesarias para el funcionamiento de memoria (listas, particiones, usuario, etc)
-void inicializar_memoria(){
+int inicializar_memoria(){
+    logger_memoria = log_create("memoria.log", "Memoria", true, log_level_from_string(cfg_memoria->LOG_LEVEL));
 
+    //Si hubo un error al crear el logger se informara por consola
+    if (logger_memoria == NULL) {
+        printf("No pude crear el logger\n");
+        return false;
+    }
 
 	memoria = malloc(cfg_memoria->TAM_MEMORIA);             //posiblemente represente el espacio del usuario, ver
 	lista_particiones = list_create();                      //lista en en donde se almacenara las particiones (contiene los proceso) 
 	lista_miniPCBs = list_create();
 	//pthread_mutex_init(&mutex_memoria, NULL);
 	//cantidad_particiones_memoria = list_size(cfg_memoria->PARTICIONES);
-	bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);   
+	bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
+    return true;   
 }
-
 
 
 //Funcion que redondea el valor al multiplo cercano de base y retorna
@@ -199,6 +198,7 @@ t_bitarray *crear_bitmap(int entradas){
         bitarray_clean_bit(bitmap, i);
     }
 
+    
     return bitmap;
 }
 
