@@ -1,6 +1,7 @@
-#include <utils/hello.h>
-
+#include "../include/init_kernel.h"
 int main(int argc, char* argv[]) {
-    saludar("kernel");
+
+    iniciar_modulo("../configuracion/config_kernel.config");
+    
     return 0;
 }
