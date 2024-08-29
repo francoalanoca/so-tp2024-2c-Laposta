@@ -24,7 +24,7 @@ typedef  enum
 //----------------BASICOS--------------------------------
     HANDSHAKE = 1,
     HANDSHAKE_OK,
-
+    OK,
 
 //---------------CPU-KERNEL-------------------
 
@@ -36,6 +36,7 @@ typedef  enum
 
 
 //----------------KERNEL-MEMORIA
+SOLICITUD_ESPACIO_PARA_PROCESO,
 
 //---------------FILESYSTEM-MEMORIA-------------------
 
