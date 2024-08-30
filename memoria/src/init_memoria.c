@@ -13,13 +13,13 @@ t_log *logger_memoria;
 t_config *file_cfg_memoria;
 t_config_memoria *cfg_memoria;
 
-void* memoria;                          //espacio de usuario
-t_list* lista_particiones;              //lista de las particiones
-t_list* lista_miniPCBs;                 //lista de los procesos
-pthread_mutex_t mutex_memoria;
-uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
+//void* memoria;                          //espacio de usuario
+//t_list* lista_particiones;              //lista de las particiones
+//t_list* lista_miniPCBs;                 //lista de los procesos
+//pthread_mutex_t mutex_memoria;
+//uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
      
-t_bitarray *bitmap_particiones;
+//t_bitarray *bitmap_particiones;
 
 
 
@@ -164,12 +164,22 @@ int inicializar_memoria(){
         return false;
     }
 
-	memoria = malloc(cfg_memoria->TAM_MEMORIA);             //posiblemente represente el espacio del usuario, ver
-	lista_particiones = list_create();                      //lista en en donde se almacenara las particiones (contiene los proceso) 
+	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //posiblemente represente el espacio del usuario, ver
+	if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
+        //hacer list_create?
+        lista_particiones = cfg_memoria->PARTICIONES;
+        inicializar_memoria_particiones_fijas(cfg_memoria->TAM_MEMORIA,lista_particiones,list_size(lista_particiones),cfg_memoria->ALGORITMO_BUSQUEDA);
+        
+    }
+    else{
+        lista_particiones = list_create(); 
+        inicializar_memoria_particiones_dinamicas(cfg_memoria->TAM_MEMORIA,cfg_memoria->ALGORITMO_BUSQUEDA);
+    }
+                         //lista en en donde se almacenara las particiones (contiene los proceso) 
 	lista_miniPCBs = list_create();
 	//pthread_mutex_init(&mutex_memoria, NULL);
 	//cantidad_particiones_memoria = list_size(cfg_memoria->PARTICIONES);
-	bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
+	//bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
     return true;   
 }
 
