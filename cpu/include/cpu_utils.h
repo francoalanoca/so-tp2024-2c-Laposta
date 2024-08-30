@@ -10,7 +10,10 @@
 #include<commons/config.h>
 #include <pthread.h>
 #include <math.h>
+typedef struct {
+    uint32_t pid; // Tamaño del payload
 
+} t_pcb;
 
 typedef enum
 {
@@ -19,12 +22,10 @@ typedef enum
 	BX,
 	CX,
 	DX,
-    EAX,
-    EBX,
-    ECX,
-    EDX,
-    SI,
-    DI,
+    EX,
+    FX,
+    GX,
+    HX,
     REG_NO_ENC
 }registros;
 
@@ -53,8 +54,8 @@ bool verificar_existencia_en_tlb(uint32_t pid, uint32_t nro_pagina, uint32_t ind
 //uint32_t string_a_uint32(const char* str);
 void pedir_marco_a_memoria(uint32_t pid, uint32_t nro_pagina, int conexion);
 void agregar_a_tlb(uint32_t pid, uint32_t nro_pag, uint32_t marco, t_list* tlb);
-void mov_in(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion, t_list* tlb);
-void mov_out(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger,int conexion, t_list* tlb);
+void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion, t_list* tlb);
+void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger,int conexion, t_list* tlb);
 void resize(uint32_t tamanio, int conexion, int conexion_kernel);
 void copy_string(uint32_t tamanio, t_log* logger, int conexion, t_list* tlb);
 void wait_inst(char* recurso, int conexion_kernel);

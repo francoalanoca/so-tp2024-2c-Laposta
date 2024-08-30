@@ -50,7 +50,7 @@ int cargar_configuracion(char *path) {
     log_info(logger_cpu, "PUERTO_ESCUCHA_INTERRUPT cargado correctamente: %s", cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
 
     cfg_cpu-> LOG_LEVEL = strdup(config_get_string_value(file_cfg_cpu, "LOG_LEVEL"));
-    log_info(logger_cpu, "LOG LEVEL cargado correctamente: %d", cfg_cpu->LOG_LEVEL));
+    log_info(logger_cpu, "LOG LEVEL cargado correctamente: %d", cfg_cpu->LOG_LEVEL);
 
 
     log_info(logger_cpu, "Archivo de configuracion cargado correctamente");
@@ -89,7 +89,6 @@ void cerrar_programa() {
     free(cfg_cpu->IP_MEMORIA);
     free(cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
     free(cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
-    free(cfg_cpu->ALGORITMO_TLB);
     free(cfg_cpu);
 
     log_info(logger_cpu,"TERMINADA_LA_CONFIG");
