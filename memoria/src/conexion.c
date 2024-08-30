@@ -27,9 +27,9 @@ void iniciar_conexiones(){
     log_info(logger_memoria, "Conexion con Kernel exitosa");
     socket_kernel = esperar_cliente(logger_memoria, "Kernel", socket_memoria);
 
-    //Esperar al cliente EntradaSalida
+    //Conecctar con FileSystem
     log_info(logger_memoria, "Conexion con Entrada Salida exitosa");
-    socket_filesystem = esperar_cliente(logger_memoria, "File System", socket_memoria);
+    socket_filesystem = crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
 }
 
 
@@ -50,12 +50,7 @@ void escuchar_modulos(){
     //se desacopla del hilo principal para no interferir
     pthread_detach(hilo_cpu);
 
-    //Atender a EntradaSalida
-    pthread_t hilo_entradasalida;
-    //se crea un nuevo hilo que atiende al cliente
-    pthread_create(&hilo_entradasalida, NULL, (void*)memoria_atender_filesystem, NULL);
-    //caundo el hilo principal llega a join este se detiene hasta que se termine el hilo actual en lugar de deacoplarse
-    pthread_join(hilo_entradasalida, NULL);
+    
 }
 
 */
