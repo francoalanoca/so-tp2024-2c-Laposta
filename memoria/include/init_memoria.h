@@ -10,7 +10,7 @@
 
 #include <commons/bitarray.h>
 
-
+#include "../include/memoria_usuario.h"
 
 
 //----------------------------------Estructuras---------------------------------
