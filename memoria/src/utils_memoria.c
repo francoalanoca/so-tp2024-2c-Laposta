@@ -61,7 +61,37 @@ void enviar_respuesta_finalizar_proceso(uint32_t pid_proceso_a_finalizar ,int so
 
 /*---------------------------- CPU-------------------------*/
 
-//Memoria deserializa lo enviado por Cpu
+//Memoria deserializa/serializa lo enviado por Cpu
+
+
+
+
+
+void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
+    t_paquete* paquete_cpu = crear_paquete(SOLICITUD_CONTEXTO_RTA); // Tipo de paquete que indica envío a CPU
+
+    // Agregar información del PCB al paquete
+    agregar_a_paquete(paquete_cpu, &pcbproceso->pid, sizeof(int));
+
+    // Agregar los registros de la CPU al paquete individualmente
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->PC, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->AX, sizeof(uint8_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->BX, sizeof(uint8_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->CX, sizeof(uint8_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->DX, sizeof(uint8_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->EX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->FX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->GX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->HX, sizeof(uint32_t));
+    //falta base y limite
+
+    // Enviar el paquete a la CPU
+    enviar_paquete(paquete_cpu, socket_cpu); //SOCKET MAL
+    printf("Contexto enviado %s\n", pcbproceso); 
+    // Liberar recursos del paquete
+    eliminar_paquete(paquete_cpu);
+}
+
 
 t_proceso_memoria* deserializar_solicitud_instruccion(t_list*  lista_paquete ){
 
