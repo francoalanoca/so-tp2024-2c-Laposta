@@ -66,7 +66,7 @@ void enviar_respuesta_finalizar_proceso(uint32_t pid_proceso_a_finalizar ,int so
 
 
 
-
+/*
 void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
     t_paquete* paquete_cpu = crear_paquete(SOLICITUD_CONTEXTO_RTA); // Tipo de paquete que indica envío a CPU
 
@@ -86,12 +86,12 @@ void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
     //falta base y limite
 
     // Enviar el paquete a la CPU
-    enviar_paquete(paquete_cpu, socket_cpu); //SOCKET MAL
+    enviar_paquete(paquete_cpu, socket_cpu); 
     printf("Contexto enviado %s\n", pcbproceso); 
     // Liberar recursos del paquete
     eliminar_paquete(paquete_cpu);
 }
-
+*/
 
 t_proceso_memoria* deserializar_solicitud_instruccion(t_list*  lista_paquete ){
 

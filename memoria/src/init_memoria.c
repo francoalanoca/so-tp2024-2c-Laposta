@@ -115,14 +115,14 @@ int cargar_configuracion(char *path_config){
     file_cfg_memoria = config_create(path_config);
 
     //Cargo en la variable tipo config las configuraciones iniciales
-    cfg_memoria->PUERTO_ESCUCHA = config_get_int_value(file_cfg_memoria, "PUERTO_ESCUCHA");
-    printf("PUERTO_ESCUCHA cargado correctamente: %d\n", cfg_memoria->PUERTO_ESCUCHA);
+    cfg_memoria->PUERTO_ESCUCHA = strdup(config_get_string_value(file_cfg_memoria, "PUERTO_ESCUCHA"));
+    printf("PUERTO_ESCUCHA cargado correctamente: %s\n", cfg_memoria->PUERTO_ESCUCHA);
 
     cfg_memoria->IP_FILESYSTEM = strdup(config_get_string_value(file_cfg_memoria, "IP_FILESYSTEM"));
     printf("IP_FILESYSTEM cargado correctamente: %s\n", cfg_memoria->IP_FILESYSTEM);
 
-    cfg_memoria->PUERTO_FILESYSTEM = config_get_int_value(file_cfg_memoria, "PUERTO_FILESYSTEM");
-    printf("PUERTO_FILESYSTEM cargado correctamente: %d\n", cfg_memoria->PUERTO_FILESYSTEM);
+    cfg_memoria->PUERTO_FILESYSTEM = strdup(config_get_string_value(file_cfg_memoria, "PUERTO_FILESYSTEM"));
+    printf("PUERTO_FILESYSTEM cargado correctamente: %s\n", cfg_memoria->PUERTO_FILESYSTEM);
 
     cfg_memoria->TAM_MEMORIA = config_get_int_value(file_cfg_memoria, "TAM_MEMORIA");
     printf("TAM_MEMORIA cargado correctamente: %d\n", cfg_memoria->TAM_MEMORIA);
@@ -164,7 +164,7 @@ int inicializar_memoria(){
         return false;
     }
 
-	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //posiblemente represente el espacio del usuario, ver
+	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //espacio del usuario
 	if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
         //hacer list_create?
         lista_particiones = cfg_memoria->PARTICIONES;

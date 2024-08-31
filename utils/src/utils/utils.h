@@ -76,7 +76,7 @@ typedef struct
 
 void* recibir_buffer(int*, int);
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
-int esperar_cliente(t_log *logger, const char *name, int socket_servidor);
+int esperar_cliente(t_log* logger, const char* name, int socket_servidor);
 int crear_conexion(t_log *logger, const char *server_name, char *ip, char *puerto);
 t_list* recibir_paquete(int);
 int recibir_operacion(int);

@@ -16,9 +16,9 @@
 //----------------------------------Estructuras---------------------------------
 
 typedef struct{
-    uint32_t PUERTO_ESCUCHA;
+    char* PUERTO_ESCUCHA;
     char* IP_FILESYSTEM;
-    uint32_t PUERTO_FILESYSTEM;
+    char* PUERTO_FILESYSTEM;
     uint32_t TAM_MEMORIA;
     char* PATH_INSTRUCCIONES;
     uint32_t RETARDO_RESPUESTA;
@@ -32,6 +32,7 @@ typedef struct{
 typedef struct{
     uint32_t pid;
     t_list *lista_de_instrucciones;
+    int tamanio;
 } t_miniPCB;
 
 
