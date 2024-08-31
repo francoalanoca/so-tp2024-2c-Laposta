@@ -99,10 +99,12 @@ void memoria_atender_kernel(){
 		int cod_op = recibir_operacion(socket_kernel);
 		op_code response;
 		//t_list* valores =  malloc(sizeof(t_list));
+		//pthread_t
 
 
 		switch (cod_op) {
 		case HANDSHAKE:
+			//pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, NULL));
 			log_info(logger_memoria, "Handshake realizado con cliente(%d)",socket_kernel);
             response = HANDSHAKE_OK;
             if (send(socket_kernel, &response, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
@@ -116,7 +118,6 @@ void memoria_atender_kernel(){
 			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
 			//valores = recibir_paquete(socket_kernel);
 			//t_m_crear_proceso iniciar_proceso = deserializar_iniciar_proceso(valores);
-			//leer_instrucciones(iniciar_proceso->archivo_pseudocodigo, iniciar_proceso->pid);
 			//crear_proceso(iniciar_proceso->pid);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel);
@@ -136,6 +137,7 @@ void memoria_atender_kernel(){
 		case INICIAR_HILO:
 			log_info(logger_memoria, "Recibí INICIAR_HILO \n");
 			//valores = recibir_paquete(socket_kernel);
+			//leer_instrucciones(iniciar_proceso->archivo_pseudocodigo, iniciar_proceso->pid);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
 			break;

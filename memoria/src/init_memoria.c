@@ -17,7 +17,7 @@ t_config_memoria *cfg_memoria;
 //t_list* lista_particiones;              //lista de las particiones
 //t_list* lista_miniPCBs;                 //lista de los procesos
 //pthread_mutex_t mutex_memoria;
-//uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
+//uint32_t cantidad_particiones_memoria;  //seria la cantidad de particiones pasadas por config 
      
 //t_bitarray *bitmap_particiones;
 
@@ -177,11 +177,14 @@ int inicializar_memoria(){
     }
                          //lista en en donde se almacenara las particiones (contiene los proceso) 
 	lista_miniPCBs = list_create();
-	//pthread_mutex_init(&mutex_memoria, NULL);
-	//cantidad_particiones_memoria = list_size(cfg_memoria->PARTICIONES);
+	
+	//cantidad_particiones_memoria = list_size((t_list*) cfg_memoria->PARTICIONES);
 	//bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
     return true;   
 }
+
+
+
 
 
 //Funcion que redondea el valor al multiplo cercano de base y retorna
@@ -189,6 +192,7 @@ int redondear_a_multiplo_mas_cercano_de(int base, int valor){
     int v = valor == 0 ? 1 : valor;
     return (int) ceil((float) v / (float) base) * base;
 }
+
 
 //Funcion que en base a la cantidad de frames crea bitmap
 t_bitarray *crear_bitmap(int entradas){

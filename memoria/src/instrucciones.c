@@ -4,7 +4,7 @@
 
 /*
 //Funcion que crea la lista de instrucciones dado un puntero al archivo de un proceso
-void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid) {
+void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t) {
 
 	t_miniPCB *miniPCB = malloc(sizeof(t_miniPCB));
 

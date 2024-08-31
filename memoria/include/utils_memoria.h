@@ -5,55 +5,7 @@
 
 #include "../include/init_memoria.h"
 
-//----------------------------------Estructuras---------------------------------
 
-typedef struct{
-    uint32_t pid;                     //pcb del proceso
-    char *archivo_pseudocodigo;     //nombre del proceso
-} t_m_crear_proceso;
-
-
-
-typedef struct{
-
-    /* data */
-
-}t_m_crear_hilo;
-
-
-typedef struct {
-    uint32_t PC;
-    uint8_t AX, BX, CX, DX, EX, FX, GX, HX;
-} t_registro_cpu;
-
-typedef struct{
-    t_registro_cpu registros;
-    //base y limite
-} t_m_contexto;
-
-
-typedef struct{
-    uint32_t pid;
-    uint32_t program_counter;
-}t_proceso_memoria;
-
-
-typedef struct{
-    uint32_t pid;
-    uint32_t direccion_fisica;
-    uint32_t tamanio;
-    char* valor;
-} t_escribir_leer;
-
-
-typedef struct{
-
-    /* data */
-
-} t_dump;
-
-
-//----------------------------------Variables Externs-------------------------
 
 
 

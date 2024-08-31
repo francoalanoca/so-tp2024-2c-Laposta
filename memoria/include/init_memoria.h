@@ -31,12 +31,65 @@ typedef struct{
 
 typedef struct{
     uint32_t pid;
-    t_list *lista_de_instrucciones;
-    int tamanio;
+    t_list hilos;
+    uint32_t tamanio_proceso;
+    uint32_t base;
 } t_miniPCB;
 
 
+typedef struct{
+    uint32_t tip;
+    t_registro_cpu registros;
+    t_list *lista_de_instrucciones;
+}t_hilo;
 
+
+
+
+
+
+
+
+typedef struct {
+    uint32_t PC;
+    uint32_t AX, BX, CX, DX, EX, FX, GX, HX;
+} t_registro_cpu;
+
+typedef struct{
+    t_registro_cpu registros;
+    //base y limite
+} t_m_contexto;
+
+
+//struct para deserializar/serializar al crear proceso
+typedef struct{
+    uint32_t pid;                     //pcb del proceso
+    char *archivo_pseudocodigo;     //nombre del proceso
+} t_m_crear_proceso;
+
+
+//struct para deserializar/serializar al leer instruccion
+typedef struct{
+    uint32_t pid;
+    uint32_t program_counter;
+}t_proceso_memoria;
+
+
+//struct para deserializar/serializar al leer o escribir
+typedef struct{
+    uint32_t pid;
+    uint32_t direccion_fisica;
+    uint32_t tamanio;
+    char* valor;
+} t_escribir_leer;
+
+
+//struct para deserializar/serializar para dump
+typedef struct{
+
+    /* data */
+
+} t_dump;
 
 
 
