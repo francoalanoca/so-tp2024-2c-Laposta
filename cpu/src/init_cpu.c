@@ -18,7 +18,7 @@ int checkProperties(char *path_config) {
             "PUERTO_MEMORIA",
             "PUERTO_ESCUCHA_DISPATCH",
             "PUERTO_ESCUCHA_INTERRUPT",
-            "LOG",
+            "LOG_LEVEL",
             NULL
             };
 
