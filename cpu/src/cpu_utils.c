@@ -2,7 +2,8 @@
 
 int tamanioParams;
 int tamanioInterfaces;
-
+t_pcb* proceso_actual;
+t_registros_CPU* registros_cpu;
 instr_t* fetch(int conexion, t_pcb* proceso){
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
     log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->program_counter); //LOG OBLIGATORIO
@@ -48,14 +49,14 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_pcb* proceso, int conex
         case READ_MEM :
         {
             log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
-            io_fs_write(inst->param1,inst->param2,inst->param3,inst->param4,inst->param5,proceso,logger_cpu,conexion,tlb,socket_dispatch);
+            
             break;
         }   
        
         case WRITE_MEM  :
         {
             log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
-            io_fs_write(inst->param1,inst->param2,inst->param3,inst->param4,inst->param5,proceso,logger_cpu,conexion,tlb,socket_dispatch);
+            
             break;
         }   
 
@@ -63,7 +64,7 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_pcb* proceso, int conex
         case LOG:
         {
             log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
-            exit_inst(socket_dispatch);
+           
             break;
         }
 
@@ -352,7 +353,7 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_log* logger,t_list* tlb){
+uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_log* logger){
     uint32_t direccion_resultado;// = malloc(sizeof(uint32_t));
     bool encontro_en_tlb = false;
     uint32_t indice_encontrado; //= malloc(sizeof(uint32_t));
@@ -374,7 +375,7 @@ uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_lo
 
 
 
-void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion, t_list* tlb){
+void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion){
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el 
     //Registro Dirección y lo almacena en el Registro Datos
     registros id_registro_direccion = identificarRegistro(registro_direccion);
@@ -383,11 +384,11 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
     uint32_t dir_fisica_result = malloc(sizeof(uint32_t));
-    dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger,tlb);
+    dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
 
-    uint32_t tamanio_a_leer = obtenerTamanioRegistro(id_registro_datos);
+    uint32_t tamanio_a_leer = 4;
 
     pedir_valor_a_memoria(dir_fisica_result,proceso->pid,tamanio_a_leer,conexion);
     int valor_sem;
@@ -415,7 +416,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
 
 }
 
-void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger, int conexion, t_list* tlb){
+void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
     printf("registro: %s\n",registro_datos);
@@ -426,7 +427,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger,tlb);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger);
     //TODO: Si el tamanio de valor_registro_datos(es un int de 32 siempre?) es mayor a tamanio_pagina hay
     //que dividir ambos y tomar el floor para obtener cant de paginas, con eso dividir datos a enviar en *cant de paginas*, y
     //por cada pedacito de intfo llamar a mmu y agregar dir fisca obtenida en lista 
@@ -437,7 +438,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t
     char* valor_str = malloc(len + 1);
     snprintf(valor_str, len + 1, "%u", valor_registro_datos);
 
-    guardar_en_direccion_fisica(dir_fisica_result, len + 1, valor_str, proceso->pid, conexion);
+    
     log_info(logger, "PID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->pid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
 
 }
@@ -574,3 +575,30 @@ void ciclo_de_instrucciones(int *conexion_mer, t_pcb *proceso, t_list *tlb, int 
     free(inst->param5);
     free(inst);
 }
+
+tipo_instruccion str_to_tipo_instruccion(const char *str) {
+
+    printf("Entro al funcion a testear \n");
+    tipo_instruccion instruccion_a_devolver = -1;
+    if (strcmp(str, "SET") == 0) instruccion_a_devolver = SET;
+    else if (strcmp(str, "SUM") == 0) instruccion_a_devolver = SUM;
+    else if (strcmp(str, "SUB") == 0) instruccion_a_devolver = SUB;
+    else if (strcmp(str, "JNZ") == 0) instruccion_a_devolver = JNZ;
+    // agregar instrucciones faltantese
+    else printf("Entro en el default de str_to_tipo_instruccion \n");
+
+    printf("imprimo instruccion_a_devolver: %d \n", instruccion_a_devolver);
+    printf("Saliendo de la funcion a testear \n");
+    return instruccion_a_devolver;
+}
+
+void generar_interrupcion_a_kernel(int conexion){
+    log_info(logger_cpu,"entro a generar_interrupcion_a_kernel\n");
+    t_paquete* paquete_interrupcion_kernel;
+    
+   
+    paquete_interrupcion_kernel = crear_paquete(HANDSHAKE); //TODO: crear codigo de operacion
+    enviar_paquete(paquete_interrupcion_kernel, conexion);   
+    eliminar_paquete(paquete_interrupcion_kernel);
+    log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
+ }

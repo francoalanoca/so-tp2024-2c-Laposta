@@ -11,8 +11,8 @@
 char *path_config;
 char *ip_cpu;
 
-t_pcb *proceso_actual;
-t_proceso_interrumpido *proceso_interrumpido_actual;
+
+
 bool interrupcion_kernel;
 instr_t *prox_inst;
 t_list *tlb;
@@ -44,7 +44,7 @@ int rta_resize;
 
 int main(int argc, char *argv[])
 {
-    decir_hola("CPU");
+
 
     path_config = argv[1];
     ip_cpu = argv[2];
@@ -185,21 +185,7 @@ void liberar_memoria()
 
     free(prox_inst);
 
-    if (proceso_actual)
-    {
-        // libero todas las estructuras dentro de proceso_actual
-        if (proceso_actual->path)
-        {
-            free(proceso_actual->path);
-        }
-        free(proceso_actual);
-    }
-
-    if (proceso_interrumpido_actual)
-    {
-
-        free(proceso_interrumpido_actual);
-    }
+   
 
     // Liberar strings
     free(path_config);

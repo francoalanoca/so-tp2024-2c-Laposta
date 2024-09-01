@@ -43,13 +43,13 @@ registros identificarRegistro(char* registro);
 uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso);
 //t_interfaz* elegir_interfaz(char* interfaz, t_proceso* proceso);
 void enviar_interfaz_a_kernel(char* nombre_interfaz, uint32_t tamanio_nombre, uint32_t unidades_de_trabajo, int conexion);
-uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_log* logger,t_list* tlb);
+uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_log* logger);
 bool verificar_existencia_en_tlb(uint32_t pid, uint32_t nro_pagina, uint32_t indice);
 //char* uint32_to_string(uint32_t number);
 //char* concatenar_cadenas(const char* str1, const char* str2);
 //uint32_t string_a_uint32(const char* str);
-void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion, t_list* tlb);
-void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger,int conexion, t_list* tlb);
+void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion);
+void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger,int conexion);
 void wait_inst(char* recurso, int conexion_kernel);
 void signal_inst(char* recurso, int conexion_kernel);
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion);
@@ -66,4 +66,5 @@ void obtenerTamanioPagina(int conexion);
 
 void limpiarCadena(char* cadena);
 uint32_t obtenerTamanioRegistro(registros id_registro);
+void generar_interrupcion_a_kernel(int conexion);
 #endif //CPU_UTILS_H

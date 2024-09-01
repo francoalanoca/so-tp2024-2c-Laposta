@@ -13,7 +13,7 @@ extern bool interrupcion_kernel;
 extern t_list* lista_sockets_global;
 extern int conexion_kernel_dispatch;
 extern int conexion_kernel_interrupt;
-extern instr_t *prox_inst;
+
 extern sem_t sem_valor_instruccion;
 extern int socket_memoria;
 extern char* valor_registro_obtenido;
@@ -29,7 +29,7 @@ extern sem_t sem_conexion_dispatch_iniciado;
 extern pthread_mutex_t mutex_proceso_actual;
 extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
-extern t_pcb* proceso_actual;
+
 extern  uint32_t base;
 typedef struct {
     t_log *log;
@@ -41,7 +41,7 @@ typedef struct {
     uint32_t pid; // Tamaño del payload
     uint32_t program_counter;
 } t_pcb;
-
+extern t_pcb* proceso_actual;
 typedef struct 
 {
     uint32_t PC;
@@ -96,6 +96,7 @@ typedef struct {
     uint8_t param5Length;
     char* param5;
 } instr_t;
+extern instr_t *prox_inst;
 
 
 int checkProperties(char *path_config);
