@@ -118,7 +118,14 @@ void memoria_atender_kernel(){
 			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
 			t_list* valores = recibir_paquete(socket_kernel);
 			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
-			inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
+			if(crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones) != -1){
+				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
+				//enviar rta OK
+			}
+			else{
+				//enviar rta con error
+			}
+			
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_PROCESO_RTA \n");

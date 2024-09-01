@@ -4,10 +4,8 @@
 void* memoria_usuario;                          //espacio de usuario
 t_list* lista_particiones;              //lista de las particiones
 t_list* lista_miniPCBs;                 //lista de los procesos
-//pthread_mutex_t mutex_memoria;
-//uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
-     
-//t_bitarray *bitmap_particiones;
+uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
+t_bitarray *bitmap_particiones;         //bitmap para controlar los bloques libres y ocupados
 
 uint32_t tamanio_total_memoria;
 char * algoritmo_alocacion;
@@ -15,22 +13,13 @@ char * algoritmo_alocacion;
 
 //-------------------------Definicion de funciones----------------------------
 //Inicializa memoria con particiones fijas
-void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t* particiones/*Lista que viene de config*/, int num_particiones/*tamanio de la lista anterior*/, char* algoritmo/*Algoritmo de busqueda de espacios vacios*/) {
+void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo) {
     tamanio_total_memoria = mem_size;
     memoria_usuario = malloc(tamanio_total_memoria);  // Espacio de memoria contiguo
-    algoritmo_alocacion = algoritmo;
+    algoritmo_alocacion = malloc(strlen(algoritmo)*sizeof(char));
+    strcpy(algoritmo_alocacion,algoritmo);
+    bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
 
-    // Inicializar particiones fijas
-    size_t offset = 0;
-    for (int i = 0; i < num_particiones; i++) {
-        t_particion* particion = (t_particion*)malloc(sizeof(t_particion));
-        particion->start = offset;
-        particion->size = particiones[i];
-        particion->is_free = true;
-        particion->next = lista_particiones;
-        lista_particiones = particion;
-        offset += particiones[i];
-    }
 }
 
 //Inicializa memoria con particiones dinamicas
@@ -80,12 +69,39 @@ void* alocar_memoria(uint32_t size) {
 }
 
 //Crear un Proceso
-void crear_proceso(uint32_t tam_proceso) {
-    void* nuevo_proceso = alocar_memoria(tam_proceso);
-    if (nuevo_proceso != NULL) {
-        printf("Proceso creado y asignado en la dirección: %p\n", nuevo_proceso);
-    } else {
-        printf("No se pudo inicializar el proceso: Memoria insuficiente\n");
+uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones) {
+    //encontrar hueco libre y marcar bitmap, si no encuentra tira error
+    uint32_t tamanio_bloque_actual = 0;
+    bool bloque_libre_encontrado = false;
+
+    if(tam_proceso == 0){
+        return -1;
+    }
+    else{
+        if(strcmp(algoritmo_alocacion, "FIRST") == 0){
+            for (int i = 0; i < list_size(lista_de_particiones); i++){
+                tamanio_bloque_actual = (uint32_t) list_get(lista_de_particiones, i);
+                if(tam_proceso<tamanio_bloque_actual){
+                    bloque_libre_encontrado = true;
+                    bitarray_set_bit(bitmap_particiones, i);
+                }
+            }
+
+            if(!bloque_libre_encontrado){
+                return -1;
+            }
+
+        }
+        else if(strcmp(algoritmo_alocacion, "BEST") == 0){
+
+        }
+        else if(strcmp(algoritmo_alocacion, "WORST") == 0){
+
+        }
+        else{
+            printf("Error: algoritmo incorrecto\n");
+        }
+        
     }
 }
 

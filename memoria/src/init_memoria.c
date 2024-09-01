@@ -18,7 +18,6 @@ t_config_memoria *cfg_memoria;
 //t_list* lista_miniPCBs;                 //lista de los procesos
 //pthread_mutex_t mutex_memoria;
 //uint32_t cantidad_particiones_memoria;  //seria la cantidad de particiones pasadas por config 
-     
 //t_bitarray *bitmap_particiones;
 
 
@@ -163,16 +162,13 @@ int inicializar_memoria(){
         printf("No pude crear el logger\n");
         return false;
     }
-
     crear_lista_procesos();
-
 	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //espacio del usuario
 	if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
         
         lista_particiones = char_array_to_list(cfg_memoria->PARTICIONES);
-        
-        inicializar_memoria_particiones_fijas(cfg_memoria->TAM_MEMORIA,lista_particiones,list_size(lista_particiones),cfg_memoria->ALGORITMO_BUSQUEDA);
-        
+        cantidad_particiones_memoria = list_size(lista_particiones);
+        inicializar_memoria_particiones_fijas(cfg_memoria->TAM_MEMORIA,cantidad_particiones_memoria,cfg_memoria->ALGORITMO_BUSQUEDA);
     }
     else{
         lista_particiones = list_create(); 
@@ -181,8 +177,7 @@ int inicializar_memoria(){
                          //lista en en donde se almacenara las particiones (contiene los proceso) 
 	
 	
-	//cantidad_particiones_memoria = list_size((t_list*) cfg_memoria->PARTICIONES);
-	//bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
+	
     return true;   
 }
 
