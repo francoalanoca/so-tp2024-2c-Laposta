@@ -30,15 +30,36 @@ typedef  enum
 
 
 //---------------CPU-MEMORIA-------------------
-INSTRUCCION_RECIBIDA,
+    SOLICITUD_CONTEXTO,
+    SOLICITUD_CONTEXTO_RTA,
+    SOLICITUD_INSTRUCCION,
+    SOLICITUD_INSTRUCCION_RTA,
+    READ_MEMORIA,
+    READ_MEMORIA_RTA,
+    WRITE_MEMORIA,
+    WRITE_MEMORIA_RTA,
+    DEVOLUCION_CONTEXTO,
+    DEVOLUCION_CONTEXTO_RTA,
+
 
 //---------------FILESYSTEM-KERNEL-------------------
 
 
 //----------------KERNEL-MEMORIA
+    INICIAR_PROCESO,
+    INICIAR_PROCESO_RTA,
+    FINALIZAR_PROCESO,
+    FINALIZAR_PROCESO_RTA,
+    INICIAR_HILO,
+    INICIAR_HILO_RTA,
+    FINALIZAR_HILO,
+    FINALIZAR_HILO_RTA,
+    PEDIDO_MEMORY_DUMP,
+    PEDIDO_MEMORY_DUMP_RTA,
 
 //---------------FILESYSTEM-MEMORIA-------------------
-
+    CREACION_DUMP,
+    CREACION_DUMP_RTA
 }op_code; 
 
 typedef struct {
@@ -55,7 +76,7 @@ typedef struct
 
 void* recibir_buffer(int*, int);
 int iniciar_servidor(t_log *logger, const char *name, char *ip, char *puerto);
-int esperar_cliente(t_log *logger, const char *name, int socket_servidor);
+int esperar_cliente(t_log* logger, const char* name, int socket_servidor);
 int crear_conexion(t_log *logger, const char *server_name, char *ip, char *puerto);
 t_list* recibir_paquete(int);
 int recibir_operacion(int);
@@ -66,6 +87,7 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
 void enviar_paquete(t_paquete* paquete, int socket_cliente);
 void liberar_conexion(int socket_cliente);
 void eliminar_paquete(t_paquete* paquete);
+bool config_has_all_properties(t_config *cfg, char **properties);
 void iterator(char* value);
 void terminar_programa(int conexion, t_log* logger, t_config* config);
 t_config* iniciar_config(char* path_config, t_log*);

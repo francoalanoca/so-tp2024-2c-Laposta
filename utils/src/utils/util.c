@@ -2,6 +2,12 @@
 #define handle_error(msg) \
            do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
+
+
+#define handle_error(msg) \
+           do { perror(msg); exit(EXIT_FAILURE); } while (0)
+		   
+
 int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
     //printf("ip: %s, puerto: %s", ip, puerto);
     log_info(logger, "comienza iniciar_servidor");
@@ -55,6 +61,19 @@ int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
 
     return socket_servidor;
 }
+
+
+int esperar_cliente(t_log* logger, const char* name, int socket_servidor) {
+    struct sockaddr_in dir_cliente;
+    socklen_t tam_direccion = sizeof(struct sockaddr_in);
+
+    int socket_cliente = accept(socket_servidor, (void*) &dir_cliente, &tam_direccion);
+
+    log_info(logger, "Cliente conectado (a %s)\n", name);
+
+    return socket_cliente;
+}
+
 
 int recibir_operacion(int socket_cliente) // modificar 
 {
