@@ -1,5 +1,5 @@
-#ifndef TP_2024_1C_PASARONCOSAS_MAIN_H
-#define TP_2024_1C_PASARONCOSAS_MAIN_H
+#ifndef CPU_MAIN_H
+#define CPU_MAIN_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,7 +7,7 @@
 #include <utils/utils.h>
 #include <signal.h>
 #include "../include/cpu_utils.h"
-#include "../include/servidorCpu.h"
+#include "../include/server_cpu.h"
 
 
 typedef struct {
@@ -26,4 +26,4 @@ void ciclo_de_instrucciones(int *conexion, t_pcb* proceso, t_list* tlb, int *soc
 
 
 
-#endif //TP_2024_1C_PASARONCOSAS_MAIN_H
+#endif //CPU_MAIN_H

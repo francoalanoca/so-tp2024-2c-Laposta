@@ -94,7 +94,7 @@ void pedir_instruccion(t_pcb* proceso,int conexion){
   
     
     t_paquete* paquete_pedido_instruccion;
-    paquete_pedido_instruccion = crear_paquete(PROXIMA_INSTRUCCION); 
+    paquete_pedido_instruccion = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
         
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->pid,  sizeof(uint32_t)); 
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->program_counter,  sizeof(uint32_t));  
@@ -374,22 +374,6 @@ uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_lo
 
 
 
-
-
-
-void pedir_marco_a_memoria(uint32_t pid, uint32_t nro_pagina, int conexion){
-    printf("entro a pedir_marco_a_memoria\n");
-    t_paquete* paquete_pedido_marco;
-    paquete_pedido_marco = crear_paquete(PEDIDO_MARCO_A_MEMORIA); 
-        
-    agregar_a_paquete(paquete_pedido_marco,  &pid,  sizeof(uint32_t)); 
-    agregar_a_paquete(paquete_pedido_marco,  &nro_pagina,  sizeof(uint32_t));  
-        
-    enviar_paquete(paquete_pedido_marco, conexion); 
-    eliminar_paquete(paquete_pedido_marco);
-}
-
-
 void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion, t_list* tlb){
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el 
     //Registro Dirección y lo almacena en el Registro Datos
@@ -399,7 +383,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
     uint32_t dir_fisica_result = malloc(sizeof(uint32_t));
-    dir_fisica_result = mmu(valor_registro_direccion,tamanio_pagina,conexion,logger,tlb);
+    dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger,tlb);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
 
@@ -442,7 +426,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,tamanio_pagina,conexion,logger,tlb);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger,tlb);
     //TODO: Si el tamanio de valor_registro_datos(es un int de 32 siempre?) es mayor a tamanio_pagina hay
     //que dividir ambos y tomar el floor para obtener cant de paginas, con eso dividir datos a enviar en *cant de paginas*, y
     //por cada pedacito de intfo llamar a mmu y agregar dir fisca obtenida en lista 
@@ -474,48 +458,12 @@ void signal_inst(char* recurso, int conexion_kernel){
 }
 
 
-void exit_inst( int conexion_kernel){
-    // Esta instrucción representa la syscall de finalización del proceso. Se deberá devolver el
-    //Contexto de Ejecución actualizado al Kernel para su finalización.
-    log_info(logger_cpu, "Entro a exit_inst pid :%d", proceso_actual->pid); 
-    
-    pthread_mutex_lock(&mutex_proceso_interrumpido_actual);
-/*ANTERIOR
-    //proceso_interrumpido_actual->pcb->pid = proceso_actual->pid;
-    t_proceso_interrumpido* proceso_interrumpido_a_enviar = malloc(sizeof(t_proceso_interrumpido));
-    proceso_interrumpido_a_enviar->pcb=malloc(sizeof(t_pcb));
-    proceso_interrumpido_a_enviar->pcb->path = malloc(proceso_actual->path_length);
 
-    proceso_interrumpido_a_enviar->pcb = proceso_actual;
-    log_info(logger_cpu, "Path del proc actual :%s", proceso_actual->path); 
-    strcpy(proceso_interrumpido_a_enviar->pcb->path, proceso_actual->path);
-    //proceso_interrumpido_actual->pcb = proceso_actual;
-    proceso_interrumpido_a_enviar->motivo_interrupcion = INSTRUCCION_EXIT;*/
-
-    t_proceso_interrumpido *proceso_interrumpido_actual = malloc(sizeof(t_proceso_interrumpido));
-    proceso_interrumpido_actual->pcb = proceso_actual;
-    proceso_interrumpido_actual->pcb->path = malloc(proceso_actual->path_length);   
-    proceso_interrumpido_actual->interfaz = "none";
-    strcpy(proceso_interrumpido_actual->pcb->path, proceso_actual->path);
-
-    log_info(logger_cpu, "Pid asignado en proceo de interrupcion pid :%d", proceso_interrumpido_actual->pcb->pid ); 
-    log_info(logger_cpu, "Pid asignado en proceo de interrupcion path :%s", proceso_interrumpido_actual->pcb->path );
-    proceso_interrumpido_actual->motivo_interrupcion = INSTRUCCION_EXIT;
-    pthread_mutex_unlock(&mutex_proceso_interrumpido_actual);
-    solicitar_exit_a_kernel(proceso_interrumpido_actual, conexion_kernel);
-   //solicitar_exit_a_kernel(proceso_interrumpido_a_enviar);
-    pthread_mutex_lock(&mutex_proceso_actual);
-    proceso_actual = NULL;
-    pthread_mutex_unlock(&mutex_proceso_actual);
-    pthread_mutex_lock(&mutex_proceso_interrumpido_actual);
-    proceso_interrumpido_actual = NULL;
-    pthread_mutex_unlock(&mutex_proceso_interrumpido_actual);
-}
 
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion){
         printf("entro a pedir_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
-        paquete_pedido_valor_memoria = crear_paquete(PETICION_VALOR_MEMORIA); 
+        paquete_pedido_valor_memoria = (HANDSHAKE); // TODO: Crear codigo de operacion
 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t));     
         agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t)); 
@@ -532,40 +480,6 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 
 
 
-void envia_error_de_memoria_a_kernel(t_proceso_interrumpido* proceso, int conexion_kernel){
-        printf("entro a envia_error_de_memoria_a_kernel\n");
-        t_paquete* paquete_error_memoria;
-   
-    paquete_error_memoria = crear_paquete(INTERRUPCION_CPU); 
-    
-    agregar_a_paquete(paquete_error_memoria,  &proceso->pcb->pid,  sizeof(uint32_t));         
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->program_counter, sizeof(uint32_t));  
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->path_length, sizeof(uint32_t)); 
-    agregar_a_paquete(paquete_error_memoria, proceso->pcb->path, proceso->pcb->path_length);
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.PC, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.AX, sizeof(uint32_t)); //VER TAMANIO
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.BX, sizeof(uint32_t)); //VER TAMANIO
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.CX, sizeof(uint32_t)); //VER TAMANIO
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.DX, sizeof(uint32_t)); //VER TAMANIO
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.EAX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.EBX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.ECX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.EDX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.SI, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->registros_cpu.DI, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->estado, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->tiempo_ejecucion, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->pcb->quantum, sizeof(uint32_t));
-    agregar_a_paquete(paquete_error_memoria, &proceso->motivo_interrupcion, sizeof(uint32_t));
-       
-    enviar_paquete(paquete_error_memoria, conexion_kernel); 
-    free(paquete_error_memoria->buffer->stream);
-    free(paquete_error_memoria->buffer);
-    free(paquete_error_memoria);
-   
-}
-
-
 
 
 void solicitar_wait_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
@@ -573,32 +487,11 @@ void solicitar_wait_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, i
         
         t_paquete* paquete_wait_kernel;
    
-        paquete_wait_kernel = crear_paquete(ENVIO_WAIT_A_KERNEL); 
+        paquete_wait_kernel = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
         agregar_a_paquete(paquete_wait_kernel,  &pcb->pid,  sizeof(uint32_t));         
-        agregar_a_paquete(paquete_wait_kernel, &pcb->program_counter, sizeof(uint32_t));  
-        agregar_a_paquete(paquete_wait_kernel, &pcb->path_length, sizeof(uint32_t)); 
-        agregar_a_paquete(paquete_wait_kernel, pcb->path, pcb->path_length);
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.PC, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.AX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.BX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.CX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.DX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.EAX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.EBX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.ECX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.EDX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.SI, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->registros_cpu.DI, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->estado, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->tiempo_ejecucion, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, &pcb->quantum, sizeof(uint32_t));        
-        agregar_a_paquete(paquete_wait_kernel, &recurso_tamanio, sizeof(uint32_t));
-        agregar_a_paquete(paquete_wait_kernel, recurso, recurso_tamanio);
         
         enviar_paquete(paquete_wait_kernel, conexion_kernel); 
-        free(paquete_wait_kernel->buffer->stream);
-        free(paquete_wait_kernel->buffer);
-        free(paquete_wait_kernel);
+        eliminar_paquete(paquete_wait_kernel);
 
 }
 
@@ -606,31 +499,12 @@ void solicitar_signal_kernel(t_pcb* pcb,uint32_t recurso_tamanio,char* recurso, 
         printf("entro a solicitar_wait_kernel\n");
         t_paquete* paquete_signal_kernel;
    
-        paquete_signal_kernel = crear_paquete(ENVIO_SIGNAL_A_KERNEL); 
+        paquete_signal_kernel = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
         
-        agregar_a_paquete(paquete_signal_kernel,  &pcb->pid,  sizeof(uint32_t));         
-        agregar_a_paquete(paquete_signal_kernel, &pcb->program_counter, sizeof(uint32_t));  
-        agregar_a_paquete(paquete_signal_kernel, &pcb->path_length, sizeof(uint32_t)); 
-        agregar_a_paquete(paquete_signal_kernel, pcb->path, pcb->path_length);
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.PC, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.AX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.BX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.CX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.DX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.EAX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.EBX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.ECX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.EDX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.SI, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->registros_cpu.DI, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->estado, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->tiempo_ejecucion, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, &pcb->quantum, sizeof(uint32_t));        
-        agregar_a_paquete(paquete_signal_kernel, &recurso_tamanio, sizeof(uint32_t));
-        agregar_a_paquete(paquete_signal_kernel, recurso, recurso_tamanio);
+        agregar_a_paquete(paquete_signal_kernel,  &pcb->pid,  sizeof(uint32_t));      
         
         enviar_paquete(paquete_signal_kernel, conexion_kernel); 
-         sem_wait(&sem_interrupcion_kernel);
+
        eliminar_paquete(paquete_signal_kernel);
 }
 
@@ -649,44 +523,11 @@ void imprimir_contenido_paquete(t_paquete* paquete) {
     }
     printf("\n");
 }
-void solicitar_exit_a_kernel(t_proceso_interrumpido* proceso, int conexion_kernel){
-        printf("entro a solicitar_exit_a_kernel\n");
-        t_paquete* paquete_exit_kernel = crear_paquete(INTERRUPCION_CPU); 
-        printf("CREO EL PAQUETE\n");
-       // proceso->pcb->path = malloc(proceso->pcb->path_length);
-       // strcpy(proceso->pcb->path,"PATHPRUEBA");
-        printf("PID: %u,PATH:%s MOTIVO:%u\n",proceso->pcb->pid,proceso->pcb->path,proceso->motivo_interrupcion);
-        printf("MOTIVO:%u\n",proceso->motivo_interrupcion);
-        agregar_a_paquete(paquete_exit_kernel,  &proceso->pcb->pid,  sizeof(uint32_t));         
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->program_counter, sizeof(uint32_t));  
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->path_length, sizeof(uint32_t)); 
-        agregar_a_paquete(paquete_exit_kernel, proceso->pcb->path, proceso->pcb->path_length);
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.PC, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.AX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.BX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.CX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.DX, sizeof(uint32_t)); //VER TAMANIO
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.EAX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.EBX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.ECX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.EDX, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.SI, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->registros_cpu.DI, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->estado, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->tiempo_ejecucion, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->pcb->quantum, sizeof(uint32_t));
-        agregar_a_paquete(paquete_exit_kernel, &proceso->motivo_interrupcion, sizeof(uint32_t));
-        imprimir_contenido_paquete(paquete_exit_kernel);
-        enviar_paquete(paquete_exit_kernel, conexion_kernel); 
-        eliminar_paquete(paquete_exit_kernel);
-    
-}
-
 
 void obtenerTamanioPagina(int conexion){
     printf("entro a obtenerTamanioPagina\n");
     t_paquete* paquete_pedido_tamanio_pag;
-    paquete_pedido_tamanio_pag = crear_paquete(SOLICITUD_TAMANIO_PAGINA); 
+    paquete_pedido_tamanio_pag = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
     enviar_paquete(paquete_pedido_tamanio_pag, conexion); 
     eliminar_paquete(paquete_pedido_tamanio_pag);
 
@@ -715,7 +556,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_pcb *proceso, t_list *tlb, int 
     tipo_inst = decode(inst);
     log_info(logger_cpu, "Voy a entrar a execute");
     execute(inst, tipo_inst, proceso, conexion_mem, tlb, dispatch, interrupt);
-    if (tipo_inst != EXIT)
+    if (tipo_inst != HANDSHAKE) //TODO: Crear tipo de instruccion
     {
         proceso_actual->program_counter += 1;
     }

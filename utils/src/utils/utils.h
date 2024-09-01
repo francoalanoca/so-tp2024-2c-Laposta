@@ -30,7 +30,7 @@ typedef  enum
 
 
 //---------------CPU-MEMORIA-------------------
-
+INSTRUCCION_RECIBIDA,
 
 //---------------FILESYSTEM-KERNEL-------------------
 

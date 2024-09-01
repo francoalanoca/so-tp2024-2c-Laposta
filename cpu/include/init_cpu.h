@@ -1,5 +1,5 @@
-#ifndef CPU_H
-#define CPU_H
+#ifndef INIT_CPU_H
+#define INIT_CPU_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,12 +29,18 @@ extern sem_t sem_conexion_dispatch_iniciado;
 extern pthread_mutex_t mutex_proceso_actual;
 extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
-
+extern t_pcb* proceso_actual;
+extern  uint32_t base;
 typedef struct {
     t_log *log;
     int fd;
     char *server_name;
 } t_procesar_conexion_args;
+
+typedef struct {
+    uint32_t pid; // Tamaño del payload
+    uint32_t program_counter;
+} t_pcb;
 
 typedef struct 
 {
@@ -124,4 +130,4 @@ static t_config_cpu *cfg_cpu_start()
     return cfg;
 }
 
-#endif /* CPU_H */
+#endif /* INIT_CPU_H */
