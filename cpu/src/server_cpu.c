@@ -151,7 +151,7 @@ void atender_memoria (int *socket_mr) {
         }
     switch (cop) {
 
-        case INSTRUCCION_RECIBIDA:
+        case SOLICITUD_INSTRUCCION_RTA:
                     {
                         log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
                          
