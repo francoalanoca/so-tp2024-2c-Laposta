@@ -164,10 +164,13 @@ int inicializar_memoria(){
         return false;
     }
 
+    crear_lista_procesos();
+
 	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //espacio del usuario
 	if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
-        //hacer list_create?
-        lista_particiones = cfg_memoria->PARTICIONES;
+        
+        lista_particiones = char_array_to_list(cfg_memoria->PARTICIONES);
+        
         inicializar_memoria_particiones_fijas(cfg_memoria->TAM_MEMORIA,lista_particiones,list_size(lista_particiones),cfg_memoria->ALGORITMO_BUSQUEDA);
         
     }
@@ -176,7 +179,7 @@ int inicializar_memoria(){
         inicializar_memoria_particiones_dinamicas(cfg_memoria->TAM_MEMORIA,cfg_memoria->ALGORITMO_BUSQUEDA);
     }
                          //lista en en donde se almacenara las particiones (contiene los proceso) 
-	lista_miniPCBs = list_create();
+	
 	
 	//cantidad_particiones_memoria = list_size((t_list*) cfg_memoria->PARTICIONES);
 	//bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
@@ -217,10 +220,6 @@ t_bitarray *crear_bitmap(int entradas){
 }
 
 
-
-
-
-
 void cerrar_programa(){
 
 
@@ -232,4 +231,78 @@ void cerrar_programa(){
     log_destroy(logger_memoria);
 }
 
+void crear_lista_procesos(){
+    lista_miniPCBs = list_create();
+}
+
+void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_pseudocodigo){
+    t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
+    t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+
+    nuevo_proceso->pid = pid;
+    nuevo_proceso->hilos = list_create();
+
+    nuevo_hilo->tid = 0;
+    nuevo_hilo->registros.PC = 0;
+    nuevo_hilo->registros.AX = 0;
+    nuevo_hilo->registros.BX = 0;
+    nuevo_hilo->registros.CX = 0;
+    nuevo_hilo->registros.DX = 0;
+    nuevo_hilo->registros.EX = 0;
+    nuevo_hilo->registros.FX = 0;
+    nuevo_hilo->registros.GX = 0;
+    nuevo_hilo->registros.HX = 0;
+    nuevo_hilo->lista_de_instrucciones = list_create();
+    //PENDIENTE: llenar la lista de instruciones usando funcion que lee el archivo de pseudicodigo
+
+    list_add(nuevo_proceso->hilos,nuevo_hilo);
+    //PENDIENTE: ver de donde se consigue la base
+
+    nuevo_proceso->tamanio_proceso = tamanio_proceso;
+
+    list_add(lista_miniPCBs,nuevo_proceso);
+}
+
+void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
+    t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+
+    nuevo_hilo->tid = tid;
+    nuevo_hilo->registros.PC = 0;
+    nuevo_hilo->registros.AX = 0;
+    nuevo_hilo->registros.BX = 0;
+    nuevo_hilo->registros.CX = 0;
+    nuevo_hilo->registros.DX = 0;
+    nuevo_hilo->registros.EX = 0;
+    nuevo_hilo->registros.FX = 0;
+    nuevo_hilo->registros.GX = 0;
+    nuevo_hilo->registros.HX = 0;
+    nuevo_hilo->lista_de_instrucciones = list_create();
+    //PENDIENTE: llenar la lista de instruciones usando funcion que lee el archivo de pseudicodigo
+    asignar_hilo_a_proceso(nuevo_hilo,pid);
+    
+}
+
+void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
+    for (int i = 0; i < list_size(lista_miniPCBs); i++){
+        t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
+
+        if (miniPCB->pid == pid){
+			list_add(miniPCB->hilos,hilo);
+        }
+    }
+
+    
+}
+
+// Función para convertir un char** en un t_list
+t_list* char_array_to_list(char** array) {
+    t_list* list = list_create();
+    
+    // Iterar sobre cada char* en el char**
+    for (int i = 0; array[i] != NULL; i++) {
+        list_add(list, array[i]);
+    }
+    
+    return list;
+}
 

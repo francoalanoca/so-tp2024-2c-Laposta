@@ -13,8 +13,11 @@ t_m_crear_proceso* deserializar_iniciar_proceso(t_list*  lista_paquete ){
     crear_proceso->pid = *(uint32_t*)list_get(lista_paquete, 0);
     printf("Pid recibido: %d \n", crear_proceso->pid);
 
-    printf("Nombre del proceso: %s \n", (char*) list_get(lista_paquete, 1));
-    crear_proceso->archivo_pseudocodigo = (char*) list_get(lista_paquete, 1);
+    crear_proceso->tamanio_proceso = *(uint32_t*)list_get(lista_paquete, 1);
+    printf("Tamanio recibido: %d \n", crear_proceso->tamanio_proceso);
+
+    printf("Nombre del archivo: %s \n", (char*) list_get(lista_paquete, 2));
+    crear_proceso->archivo_pseudocodigo = (char*) list_get(lista_paquete, 2);
     
     return crear_proceso;
 }
@@ -31,6 +34,39 @@ void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int sock
     enviar_paquete(paquete_crear_proceso, socket_kernel);   
     printf("Proceso enviado: %i\n", crear_proceso->pid); 
     eliminar_paquete(paquete_crear_proceso);
+    printf("PAQUETE ELIMINADO\n"); 
+}
+
+t_m_crear_hilo* deserializar_iniciar_hilo(t_list*  lista_paquete ){
+
+    //Creamos una variable de tipo struct que ira guardando todo del paquete y le asignamos tamaño
+    t_m_crear_hilo* crear_hilo = malloc(sizeof(t_m_crear_hilo));
+    
+    crear_hilo->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Pid recibido: %d \n", crear_hilo->pid);
+
+    crear_hilo->tid = *(uint32_t*)list_get(lista_paquete, 1);
+    printf("Tid recibido: %d \n", crear_hilo->tid);
+
+    printf("Nombre del archivo: %s \n", (char*) list_get(lista_paquete, 2));
+    crear_hilo->archivo_pseudocodigo = (char*) list_get(lista_paquete, 2);
+    
+    return crear_hilo;
+}
+
+
+//Memoria envia proceso creado a Kernel
+void enviar_respuesta_iniciar_hilo(t_m_crear_hilo* crear_hilo ,int socket_kernel) {
+    t_paquete* paquete_crear_hilo;
+ 
+    paquete_crear_hilo = crear_paquete(INICIAR_PROCESO_RTA);
+ 
+    agregar_a_paquete(paquete_crear_hilo, &crear_hilo->pid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_crear_hilo, &crear_hilo->tid,  sizeof(uint32_t));
+     
+    enviar_paquete(paquete_crear_hilo, socket_kernel);   
+    printf("Proceso enviado: %i\n", crear_hilo->pid); 
+    eliminar_paquete(paquete_crear_hilo);
     printf("PAQUETE ELIMINADO\n"); 
 }
 

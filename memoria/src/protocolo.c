@@ -116,9 +116,9 @@ void memoria_atender_kernel(){
 		
 		case INICIAR_PROCESO:
 			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
-			//valores = recibir_paquete(socket_kernel);
-			//t_m_crear_proceso iniciar_proceso = deserializar_iniciar_proceso(valores);
-			//crear_proceso(iniciar_proceso->pid);
+			t_list* valores = recibir_paquete(socket_kernel);
+			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
+			inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_PROCESO_RTA \n");
@@ -136,8 +136,10 @@ void memoria_atender_kernel(){
 
 		case INICIAR_HILO:
 			log_info(logger_memoria, "Recibí INICIAR_HILO \n");
-			//valores = recibir_paquete(socket_kernel);
+			t_list* valores_iniciar_hilo = recibir_paquete(socket_kernel);
+			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores_iniciar_hilo);
 			//leer_instrucciones(iniciar_proceso->archivo_pseudocodigo, iniciar_proceso->pid);
+			inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
 			break;
