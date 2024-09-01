@@ -23,7 +23,7 @@ void añadir_tid_a_proceso(t_pcb* pcb){
 void enviar_solicitud_espacio_a_memoria(void* pcb_solicitante,int socket){
     t_pcb* pcb=(t_pcb*) pcb_solicitante;
     //memoria solo necesita tamanio de proceso y el pid 
-    t_paquete* paquete_a_enviar=crear_paquete(SOLICITUD_ESPACIO_PARA_PROCESO);
+    t_paquete* paquete_a_enviar=crear_paquete(INICIAR_PROCESO);
     agregar_a_paquete(paquete_a_enviar,&(pcb->tamanio_proceso),sizeof(int));
     agregar_a_paquete(paquete_a_enviar,&(pcb->pid),sizeof(int));
     enviar_paquete(paquete_a_enviar,socket);
