@@ -24,7 +24,7 @@ typedef  enum
 //----------------BASICOS--------------------------------
     HANDSHAKE = 1,
     HANDSHAKE_OK,
-
+    OK,
 
 //---------------CPU-KERNEL-------------------
 

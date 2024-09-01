@@ -37,7 +37,7 @@ int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
         setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes);
         if (bind(socket_servidor, p->ai_addr, p->ai_addrlen) == -1) {
             // Si entra aca fallo el bind
-            handle_error("bind");
+            perror("bind");//TODO: se cambio porque handle_error("bind") no esta definida, supongo que solo printeaba el mensaje
             close(socket_servidor);
             continue;
         }
