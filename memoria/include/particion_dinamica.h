@@ -20,6 +20,6 @@
 
 
 //----------------------------------Prototipos---------------------------------
-
+void crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso);
 
 #endif 

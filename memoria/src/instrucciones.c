@@ -4,12 +4,14 @@
 
 /*
 //Funcion que crea la lista de instrucciones dado un puntero al archivo de un proceso
-void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t) {
+void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hilo_tid) {
 
 	t_miniPCB *miniPCB = malloc(sizeof(t_miniPCB));
+    t_hilo *hilo_proceso = malloc(sizeof(t_hilo));
 
     miniPCB->pid = proceso_pid;
-    miniPCB->lista_de_instrucciones = list_create();
+    hilo_proceso->tid = hilo_tid;
+    hilo_proceso->lista_de_instrucciones = list_create();
 
 	//Creamos una variable que gurada el path entero: path_instrucciones/nombre
 	char* path_total = string_new();
@@ -45,7 +47,7 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t) {
             strcpy(linea2, linea);
 
             //Agregamos la linea a la lista de instrucciones
-            list_add(miniPCB->lista_de_instrucciones, linea2);
+            list_add(hilo_proceso->lista_de_instrucciones, linea2);
         }
         else{       //Si la línea leída no es "EXIT"
 
@@ -57,11 +59,12 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t) {
             strcpy(linea2, linea);
 
             //Agregamos la linea a la lista de instrucciones
-            list_add(miniPCB->lista_de_instrucciones, linea2);
+            list_add(hilo_proceso->lista_de_instrucciones, linea2);
         }
 	}
     //Agregamos el proceso a la lista de procesos
-	list_add(lista_miniPCBs, miniPCB);
+	list_add(miniPCB->hilos, hilo_proceso);
+    list_add(lista_miniPCBs, miniPCB);
 
     fclose(archivo);
 }
@@ -69,21 +72,35 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t) {
 
 
 
-//Funcion que busca una instruccion en base a un pid y pc de un proceso
-char *buscar_instruccion(int proceso_pid, int program_counter){
+//Funcion que busca una instruccion en base a un pid, tid y pc
+char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_counter){
 
-	//Mientras se menor al tamaño de la lista hace el bucle
+    //Buscamo el proceso
+	//Recorremos segun el tamaño de la lista de procesos
     for (int i = 0; i < list_size(lista_miniPCBs); i++){
 
 		//Creamos una variable a la que le asignamos elementos de la lista
         t_miniPCB *miniPCB = list_get(lista_miniPCBs, i);
 
-		//Si la varialbe es igual al proceso buscado
+		//Verificamos que sea igual al proceso buscado
         if (miniPCB->pid == proceso_pid){
 
-			//GUarmamos valor y lo retornamos
-            char *valor = list_get(miniPCB->lista_de_instrucciones, program_counter);
-            return valor;
+
+            //Buscamos el hilo
+            //Recorremos segun el tamaño de la lista de hilos
+            for (int j = 0; j < list_size(miniPCB->hilos); j++){
+                
+                t_hilo *hilo_proceso = list_get(miniPCB->hilos, j);
+
+                //Verificamos que sea igual al hilo buscado
+                if (hilo_proceso->tid == hilo_tid){
+                    
+                    //Guardamos valor y lo retornamos
+                    char *valor = list_get(hilo_proceso->lista_de_instrucciones, program_counter);
+                    return valor;
+                }
+
+            }
         }
     }
 

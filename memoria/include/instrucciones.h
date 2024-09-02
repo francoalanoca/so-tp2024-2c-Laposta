@@ -19,7 +19,7 @@
 
 //----------------------------------Prototipos---------------------------------
 
-//void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid);
-//char *buscar_instruccion(int proceso_pid, int program_counter);
+//void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hilo_tid);
+//char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_counter);
 
 #endif 
