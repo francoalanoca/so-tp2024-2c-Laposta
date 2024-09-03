@@ -176,7 +176,10 @@ int inicializar_memoria(){
     }
                          //lista en en donde se almacenara las particiones (contiene los proceso) 
 	
-	
+	    //prueba
+        printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
+        crear_proceso(100,lista_particiones);
+
 	
     return true;   
 }
@@ -192,27 +195,8 @@ int redondear_a_multiplo_mas_cercano_de(int base, int valor){
 }
 
 
-//Funcion que en base a la cantidad de frames crea bitmap
-t_bitarray *crear_bitmap(int entradas){
 
-    int ent = entradas;
-    // si la cantidad de entradas es menor que lo que puede ocupar un Byte * N, entonces redondeamos
-    // al multiplo mas cercano mayor que el valor. Entonces si son 4 entradas -> 8, 15 -> 16, etc.
-    if (ent % 8 != 0){
-        ent = redondear_a_multiplo_mas_cercano_de(8, ent); 
-        log_trace(logger_memoria, "tamanio inusual de memoria/pagina causo conflicto, redondeando al multiplo de 8 mas cercano: %i", ent);
-    }
 
-    void *puntero = malloc(ent / 8);
-    t_bitarray *bitmap = bitarray_create_with_mode(puntero, ent / 8, LSB_FIRST);
-
-    for (int i = 0; i < bitarray_get_max_bit(bitmap); i++){
-        bitarray_clean_bit(bitmap, i);
-    }
-
-    
-    return bitmap;
-}
 
 
 void cerrar_programa(){

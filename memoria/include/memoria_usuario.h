@@ -39,6 +39,8 @@ void* alocar_memoria(uint32_t size);
 
 uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones);
 
+t_bitarray *crear_bitmap(int entradas);
+
 void finalizar_proceso(void* direccion_proceso);
 
 uint32_t read_mem(uint32_t direccion_fisica);
