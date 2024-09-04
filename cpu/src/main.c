@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
     ciclo_params_t *params = malloc(sizeof(ciclo_params_t));
     params->socket_memoria = socket_memoria;
     params->proceso_actual = proceso_actual;
-    params->tlb = tlb;
+  
     params->lista_conexion_kernel_dispatch = lista_sockets_global;
     params->conexion_kernel_interrupt = conexion_kernel_interrupt;
 
