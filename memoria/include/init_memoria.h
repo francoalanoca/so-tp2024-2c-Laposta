@@ -10,6 +10,7 @@
 
 #include <commons/bitarray.h>
 
+
 #include "../include/memoria_usuario.h"
 
 
@@ -113,6 +114,7 @@ extern pthread_mutex_t mutex_memoria;
 extern uint32_t cantidad_particiones_memoria;
      
 extern t_bitarray *bitmap_particiones;
+extern t_dictionary* pids_por_bloque;
 
 
 
@@ -127,7 +129,7 @@ int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
 int redondear_a_multiplo_mas_cercano_de(int base, int valor);
-t_bitarray *crear_bitmap(int entradas);
+//t_bitarray *crear_bitmap(int entradas);
 
 void cerrar_programa();
 

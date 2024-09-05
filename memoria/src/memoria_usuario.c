@@ -6,6 +6,7 @@ t_list* lista_particiones;              //lista de las particiones
 t_list* lista_miniPCBs;                 //lista de los procesos
 uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
 t_bitarray *bitmap_particiones;         //bitmap para controlar los bloques libres y ocupados
+t_dictionary* pids_por_bloque;
 
 uint32_t tamanio_total_memoria;
 char * algoritmo_alocacion;
@@ -21,12 +22,17 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
     cantidad_particiones_memoria = num_particiones;
     //bitmap_particiones = malloc(sizeof(t_bitarray));
     bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
+    pids_por_bloque = dictionary_create();
+
+    //ingresar_valor_diccionario(pids_por_bloque,4,43);
     
-    printf("bitmap:\n");
+    
+    //PRUEBA
+  //  printf("bitmap:\n");
     //printf("bitmap prueba %d:\n",bitarray_test_bit(bitmap_particiones, 1) ? 1 : 0);
-    bitarray_set_bit(bitmap_particiones, 1);
-    printf("bitmap:%d\n",bitarray_get_max_bit(bitmap_particiones));
-printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap_particiones, 2) ? 1 : 0);
+    //bitarray_set_bit(bitmap_particiones, 1);
+    //printf("bitmap:%d\n",bitarray_get_max_bit(bitmap_particiones));
+//printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap_particiones, 2) ? 1 : 0);
 
 }
 
@@ -46,7 +52,7 @@ void inicializar_memoria_particiones_dinamicas(size_t mem_size, char* algoritmo)
 }
 
 // Funcion para Asignar Memoria
-void* alocar_memoria(uint32_t size) {
+/*void* alocar_memoria(uint32_t size) {
     t_particion* best_partition = NULL;
     t_particion* particion_actual = lista_particiones;
 
@@ -74,10 +80,10 @@ void* alocar_memoria(uint32_t size) {
     }
 
     return NULL; // No se encontró un hueco adecuado
-}
+}*/
 
 //Crear un Proceso
-uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones) {
+uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
     printf("Entro crear proceso\n");
     printf("Tamanio lista:%d\n", list_size(lista_de_particiones));
     //encontrar hueco libre y marcar bitmap, si no encuentra tira error
@@ -111,6 +117,7 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones) {
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
                     bitarray_set_bit(bitmap_particiones, i);
+                    ingresar_valor_diccionario(pids_por_bloque,i,pid);
                     return 0;
                 }
             }
@@ -152,6 +159,7 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones) {
             else{
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
+                ingresar_valor_diccionario(pids_por_bloque,ultimo_bloque_best_fit,pid);
             }
         }
         else if(strcmp(algoritmo_alocacion, "WORST") == 0){
@@ -186,6 +194,7 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones) {
             else{
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
+                ingresar_valor_diccionario(pids_por_bloque,ultimo_bloque_worst_fit,pid);
             }
         }
         else{
@@ -196,8 +205,13 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones) {
     }
 }
 
+void finalizar_proceso_fijas(uint32_t pid){
+    eliminar_valor_diccionario(pids_por_bloque,pid);
+    //dictionary_remove(pids_por_bloque,pid);
+}
+
 //Finalizar proceso
-void finalizar_proceso(void* direccion_proceso) {
+/*void finalizar_proceso(void* direccion_proceso) {
     t_particion* particion_actual = lista_particiones;//lista de particiones de config
 
     // Recorrer la lista de particiones para encontrar la que corresponde al proceso
@@ -220,7 +234,7 @@ void finalizar_proceso(void* direccion_proceso) {
 
     // Si no se encuentra la partición correspondiente, mostrar un mensaje de error
     printf("Error: no se encontró la partición correspondiente al proceso.\n");
-}
+}*/
 
 // Funcion para leer 4 bytes desde una direccion física en memoria de usuario
 uint32_t read_mem(uint32_t direccion_fisica) {
@@ -279,4 +293,30 @@ t_bitarray *crear_bitmap(int entradas){
     }
 printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap, 2) ? 1 : 0);
     return bitmap;
+}
+
+void uint32_to_string(uint32_t num, char *str, size_t size) {
+    snprintf(str, size, "%u", num);
+}
+
+//Imprime valor de diccionario
+void print_element(char *key, void *value) {
+    printf("Clave: %s, Valor: %u\n", key, *(uint32_t *)value);
+}
+
+void ingresar_valor_diccionario(t_dictionary* diccionario, uint32_t clave, uint32_t valor){
+    char clave_string[12];
+    uint32_to_string(clave,clave_string,sizeof(clave_string));
+    dictionary_put(pids_por_bloque,clave_string,&valor);
+     printf("Elemento agreagado a diccionario, nuevo estado del diccionario:\n");
+    dictionary_iterator(pids_por_bloque, print_element);
+}
+
+void eliminar_valor_diccionario(t_dictionary* diccionario, uint32_t clave){
+    char clave_string[12];
+    uint32_to_string(clave,clave_string,sizeof(clave_string));
+    //dictionary_remove(pids_por_bloque,clave_string);
+    dictionary_remove_and_destroy(pids_por_bloque,clave_string,free);
+    printf("Elemento eliminado de diccionario, nuevo estado del diccionario:\n");
+    dictionary_iterator(pids_por_bloque, print_element);
 }

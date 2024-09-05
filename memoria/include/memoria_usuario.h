@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <commons/string.h>
 #include <commons/bitarray.h>
+#include <commons/collections/dictionary.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,7 +38,7 @@ void inicializar_memoria_particiones_dinamicas(size_t mem_size, char* algoritmo)
 
 void* alocar_memoria(uint32_t size);
 
-uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones);
+uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid);
 
 t_bitarray *crear_bitmap(int entradas);
 
@@ -46,5 +47,13 @@ void finalizar_proceso(void* direccion_proceso);
 uint32_t read_mem(uint32_t direccion_fisica);
 
 void write_mem(uint32_t direccion_fisica, uint32_t valor);
+
+void uint32_to_string(uint32_t num, char *str, size_t size);
+
+void print_element(char *key, void *value);
+
+void ingresar_valor_diccionario(t_dictionary* diccionario, uint32_t clave, uint32_t valor);
+
+void eliminar_valor_diccionario(t_dictionary* diccionario, uint32_t clave);
 
 #endif 

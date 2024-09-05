@@ -178,7 +178,8 @@ int inicializar_memoria(){
 	
 	    //prueba
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
-        crear_proceso(100,lista_particiones);
+        crear_proceso(100,lista_particiones,1);
+        finalizar_proceso_fijas(1);
 
 	
     return true;   
