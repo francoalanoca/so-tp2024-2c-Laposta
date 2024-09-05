@@ -1,34 +1,152 @@
 #include "../include/particion_dinamica.h"
 
-/*
+
 void crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
-    if (cfg_memoria->ESQUEMA == "DINAMICAS"){
-        crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso);
+    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
+        crear_proceso_dinamico(proceso_pid, tamanio_proceso);
     }else{
-        if (cfg_memoria == "FIJAS")
-            crear_proceso_fijo(uint32_t proceso_pid, uint32_t tamanio_proceso);
-        
+        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
+            crear_proceso_fijo(proceso_pid, tamanio_proceso);
     }
     
 }
-*/
+
 
 /*
-//Funcion que crea la tabla de paginas a partir de un pid
+//Funcion que crea las estructuras del proceso
 void crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
     log_info(logger_memoria, "Creacion del proceso PID %i \n", proceso_pid);
     log_info(logger_memoria, "Iniciando estructuras \n");
 
-    //Guardo en una varia de tipo struct la tabla creada
-    t_tabla_de_paginas *tabla_de_paginas = crear_tabla_pagina(proceso_pid);
-    log_info(logger_memoria, "Creada tabla de paginas \n");
-    list_add(lista_tablas_de_paginas, tabla_de_paginas);
+    t_particion* particion_proceso = malloc(sizeof(t_particion));
+    particion_proceso = asignar_memoria(tamanio_proceso);
+
+    
+    log_info(logger_memoria, "Creada particion \n");
+    list_add(lista_particiones, particion_proceso);
 }
 
 
 
+
+t_particion *asignar_memoria(uint32_t tamanio_proceso){
+
+    t_particion *particion_resultante = NULL;
+
+    // Selecciona la partición según el algoritmo
+    if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "FIRST_FIT") == 0) {
+        particion_resultante = buscar_first_fit(tamanio_proceso);
+
+    } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "BEST_FIT") == 0) {
+        particion_resultante = buscar_best_fit(tamanio_proceso);
+
+    } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "WORST_FIT") == 0) {
+        particion_resultante = buscar_worst_fit(tamanio_proceso);
+    }
+
+    // Si es null no hay memoria
+    if (particion_resultante == NULL) {
+        return NULL; 
+    }
+
+    // Marcar la partición como ocupada
+    particion_resultante->ocupado = true;
+
+    return particion_resultante;
+}
+
+
+
+//Funcion que busca la primer particion
+t_particion *buscar_first_fit(uint32_t tamanio_proceso){
+
+    //Recorremos la lista de particiones comparando en cada iteracion
+    for (int i = 0; i < list_size(lista_particiones); i++) {
+        t_particion *particion = list_get(lista_particiones, i);
+
+        //Verificamos que la particion obtenida este libre y sea >= al proceso
+        if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
+            return particion;
+        }
+    }
+    return NULL;
+}
+
+
+//Funcion que busca la mejor particion
+t_particion *buscar_best_fit(uint32_t tamanio_proceso){
+
+    //iniciamos la variable mejor en Null
+    t_particion *mejor_particion = NULL;
+
+    //Recorremos la lista de particiones comparando en cada iteracion
+    for (int i = 0; i < list_size(lista_particiones); i++) {
+        t_particion *particion = list_get(lista_particiones, i);
+
+        //Verificamos que la particion obtenida este libre y sea >= al proceso
+        if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
+
+            //Verificamos si todavia no hay una mejor o si el tamaño particion actual es menor a la mejor actual 
+            if (mejor_particion == NULL || particion->tamanio < mejor_particion->tamanio) {
+                mejor_particion = particion;
+            }
+        }
+    }
+
+    //Retornamos la mejor o si no hay Null
+    return mejor_particion;
+}
+
+
+//Funcion que busca la peor particion
+t_particion *buscar_worst_fit(uint32_t tamanio_proceso){
+
+    //iniciamos la variable mejor en Null
+    t_particion *peor_particion = NULL;
+
+    //Recorremos la lista de particiones comparando en cada iteracion
+    for (int i = 0; i < list_size(lista_particiones); i++){
+        t_particion *particion = list_get(lista_particiones, i);
+
+        //Verificamos que la particion obtenida este libre y sea >= al proceso
+        if (!particion->ocupado && particion->tamanio >= tamanio_proceso){
+
+            //Verificamos si todavia no hay una peor o si el tamaño particion actual es mayor a la peor actual 
+            if (peor_particion == NULL || particion->tamanio > peor_particion->tamanio) {
+                peor_particion = particion;
+            }
+        }
+    }
+
+    //Retornamos la peor o si no hay Null
+    return peor_particion;
+}
+
+
+
+
+
+
+
+
+//Funcion que unifica bloques continuos que estan vacios
+void unificar_bloques(){
+    t_particion primer_bloque;
+    t_particion segundo_bloque;
+    t_particion bloque_resultante;
+
+    if(primer_bloque->is_free == "true" && segundo_bloque->is_free == "true"){
+
+        bloque_resultante->start = primer_bloque->start;
+        bloque_resultante->size = primer_bloque->size + segundo_bloque->size;
+        bloque_resultante->is_free = true;
+        bloque_resultante->next = segundo_bloque->next;
+
+        
+    }
+}
 
 
 
