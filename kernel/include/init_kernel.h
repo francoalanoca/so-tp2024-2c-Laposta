@@ -58,7 +58,6 @@ typedef struct
     /* data */
     int tid;
     int prioridad;
-
     t_pcb* pcb;
     int quantum_th;
 } t_tcb;
@@ -76,13 +75,8 @@ typedef enum
     MUTEX_UNLOCK,
 } t_op_mutex;
 
-typedef struct{
-    //TODO: agregar todos los semaforos globales aca
-    sem_t sem_procesos_new;
-    sem_t sem_procesos_ready;
-    sem_t sem_espacio_liberado_por_proceso;
-}t_semaforos;
-extern t_semaforos* semaforos;
+
+//---------------------- HILOS ------------------------------
 typedef struct{
     //TODO: agregar todos los hilos aca
     pthread_t hilo_planif_largo_plazo;
@@ -91,13 +85,23 @@ typedef struct{
     pthread_t hilo_colas_multinivel;
 }t_hilos;
 
-//------------------------------SEMAFOROS-------------------------
+extern t_hilos *hilos;
+
+//---------------------------SEMAFOROS------------------------
 sem_t mutex_lista_new;
 sem_t mutex_lista_ready;
 sem_t mutex_lista_exit;
 sem_t mutex_lista_exec;
 sem_t mutex_lista_blocked;
 sem_t inicializar_planificador;
+
+typedef struct{
+    //TODO: agregar todos los semaforos globales aca
+    sem_t sem_procesos_new;
+    sem_t sem_procesos_ready;
+    sem_t sem_espacio_liberado_por_proceso;
+}t_semaforos;
+extern t_semaforos* semaforos;
 
 //------------------------------LISTAS-------------------------
 extern t_list* lista_ready; 
@@ -106,7 +110,6 @@ extern t_list* lista_blocked;
 extern t_list* lista_exit;
 extern t_list* lista_new;
 
-extern t_hilos *hilos;
 
 int conectar_a_memoria();
 void generar_conexiones_a_cpu();
@@ -141,5 +144,6 @@ void pasar_blocked_a_exit();
 void pasar_blocked_a_ready();
 void pasar_execute_a_exit();
 void pasar_execute_a_blocked();
+vois* planificar_procesos();
 
 #endif /* KERNEL_H_ */
