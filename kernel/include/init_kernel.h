@@ -1,8 +1,9 @@
 #ifndef KERNEL_H_
 #define KERNEL_H_
 #include <utils/utils.h>
-#include "manejo_colas.h"
+//#include "manejo_colas.h"
 #include "semaphore.h"
+#include <commons/collections/list.h>
 #define HILO_MAIN 0
 typedef struct
 {
@@ -24,11 +25,12 @@ extern t_config_kernel *config_kernel;
 extern t_log *logger_kernel;
 extern int pid_AI_global;//contador de pids de procesos
 
-//----------------- colas
+//----------------- colas. listas ....................
 
-extern t_cola_mutex *cola_de_ready;
-extern t_cola_mutex *cola_de_new;
-extern t_cola_mutex *cola_de_exit;
+// extern t_cola_mutex *cola_de_ready;
+// extern t_cola_mutex *cola_de_new;
+// extern t_cola_mutex *cola_de_exit;
+
 typedef struct
 {
     //atrib minimos requeridos
@@ -36,11 +38,20 @@ typedef struct
     int contador_AI_tids;//contador auto-incremental TODO: FIXME: deberia asegurar con mutex??
     t_list *lista_tids;
     t_list *lista_mutex;
+    t_estado estado;
 
     //atrib de creacion 
     int tamanio_proceso;
     char* ruta_pseudocodigo;
 } t_pcb;
+
+enum estado{
+    NEW,
+    READY,
+    EXEC,
+    BLOCKED,
+    EXIT
+};typedef enum estado t_estado;
 typedef struct
 {
     /* data */
@@ -69,6 +80,9 @@ extern t_semaforos* semaforos;
 typedef struct{
     //TODO: agregar todos los hilos aca
     pthread_t hilo_planif_largo_plazo;
+    pthread_t hilo_fifo;
+    pthread_t hilo_prioridades;
+    pthread_t hilo_colas_multinivel;
 }t_hilos;
 extern t_hilos *hilos;
 
