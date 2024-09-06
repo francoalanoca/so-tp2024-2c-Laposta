@@ -57,11 +57,16 @@ typedef struct
     /* data */
     int tid;
     int prioridad;
+
+    t_pcb* pcb;
+    int quantum_th;
 } t_tcb;
 
 typedef struct
 {
-    int cod_op;
+    int cod_op;//recurso, identificador del mutex
+    t_list* lista_threads_bloquedos;
+    bool locked;
 } t_mutex;
 typedef enum
 {
