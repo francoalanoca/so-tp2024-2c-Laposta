@@ -3,7 +3,7 @@
 t_log *logger_file_system; // Definición de la variable global
 t_config_file_system *cfg_file_system;
 t_config *file_cfg_file_system;
-
+int conexion_memoria;
 
 int checkProperties(char *path_config) {
     // config valida
