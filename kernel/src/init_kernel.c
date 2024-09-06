@@ -39,6 +39,7 @@ void inicializar_semaforos(){
 	sem_init(&mutex_lista_exit, 0, 1);
 	sem_init(&mutex_lista_exec, 0 ,1);
 	sem_init(&mutex_lista_blocked, 0 ,1);
+    sem_init(&inicializar_planificador, 0, 0);
 }
 
 int conectar_a_memoria(){

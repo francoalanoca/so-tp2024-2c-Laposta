@@ -97,6 +97,14 @@ sem_t mutex_lista_ready;
 sem_t mutex_lista_exit;
 sem_t mutex_lista_exec;
 sem_t mutex_lista_blocked;
+sem_t inicializar_planificador;
+
+//------------------------------LISTAS-------------------------
+extern t_list* lista_ready; 
+extern t_list* lista_exec;
+extern t_list* lista_blocked;
+extern t_list* lista_exit;
+extern t_list* lista_new;
 
 extern t_hilos *hilos;
 
@@ -127,5 +135,11 @@ void pasar_new_a_ready();
 void pasar_ready_a_exit();
 void pasar_new_a_exit();
 void inicializar_semaforos();
+void pasar_ready_a_execute();
+void pasar_execute_a_ready();
+void pasar_blocked_a_exit();
+void pasar_blocked_a_ready();
+void pasar_execute_a_exit();
+void pasar_execute_a_blocked();
 
 #endif /* KERNEL_H_ */

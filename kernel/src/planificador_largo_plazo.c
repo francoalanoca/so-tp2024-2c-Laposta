@@ -1,10 +1,30 @@
 #include "../include/init_kernel.h"
 
+//No se si esto esta bien aca
 t_list* lista_new;
 t_list* lista_ready;
 t_list* lista_exec;
-t_list* lista_block;
+t_list* lista_blocked;
 t_list* lista_exit;
+
+void inicializar_listas() {
+    lista_new = list_create();
+    lista_ready = list_create();
+    lista_exec = list_create();
+    lista_exit = list_create();
+    lista_blocked = list_create();
+}
+
+void* planificar_procesos(){
+    while (!list_is_empty(lista_new)) {
+        log_info(logger_kernel, "Iniciando planificador de largo plazo");
+        pasar_new_a_ready();
+        sem_post(&inicializar_planificador);
+        //sem_post(&hay_proceso_ready); por ahora no llegue a esto
+    }
+    log_info(logger_kernel, "No hay procesos en la cola NEW");
+    return NULL; 
+}
 
 
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado) {
