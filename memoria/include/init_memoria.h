@@ -9,7 +9,7 @@
 #include <utils/utils.h>
 
 #include <commons/bitarray.h>
-
+#include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
 
@@ -142,5 +142,11 @@ void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
 void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
 
 t_list* char_array_to_list(char** array);
+
+void liberar_hilo(t_hilo *hilo);
+
+void liberar_miniPCB(t_miniPCB *miniPCB);
+
+uint32_t buscar_indice_pcb_por_pid(t_list* lista, uint32_t pid);
 
 #endif /* MEMORIA_H */

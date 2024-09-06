@@ -179,7 +179,9 @@ int inicializar_memoria(){
 	    //prueba
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
         crear_proceso(100,lista_particiones,1);
+        inicializar_proceso(1, 64, "iniciar_proceso->archivo_pseudocodigo");
         finalizar_proceso_fijas(1);
+        eliminar_proceso_de_lista(lista_miniPCBs,1);
 
 	
     return true;   
@@ -286,3 +288,55 @@ t_list* char_array_to_list(char** array) {
     return list;
 }
 
+void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid){
+    printf("Print 1\n");
+    uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_procesos,pid);
+    printf("Print 1, indice: %d\n",indice_a_eliminar);
+	t_miniPCB* proceso_a_eliminar = malloc(sizeof(t_miniPCB));
+    printf("Print 1\n");
+    proceso_a_eliminar = list_get(lista_procesos,indice_a_eliminar);
+    printf("Print 1\n");
+	list_remove_and_destroy_element(lista_procesos,indice_a_eliminar,liberar_miniPCB);
+}
+
+void liberar_hilo(t_hilo *hilo) {
+    if (hilo == NULL) return; // Verifica que no sea NULL
+
+    // Recorre y libera cada instrucción en la lista 'lista_de_instrucciones'
+    for (int i = 0; i < list_size(hilo->lista_de_instrucciones); i++) {
+        char *instruccion = list_get(hilo->lista_de_instrucciones, i); // Obtiene la instrucción
+        free(instruccion); // Libera la instrucción
+    }
+
+    // Libera la lista de instrucciones del hilo
+    list_destroy(hilo->lista_de_instrucciones);
+    
+    // Libera el hilo en sí
+    free(hilo);
+}
+
+void liberar_miniPCB(t_miniPCB *miniPCB) {
+    if (miniPCB == NULL) return; // Verifica que no sea NULL
+
+    // Recorre y libera cada hilo en la lista 'hilos'
+    for (int i = 0; i < list_size(miniPCB->hilos); i++) {
+        t_hilo *hilo = list_get(miniPCB->hilos, i); // Obtiene el hilo actual
+        liberar_hilo(hilo); // Llama a la función de liberar hilo
+    }
+
+    // Libera la lista de hilos
+    list_destroy(miniPCB->hilos);
+
+    // Finalmente, libera el miniPCB
+    free(miniPCB);
+}
+
+uint32_t buscar_indice_pcb_por_pid(t_list* lista, uint32_t pid) {
+    for (int i = 0; i < list_size(lista); i++) {
+        t_miniPCB* proceso = list_get(lista, i);
+        if (proceso->pid == pid) {
+            return i;
+        }
+    }
+    return -1; 
+}

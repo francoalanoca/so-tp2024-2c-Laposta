@@ -139,6 +139,8 @@ void memoria_atender_kernel(){
 			if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
 				finalizar_proceso_fijas(pid_proceso_a_finalizar);
 				//Elminiar de lista miniPBCs
+				eliminar_proceso_de_lista(lista_miniPCBs,pid_proceso_a_finalizar);
+				
 			}
 			else{
 				//crear funcion de finalizar para particiones dinamicas
