@@ -2,20 +2,20 @@
 
 t_config_kernel* config_kernel;
 t_log* logger_kernel;
-t_cola_mutex *cola_de_ready;
-t_cola_mutex *cola_de_new;
-t_cola_mutex *cola_de_exit;
 t_semaforos* semaforos;
 t_hilos* hilos;
 int pid_AI_global;
+
 void iniciar_modulo( char *ruta_config){
     logger_kernel=log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
     cargar_config_kernel(ruta_config);
     pid_AI_global=0;
+    inicializar_semaforos();
+    inicializar_hilos_planificador();
+
+    //revisar de aca para abajo
     semaforos=malloc(sizeof(t_semaforos));
     hilos=malloc(sizeof(t_hilos));
-    inicializar_estructuras_new();
-    inicializar_estructuras_ready();
    
 }
 void cargar_config_kernel(char* ruta_config){
@@ -33,46 +33,12 @@ void cargar_config_kernel(char* ruta_config){
     log_info(logger_kernel,"configuracion cargada");
 }
 
-void inicializar_estructuras_new()
-{
-
-    cola_de_new = cola_mutex_crear();
-    
-    if (sem_init(&(semaforos->sem_procesos_new), 0, 0) != 0)
-    {
-        log_error(logger_kernel, "Ocurrio un error al crear procesos_new_sem");
-        abort();
-    }
-}
-
-void inicializar_estructuras_ready()
-{
-    cola_de_ready = cola_mutex_crear();
-    if (sem_init(&(semaforos->sem_procesos_ready), 0, 0) != 0)
-    {
-        log_error(logger_kernel, "Ocurrio un error al crear semaforo procesos_ready_sem");
-        abort();
-    }
-}
-
-void inicializar_estructuras_exit()
-{
-
-    cola_de_exit = cola_mutex_crear();
-    
-    if (sem_init(&(semaforos->sem_espacio_liberado_por_proceso), 0, 0) != 0)
-    {
-        log_error(logger_kernel, "Ocurrio un error al crear sem_espacio_liberado_por_proceso");
-        abort();
-    }
-}
-void agregar_proceso_a_new(t_pcb* pcb){
-    cola_mutex_push(cola_de_new,pcb);
-    sem_post(&(semaforos->sem_procesos_new));
-}
-void agregar_proceso_a_ready(t_pcb* pcb){
-    cola_mutex_push(cola_de_ready,pcb);
-    sem_post(&(semaforos->sem_procesos_ready));
+void inicializar_semaforos(){
+    sem_init(&mutex_lista_new, 0, 1);
+    sem_init(&mutex_lista_ready, 0, 1);
+	sem_init(&mutex_lista_exit, 0, 1);
+	sem_init(&mutex_lista_exec, 0 ,1);
+	sem_init(&mutex_lista_blocked, 0 ,1);
 }
 
 int conectar_a_memoria(){

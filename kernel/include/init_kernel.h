@@ -52,6 +52,7 @@ enum estado{
     BLOCKED,
     EXIT
 };typedef enum estado t_estado;
+
 typedef struct
 {
     /* data */
@@ -89,6 +90,14 @@ typedef struct{
     pthread_t hilo_prioridades;
     pthread_t hilo_colas_multinivel;
 }t_hilos;
+
+//------------------------------SEMAFOROS-------------------------
+sem_t mutex_lista_new;
+sem_t mutex_lista_ready;
+sem_t mutex_lista_exit;
+sem_t mutex_lista_exec;
+sem_t mutex_lista_blocked;
+
 extern t_hilos *hilos;
 
 int conectar_a_memoria();
@@ -99,14 +108,24 @@ void cargar_config_kernel(char *ruta_config);
 void process_create(char* ruta_instrucciones,int tamanio_proceso,int prioridad_hilo_main);
 void agregar_proceso_a_new(t_pcb* pcb);
 void agregar_proceso_a_ready(t_pcb* pcb);
-void inicializar_estructuras_new();
-void inicializar_estructuras_ready();
-void inicializar_estructuras_exit();
 void *planificar_largo_plazo();
-void iniciar_planificador_largo_plazo();
 t_pcb* crear_pcb(int tam_proceso,char*archivo_instrucciones) ;
 void añadir_tid_a_proceso(t_pcb* pcb);
 void enviar_solicitud_espacio_a_memoria(void* pcb_solicitante,int socket);
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria);
+
+void inicializar_hilos_planificador();
+void crear_hilo_planificador_fifo();
+void crear_hilo_planificador_prioridades();
+void crear_hilo_planificador_colas_multinivel();
+void planificar_fifo();
+void planificar_prioridades();
+void planificar_colas_multinivel();
+void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado);
+void agregar_a_cola(t_pcb *pcb,t_list* lista,sem_t* sem);
+void pasar_new_a_ready();
+void pasar_ready_a_exit();
+void pasar_new_a_exit();
+void inicializar_semaforos();
 
 #endif /* KERNEL_H_ */

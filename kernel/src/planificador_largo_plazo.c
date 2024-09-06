@@ -6,7 +6,6 @@ t_list* lista_exec;
 t_list* lista_block;
 t_list* lista_exit;
 
-//FALTAN DECLARACIONES Y SEMAFOROS (los hago mas tarde)
 
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado) {
     if (!list_is_empty(lista_origen)) {
@@ -36,7 +35,9 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
         log_info(logger_kernel, "No hay procesos en la lista origen");
 }
 
-//READY, EXEC y BLOCKED tienen que reservar el semaforo de grado_multiprogramacion, si ya estan en uno de esos tres no cambio nada
+void agregar_a_cola(t_pcb *pcb,t_list* lista,sem_t* sem){
+    list_add(lista,pcb);
+}
 void pasar_new_a_ready() {
     log_info(logger_kernel, "Pasando procesos de NEW a READY");
     mover_procesos(lista_new, lista_ready, &mutex_lista_new, &mutex_lista_ready, READY); 
