@@ -10,6 +10,7 @@ void iniciar_modulo( char *ruta_config){
     logger_kernel=log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
     cargar_config_kernel(ruta_config);
     pid_AI_global=0;
+    inicializar_listas();
     inicializar_semaforos();
     inicializar_hilos_planificador();
 
