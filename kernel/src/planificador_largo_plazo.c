@@ -6,6 +6,7 @@ t_list* lista_exec;
 t_list* lista_block;
 t_list* lista_exit;
 
+//FALTAN DECLARACIONES Y SEMAFOROS (los hago mas tarde)
 
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado) {
     if (!list_is_empty(lista_origen)) {
