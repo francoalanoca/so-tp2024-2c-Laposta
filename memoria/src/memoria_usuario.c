@@ -206,8 +206,30 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint3
 }
 
 void finalizar_proceso_fijas(uint32_t pid){
+    //buscar bloque segun pid del diccionario y eliminar del bitmap
+ printf("Elemento agreagado a diccionario, nuevo estado del diccionario:\n");
+    dictionary_iterator(pids_por_bloque, print_element);
+
+    char key_str[sizeof(uint32_t)];
+    memcpy(key_str, &pid, sizeof(uint32_t));
+        // Imprimir cada byte de key_str en formato hexadecimal
+    printf("key_str (en hexadecimal): ");
+    for (int i = 0; i < sizeof(uint32_t); i++) {
+        printf("%02x ", (unsigned char)key_str[i]);
+    }
+    printf("\n");
+
+    void *bloque_a_liberar = dictionary_get(pids_por_bloque, key_str);
+    uint32_t valor_bloque_a_liberar;
+    if (bloque_a_liberar != NULL) {
+        valor_bloque_a_liberar = *(uint32_t *)bloque_a_liberar; // Convertir y acceder al valor
+        printf("Valor recuperado: %u\n", valor_bloque_a_liberar);
+    } else {
+        printf("No se encontró un elemento con la clave %u.\n", pid);
+    }
+    bitarray_clean_bit(bitmap_particiones,valor_bloque_a_liberar);
     eliminar_valor_diccionario(pids_por_bloque,pid);
-    //dictionary_remove(pids_por_bloque,pid);
+    
 }
 
 //Finalizar proceso

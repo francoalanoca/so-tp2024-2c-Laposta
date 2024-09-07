@@ -149,4 +149,14 @@ void liberar_miniPCB(t_miniPCB *miniPCB);
 
 uint32_t buscar_indice_pcb_por_pid(t_list* lista, uint32_t pid);
 
+void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid);
+
+uint32_t buscar_indice_hilos_por_tid(t_list* lista, uint32_t tid);
+
+void mostrar_instrucciones(t_list* lista_de_instrucciones);
+
+void mostrar_hilos(t_list* lista_de_hilos);
+
+void mostrar_lista_miniPCB(t_list* lista_miniPCB);
+
 #endif /* MEMORIA_H */

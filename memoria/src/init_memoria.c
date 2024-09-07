@@ -177,11 +177,52 @@ int inicializar_memoria(){
                          //lista en en donde se almacenara las particiones (contiene los proceso) 
 	
 	    //prueba
+        void print_bitarray(t_bitarray *bitarray) {
+    // Obtén la cantidad máxima de bits que puede tener el bitarray
+    size_t max_bits = bitarray_get_max_bit(bitarray);
+
+    printf("Contenido del bitarray:\n");
+
+    // Recorre cada bit en el bitarray
+    for (size_t i = 0; i < max_bits; i++) {
+        // Verifica el valor del bit en la posición 'i'
+        int bit_value = bitarray_test_bit(bitarray, i) ? 1 : 0;
+        printf("%d", bit_value);
+
+        // Opcional: añadir un espacio cada 8 bits para mayor legibilidad
+        if ((i + 1) % 8 == 0) {
+            printf(" ");
+        }
+    }
+    printf("\n");  // Nueva línea al final de la impresión
+}
+
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
         crear_proceso(100,lista_particiones,1);
+        printf("Acualizo bitmap:\n");
+        print_bitarray(bitmap_particiones);
+
         inicializar_proceso(1, 64, "iniciar_proceso->archivo_pseudocodigo");
+        printf("Acualizo lista miniPCB:\n");
+        mostrar_lista_miniPCB(lista_miniPCBs);
+
+ printf("Elemento agreagado a diccionario, nuevo estado del diccionario:\n");
+    dictionary_iterator(pids_por_bloque, print_element);
         finalizar_proceso_fijas(1);
+        printf("Acualizo bitmap:\n");
+        print_bitarray(bitmap_particiones);
+
+        inicializar_hilo(1,1, "archivo_pseudocodigo");
+        printf("Acualizo lista miniPCB:\n");
+        mostrar_lista_miniPCB(lista_miniPCBs);
+
+        eliminar_hilo_de_lista(lista_miniPCBs,1,1);
+        printf("Acualizo lista miniPCB:\n");
+        mostrar_lista_miniPCB(lista_miniPCBs);
+
         eliminar_proceso_de_lista(lista_miniPCBs,1);
+        printf("Acualizo lista miniPCB:\n");
+        mostrar_lista_miniPCB(lista_miniPCBs);
 
 	
     return true;   
@@ -248,6 +289,7 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_p
 void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
     t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
+    //PENDIENTE: ver si ya existe el tid para ese pid
     nuevo_hilo->tid = tid;
     nuevo_hilo->registros.PC = 0;
     nuevo_hilo->registros.AX = 0;
@@ -265,12 +307,18 @@ void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
 }
 
 void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
+    bool encontrado = false;
     for (int i = 0; i < list_size(lista_miniPCBs); i++){
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
 
         if (miniPCB->pid == pid){
 			list_add(miniPCB->hilos,hilo);
+            printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
+            encontrado = true;
         }
+    }
+    if(!encontrado){
+        printf("No se asigno hilo ya que no se encuentra el proceso %d\n", pid);
     }
 
     
@@ -289,14 +337,20 @@ t_list* char_array_to_list(char** array) {
 }
 
 void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid){
-    printf("Print 1\n");
     uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_procesos,pid);
-    printf("Print 1, indice: %d\n",indice_a_eliminar);
 	t_miniPCB* proceso_a_eliminar = malloc(sizeof(t_miniPCB));
-    printf("Print 1\n");
     proceso_a_eliminar = list_get(lista_procesos,indice_a_eliminar);
-    printf("Print 1\n");
 	list_remove_and_destroy_element(lista_procesos,indice_a_eliminar,liberar_miniPCB);
+    printf("Se elimina pid %d\n",pid);
+}
+
+void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid){
+    uint32_t indice_proceso_hilo = buscar_indice_pcb_por_pid(lista_procesos,pid);
+	t_miniPCB* proceso_hilo_a_eliminar = malloc(sizeof(t_miniPCB));
+    proceso_hilo_a_eliminar = list_get(lista_procesos,indice_proceso_hilo);
+    uint32_t indice_hilo_a_eliminar = buscar_indice_hilos_por_tid(proceso_hilo_a_eliminar->hilos,tid);
+	list_remove_and_destroy_element(proceso_hilo_a_eliminar->hilos,indice_hilo_a_eliminar,liberar_hilo);
+    printf("Se elimina tid %d correspondiente a pid %d\n",tid,pid);
 }
 
 void liberar_hilo(t_hilo *hilo) {
@@ -340,3 +394,52 @@ uint32_t buscar_indice_pcb_por_pid(t_list* lista, uint32_t pid) {
     }
     return -1; 
 }
+
+uint32_t buscar_indice_hilos_por_tid(t_list* lista, uint32_t tid) {
+    for (int i = 0; i < list_size(lista); i++) {
+        t_hilo* hilo = list_get(lista, i);
+        if (hilo->tid == tid) {
+            return i;
+        }
+    }
+    return -1; 
+}
+
+void mostrar_instrucciones(t_list* lista_de_instrucciones) {
+    if (lista_de_instrucciones == NULL) return; // Verifica que no sea NULL
+
+    // Recorre y muestra cada instrucción
+    for (int i = 0; i < list_size(lista_de_instrucciones); i++) {
+        char *instruccion = list_get(lista_de_instrucciones, i);
+        printf("    Instrucción: %s\n", instruccion);
+    }
+}
+
+void mostrar_hilos(t_list* lista_de_hilos) {
+    if (lista_de_hilos == NULL) return; // Verifica que no sea NULL
+
+    // Recorre y muestra cada hilo
+    for (int i = 0; i < list_size(lista_de_hilos); i++) {
+        t_hilo *hilo = list_get(lista_de_hilos, i);
+        printf("  Hilo TID: %u\n", hilo->tid);
+
+        // Llama a la función para mostrar las instrucciones de este hilo
+        mostrar_instrucciones(hilo->lista_de_instrucciones);
+    }
+}
+
+void mostrar_lista_miniPCB(t_list* lista_miniPCB) {
+    if (lista_miniPCB == NULL) return; // Verifica que no sea NULL
+
+    // Recorre y muestra cada t_miniPCB en la lista
+    for (int i = 0; i < list_size(lista_miniPCB); i++) {
+        t_miniPCB *miniPCB = list_get(lista_miniPCB, i);
+        printf("Proceso PID: %u\n", miniPCB->pid);
+        printf("  Tamaño del Proceso: %u\n", miniPCB->tamanio_proceso);
+        printf("  Base: %u\n", miniPCB->base);
+        
+        // Llama a la función para mostrar los hilos de este miniPCB
+        mostrar_hilos(miniPCB->hilos);
+    }
+}
+

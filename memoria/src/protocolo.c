@@ -162,7 +162,12 @@ void memoria_atender_kernel(){
 
 		case FINALIZAR_HILO:
 			log_info(logger_memoria, "Recibí FINALIZAR_HILO \n");
-			//valores = recibir_paquete(socket_kernel);
+			t_list* valores_finalizar_hilo = recibir_paquete(socket_kernel);
+			uint32_t pid_hilo = *(uint32_t*)list_get(valores_finalizar_hilo, 0);
+			uint32_t tid_hilo = *(uint32_t*)list_get(valores_finalizar_hilo, 1);
+
+			eliminar_hilo_de_lista(lista_miniPCBs,pid_hilo,tid_hilo);
+
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de FINALIZAR_HILO_RTA \n");
 			break;
