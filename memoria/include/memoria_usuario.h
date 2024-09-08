@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <commons/string.h>
 #include <commons/bitarray.h>
-#include <commons/collections/dictionary.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,14 +58,6 @@ uint32_t read_mem(uint32_t direccion_fisica);
 void write_mem(uint32_t direccion_fisica, uint32_t valor);
 
 void uint32_to_string(uint32_t num, char *str, size_t size);
-
-void print_element(char *key, void *value);
-
-void ingresar_valor_diccionario(t_dictionary* diccionario, uint32_t clave, uint32_t valor);
-
-void eliminar_valor_diccionario(t_dictionary* diccionario, uint32_t clave);
-
-void verificar_diccionario(t_dictionary* diccionario, const char* mensaje);
 
 uint32_t buscar_indice_bloque_por_pid(t_list* lista, uint32_t pid);
 
