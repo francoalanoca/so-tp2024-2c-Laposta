@@ -2,7 +2,7 @@
 
 
 
-/*
+
 //Funcion que crea la lista de instrucciones dado un puntero al archivo de un proceso
 void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hilo_tid) {
 
@@ -107,4 +107,3 @@ char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_co
     return NULL;
 }
 
-*/

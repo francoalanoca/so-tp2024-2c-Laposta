@@ -14,7 +14,7 @@ void memoria_atender_cpu(){
         //Se queda esperando a que Cpu le envie algo y extrae el cod de operacion
 		int cod_op = recibir_operacion(socket_cpu);
 		op_code response;
-		//t_list* valores =  malloc(sizeof(t_list));
+		t_list* valores =  malloc(sizeof(t_list));
 
 
 		switch (cod_op) {
@@ -37,9 +37,9 @@ void memoria_atender_cpu(){
 
 		case SOLICITUD_INSTRUCCION:
 			log_info(logger_memoria, "Recibí SOLICITUD_INSTRUCCION \n");
-			//valores = recibir_paquete(socket_cpu);
-			//t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
-            //char* instruccion = buscar_instruccion(solicitud_instruccion->pid, solicitud_instruccion->program_counter);
+			valores = recibir_paquete(socket_cpu);
+			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
+            char* instruccion = buscar_instruccion(solicitud_instruccion->pid, solicitud_instruccion->program_counter);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_instruccion(instruccion, socket_cpu);    
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_INSTRUCCION_RTA \n");
@@ -138,7 +138,7 @@ void memoria_atender_kernel(){
 			log_info(logger_memoria, "Recibí INICIAR_HILO \n");
 			t_list* valores_iniciar_hilo = recibir_paquete(socket_kernel);
 			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores_iniciar_hilo);
-			//leer_instrucciones(iniciar_proceso->archivo_pseudocodigo, iniciar_proceso->pid);
+			leer_instrucciones(iniciar_proceso->archivo_pseudocodigo, iniciar_proceso->pid);
 			inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
