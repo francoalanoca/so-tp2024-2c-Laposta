@@ -179,8 +179,11 @@ int inicializar_memoria(){
 	    //prueba
         void print_bitarray(t_bitarray *bitarray) {
     // Obtén la cantidad máxima de bits que puede tener el bitarray
+    // printf("nuevo estado del diccionario1:\n");
+   // dictionary_iterator(pids_por_bloque, print_element);
     size_t max_bits = bitarray_get_max_bit(bitarray);
-
+ //printf("nuevo estado del diccionario1:\n");
+   //dictionary_iterator(pids_por_bloque, print_element);
     printf("Contenido del bitarray:\n");
 
     // Recorre cada bit en el bitarray
@@ -198,19 +201,22 @@ int inicializar_memoria(){
 }
 
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
+        //verificar_diccionario(pids_por_bloque, "Estado del diccionario antesss de la llamada a la función crear_proceso");
         crear_proceso(100,lista_particiones,1);
+      // verificar_diccionario(pids_por_bloque, "Estado del diccionario despues de la llamada a la función crear_proceso");
+    
         printf("Acualizo bitmap:\n");
+        //verificar_diccionario(pids_por_bloque, "Estado del diccionario despues de la llamada a la función print_bitarray");
         print_bitarray(bitmap_particiones);
+        //verificar_diccionario(pids_por_bloque, "Estado del diccionario despues de la llamada a la función print_bitarray");
 
-        inicializar_proceso(1, 64, "iniciar_proceso->archivo_pseudocodigo");
+        inicializar_proceso(1,64,"archivo");
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
 
- printf("Elemento agreagado a diccionario, nuevo estado del diccionario:\n");
-    dictionary_iterator(pids_por_bloque, print_element);
-        finalizar_proceso_fijas(1);
-        printf("Acualizo bitmap:\n");
-        print_bitarray(bitmap_particiones);
+ //printf("nuevo estado del diccionario3:\n");
+  //  dictionary_iterator(pids_por_bloque, print_element);
+        
 
         inicializar_hilo(1,1, "archivo_pseudocodigo");
         printf("Acualizo lista miniPCB:\n");
@@ -220,9 +226,15 @@ int inicializar_memoria(){
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
 
+        finalizar_proceso_fijas(1);
+        printf("Acualizo bitmap:\n");
+        print_bitarray(bitmap_particiones);
+
         eliminar_proceso_de_lista(lista_miniPCBs,1);
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
+
+        
 
 	
     return true;   

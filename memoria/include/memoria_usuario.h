@@ -22,13 +22,20 @@ typedef struct{
     struct t_particion* next;  // Puntero a la siguiente partición (lista enlazada)
 } t_particion;
 
+//struct para controlar los pids asociados a cada bloque en particiones fijas
+typedef struct{
+    uint32_t pid;                     //pcb del proceso
+    uint32_t bloque;     //bloque de memoria en donde se encuentra el proceso
+} t_pid_por_bloque;
+
 
 //----------------------------------Variables Externs-------------------------
 extern void* memoria_usuario;                        
 extern t_list* lista_particiones;             
 extern t_list* lista_miniPCBs;  
 extern uint32_t tamanio_total_memoria;  
-extern char * algoritmo_alocacion;          
+extern char * algoritmo_alocacion;     
+extern t_list* pids_por_bloque;     
 
 
 //----------------------------------Prototipos---------------------------------
@@ -55,5 +62,13 @@ void print_element(char *key, void *value);
 void ingresar_valor_diccionario(t_dictionary* diccionario, uint32_t clave, uint32_t valor);
 
 void eliminar_valor_diccionario(t_dictionary* diccionario, uint32_t clave);
+
+void verificar_diccionario(t_dictionary* diccionario, const char* mensaje);
+
+uint32_t buscar_indice_bloque_por_pid(t_list* lista, uint32_t pid);
+
+void print_pid_por_bloque(void* element);
+
+void print_lista_pid_por_bloque(t_list* lista);
 
 #endif 

@@ -114,7 +114,7 @@ extern pthread_mutex_t mutex_memoria;
 extern uint32_t cantidad_particiones_memoria;
      
 extern t_bitarray *bitmap_particiones;
-extern t_dictionary* pids_por_bloque;
+//extern t_dictionary* pids_por_bloque;
 
 
 
