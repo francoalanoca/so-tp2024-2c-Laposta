@@ -3,6 +3,7 @@
 //-------------------------Definicion de variables globales----------------------
 void* memoria_usuario;                          //espacio de usuario
 t_list* lista_particiones;              //lista de las particiones
+t_particion_dinamica* lista_particiones_dinamicas; //variable que guarda la lista de particiones
 t_list* lista_miniPCBs;                 //lista de los procesos
 uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
 t_bitarray *bitmap_particiones;         //bitmap para controlar los bloques libres y ocupados
@@ -38,20 +39,6 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 
 }
 
-//Inicializa memoria con particiones dinamicas
-void inicializar_memoria_particiones_dinamicas(size_t mem_size, char* algoritmo) {
-    tamanio_total_memoria = mem_size;
-    memoria_usuario = malloc(tamanio_total_memoria);  // Espacio de memoria contiguo
-    algoritmo_alocacion = algoritmo;
-
-    // Crear una sola partición que cubre todo el espacio
-    t_particion* particion = (t_particion*)malloc(sizeof(t_particion));
-    particion->start = 0;
-    particion->size = tamanio_total_memoria;
-    particion->is_free = true;
-    particion->next = NULL;
-    lista_particiones = particion;
-}
 
 // Funcion para Asignar Memoria
 /*void* alocar_memoria(uint32_t size) {

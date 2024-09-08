@@ -14,13 +14,16 @@
 
 //----------------------------------Estructuras---------------------------------
 
-// Estructura para las particiones
+// Estructura para las particiones dinamicas
+
 typedef struct{
-    uint32_t start;            // Posición de inicio en el espacio de memoria
-    uint32_t size;             // Tamaño de la partición
-    bool is_free;            // Estado de la partición: libre u ocupada
-    struct t_particion* next;  // Puntero a la siguiente partición (lista enlazada)
-} t_particion;
+    uint32_t pid;                   // Id del proceso al que pertenece la particion
+    uint32_t tid;                   // Id del hilo al que pertenece la particion
+    uint32_t inicio;                // Posición de inicio en el espacio de memoria
+    uint32_t tamanio;               // Tamaño de la partición
+    bool ocupado;                   // Estado de la partición: libre u ocupada
+    struct t_particion* siguiente;  // Puntero a la siguiente partición (lista enlazada)
+} t_particion_dinamica;
 
 //struct para controlar los pids asociados a cada bloque en particiones fijas
 typedef struct{
