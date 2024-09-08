@@ -170,11 +170,8 @@ int inicializar_memoria(){
         cantidad_particiones_memoria = list_size(lista_particiones);
         inicializar_memoria_particiones_fijas(cfg_memoria->TAM_MEMORIA,cantidad_particiones_memoria,cfg_memoria->ALGORITMO_BUSQUEDA);
     }
-    else{
-        lista_particiones = list_create(); 
-        inicializar_memoria_particiones_dinamicas(cfg_memoria->TAM_MEMORIA,cfg_memoria->ALGORITMO_BUSQUEDA);
-    }
-                         //lista en en donde se almacenara las particiones (contiene los proceso) 
+    
+                 
 	
 	    //prueba
         void print_bitarray(t_bitarray *bitarray) {

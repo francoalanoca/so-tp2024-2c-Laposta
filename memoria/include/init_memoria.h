@@ -73,6 +73,7 @@ typedef struct{
 //struct para deserializar/serializar al leer instruccion
 typedef struct{
     uint32_t pid;
+    uint32_t tid;
     uint32_t program_counter;
 }t_proceso_memoria;
 

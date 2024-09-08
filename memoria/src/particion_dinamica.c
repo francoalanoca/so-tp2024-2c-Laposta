@@ -1,6 +1,6 @@
 #include "../include/particion_dinamica.h"
 
-
+/*
 void crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
     if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
@@ -11,7 +11,7 @@ void crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
     }
     
 }
-
+*/
 
 /*
 //Funcion que crea las estructuras del proceso
