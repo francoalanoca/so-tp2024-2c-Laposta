@@ -20,7 +20,7 @@ extern char* valor_registro_obtenido;
 extern sem_t sem_valor_registro_recibido;
 extern int rta_resize;
 extern sem_t sem_valor_resize_recibido;
-extern sem_t sem_valor_tamanio_pagina;
+extern sem_t sem_valor_base_particion;
 extern sem_t sem_servidor_creado;
 extern sem_t sem_interrupcion_kernel;
 extern sem_t sem_check_interrupcion_kernel;
