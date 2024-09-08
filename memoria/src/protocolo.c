@@ -118,7 +118,14 @@ void memoria_atender_kernel(){
 			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
 			t_list* valores = recibir_paquete(socket_kernel);
 			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
-			inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
+			if(crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid) != -1){
+				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
+				//enviar rta OK
+			}
+			else{
+				//enviar rta con error
+			}
+			
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_PROCESO_RTA \n");
@@ -126,9 +133,18 @@ void memoria_atender_kernel(){
 
 		case FINALIZAR_PROCESO:
 			log_info(logger_memoria, "Recibí FINALIZAR_PROCESO \n");
-			//valores = recibir_paquete(socket_kernel);
-			//uint32_t pid_proceso_a_finalizar = deserializar_finalizar_proceso(valores);
+			t_list* valores_finalizar_proceso = recibir_paquete(socket_kernel);
+			uint32_t pid_proceso_a_finalizar = deserializar_finalizar_proceso(valores_finalizar_proceso);
             //finalizar_proceso(pid_proceso_a_finalizar);
+			if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
+				finalizar_proceso_fijas(pid_proceso_a_finalizar);
+				//Elminiar de lista miniPBCs
+				eliminar_proceso_de_lista(lista_miniPCBs,pid_proceso_a_finalizar);
+				
+			}
+			else{
+				//crear funcion de finalizar para particiones dinamicas
+			}
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel);
 			log_info(logger_memoria, "enviada respuesta de FINALIZAR_PROCESO_RTA \n");
@@ -146,7 +162,12 @@ void memoria_atender_kernel(){
 
 		case FINALIZAR_HILO:
 			log_info(logger_memoria, "Recibí FINALIZAR_HILO \n");
-			//valores = recibir_paquete(socket_kernel);
+			t_list* valores_finalizar_hilo = recibir_paquete(socket_kernel);
+			uint32_t pid_hilo = *(uint32_t*)list_get(valores_finalizar_hilo, 0);
+			uint32_t tid_hilo = *(uint32_t*)list_get(valores_finalizar_hilo, 1);
+
+			eliminar_hilo_de_lista(lista_miniPCBs,pid_hilo,tid_hilo);
+
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de FINALIZAR_HILO_RTA \n");
 			break;

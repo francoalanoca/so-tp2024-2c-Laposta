@@ -9,6 +9,7 @@
 #include <utils/utils.h>
 
 #include <commons/bitarray.h>
+#include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
 
@@ -113,6 +114,7 @@ extern pthread_mutex_t mutex_memoria;
 extern uint32_t cantidad_particiones_memoria;
      
 extern t_bitarray *bitmap_particiones;
+extern t_dictionary* pids_por_bloque;
 
 
 
@@ -127,7 +129,7 @@ int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
 int redondear_a_multiplo_mas_cercano_de(int base, int valor);
-t_bitarray *crear_bitmap(int entradas);
+//t_bitarray *crear_bitmap(int entradas);
 
 void cerrar_programa();
 
@@ -140,5 +142,21 @@ void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
 void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
 
 t_list* char_array_to_list(char** array);
+
+void liberar_hilo(t_hilo *hilo);
+
+void liberar_miniPCB(t_miniPCB *miniPCB);
+
+uint32_t buscar_indice_pcb_por_pid(t_list* lista, uint32_t pid);
+
+void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid);
+
+uint32_t buscar_indice_hilos_por_tid(t_list* lista, uint32_t tid);
+
+void mostrar_instrucciones(t_list* lista_de_instrucciones);
+
+void mostrar_hilos(t_list* lista_de_hilos);
+
+void mostrar_lista_miniPCB(t_list* lista_miniPCB);
 
 #endif /* MEMORIA_H */
