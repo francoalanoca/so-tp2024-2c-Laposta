@@ -9,6 +9,7 @@
 #include <utils/utils.h>
 
 #include "../include/init_memoria.h"
+#include "../include/memoria_usuario.h"
 
 
 //----------------------------------Estructuras---------------------------------

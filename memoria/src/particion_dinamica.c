@@ -67,14 +67,18 @@ t_particion_dinamica *asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_pro
 //Funcion que busca la primer particion
 t_particion_dinamica *buscar_first_fit(uint32_t tamanio_proceso){
 
-    //Recorremos la lista de particiones comparando en cada iteracion
-    for (int i = 0; i < list_size(lista_particiones); i++) {
-        t_particion_dinamica *particion = list_get(lista_particiones, i);
+    t_particion_dinamica *particion = lista_particiones_dinamicas;
+
+    //Recorremos la lista enlazada de particiones
+    while (particion != NULL){
 
         //Verificamos que la particion obtenida este libre y sea >= al proceso
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
             return particion;
         }
+
+        //Actualizo la particion para poder avanzar
+        particion = particion->siguiente;
     }
     return NULL;
 }
@@ -83,12 +87,13 @@ t_particion_dinamica *buscar_first_fit(uint32_t tamanio_proceso){
 //Funcion que busca la mejor particion
 t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
 
+    t_particion_dinamica *particion = lista_particiones_dinamicas;
+
     //iniciamos la variable mejor en Null
     t_particion_dinamica *mejor_particion = NULL;
 
     //Recorremos la lista de particiones comparando en cada iteracion
-    for (int i = 0; i < list_size(lista_particiones); i++) {
-        t_particion_dinamica *particion = list_get(lista_particiones, i);
+    while (particion != NULL){
 
         //Verificamos que la particion obtenida este libre y sea >= al proceso
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
@@ -98,6 +103,9 @@ t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
                 mejor_particion = particion;
             }
         }
+
+        //Actualizo la particion para poder avanzar
+        particion = particion->siguiente;
     }
 
     //Retornamos la mejor o si no hay Null
@@ -108,13 +116,14 @@ t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
 //Funcion que busca la peor particion
 t_particion_dinamica *buscar_worst_fit(uint32_t tamanio_proceso){
 
+    t_particion_dinamica *particion = lista_particiones_dinamicas;
+
     //iniciamos la variable mejor en Null
     t_particion_dinamica *peor_particion = NULL;
 
     //Recorremos la lista de particiones comparando en cada iteracion
-    for (int i = 0; i < list_size(lista_particiones); i++){
-        t_particion_dinamica *particion = list_get(lista_particiones, i);
-
+    while (particion != NULL){
+        
         //Verificamos que la particion obtenida este libre y sea >= al proceso
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso){
 
@@ -123,6 +132,9 @@ t_particion_dinamica *buscar_worst_fit(uint32_t tamanio_proceso){
                 peor_particion = particion;
             }
         }
+
+        //Actualizo la particion para poder avanzar
+        particion = particion->siguiente;
     }
 
     //Retornamos la peor o si no hay Null
@@ -136,46 +148,25 @@ t_particion_dinamica *buscar_worst_fit(uint32_t tamanio_proceso){
 
 
 
-//Funcion que unifica bloques continuos que estan vacios
-void unificar_bloques(){
-    t_particion primer_bloque;
-    t_particion segundo_bloque;
-    t_particion bloque_resultante;
-
-    if(primer_bloque->is_free == "true" && segundo_bloque->is_free == "true"){
-
-        bloque_resultante->start = primer_bloque->start;
-        bloque_resultante->size = primer_bloque->size + segundo_bloque->size;
-        bloque_resultante->is_free = true;
-        bloque_resultante->next = segundo_bloque->next;
-
-        
-    }
-}
-
-
-
-
-
-
 
 //Funciones para la finalizacion de un proceso
 
-t_particion_dinamica *busco_particion_por_PID(uint32_t proceso_pid){
+t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Buscando la particion por PID");
 
-    t_particion_dinamica *particion;
+    t_particion_dinamica *particion = lista_particiones_dinamicas;
 
-    //Recorremos la lista que contiene particiones
-    for (int i = 0; i < list_size(lista_particiones); i++){
-
-        //Sacamos una particion de la lista
-        particion = list_get(lista_particiones, i);
-
-        //Si el id de la tabla es el mismo que la tabla, la retorna
-        if (proceso_pid == particion->id)
+    //Recorremos la lista enlazada que contiene particiones
+    while (particion != NULL){
+    
+        //Si el id de la particion es el mismo, la retorna
+        if (proceso_pid == particion->pid){
             return particion;
+        }
+
+        //Actualizo la particion para poder avanzar
+        particion = particion->siguiente;
     }
 
     log_error(logger_memoria, "PID - %d No se encontro la Particion", proceso_pid);
@@ -221,13 +212,65 @@ t_miniPCB *busco_un_hilo_TID(uint32_t hilo_pid){
         proceso = list_get(lista_miniPCBs, i);
 
         //Si el id del proceso es el mismo que el proceso buscado, la retorna
-        if (proceso_pid == proceso->pid)
+        if (hilo_pid == proceso->pid)
             return proceso;
     }
 
-    log_error(logger_memoria, "PID - %d No se encontro el proceso", proceso_pid);
+    log_error(logger_memoria, "PID - %d No se encontro el proceso", hilo_pid);
     abort();
 }
+
+
+
+
+// Función para unificar particiones libres adyacentes
+void unificar_particiones_dinamicas(t_particion_dinamica *particion){
+
+    t_particion_dinamica *particion_actual = particion;
+    t_particion_dinamica *particion_anterior = NULL;
+    t_particion_dinamica *actual = lista_particiones_dinamicas;
+
+
+    // 1. Unificación hacia adelante (con la siguiente partición)
+    if (particion_actual->siguiente != NULL && !particion_actual->siguiente->ocupado) {
+        log_trace(logger_memoria, "Unificando con la particion siguiente libre.");
+
+        t_particion_dinamica *particion_siguiente = particion_actual->siguiente;
+
+        // Aumentamos el tamaño de la partición actual
+        particion_actual->tamanio += particion_siguiente->tamanio;
+
+        // Ajustamos el puntero al siguiente de la partición unificada
+        particion_actual->siguiente = particion_siguiente->siguiente;
+
+        // Liberamos la partición siguiente que ha sido unificada
+        free(particion_siguiente);
+    }
+
+
+    // 2. Unificación hacia atrás (con la partición anterior)
+    // Buscamos la partición anterior en la lista
+    while (actual != NULL && actual != particion_actual) {
+        particion_anterior = actual;
+        actual = actual->siguiente;
+    }
+
+
+    // Si existe una partición anterior y está libre
+    if (particion_anterior != NULL && !particion_anterior->ocupado) {
+        log_trace(logger_memoria, "Unificando con la particion anterior libre.");
+
+        // Aumentamos el tamaño de la partición anterior
+        particion_anterior->tamanio += particion_actual->tamanio;
+
+        // Ajustamos el puntero al siguiente de la partición anterior
+        particion_anterior->siguiente = particion_actual->siguiente;
+
+        // Liberamos la partición actual que ha sido unificada
+        free(particion_actual);
+    }
+}
+
 
 
 
@@ -235,6 +278,7 @@ t_miniPCB *busco_un_hilo_TID(uint32_t hilo_pid){
 void finalizar_proceso(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Liberacion del proceso PID %i", proceso_pid);
+
     t_particion_dinamica *particion = busco_particion_por_PID(proceso_pid);
     t_miniPCB *proceso = busco_un_proceso_PID(proceso_pid);
 
@@ -245,6 +289,7 @@ void finalizar_proceso(uint32_t proceso_pid){
         t_hilo *hilo = list_get(proceso->hilos, j);
 
         list_destroy_and_destroy_elements(hilo->lista_de_instrucciones, free);
+        free(hilo);
         
     }
 
@@ -253,8 +298,9 @@ void finalizar_proceso(uint32_t proceso_pid){
     log_info(logger_memoria, "Destruccion de particion: \n");
     log_info(logger_memoria, "PID: %d - Tamaño: %d", proceso_pid, list_size(tabla_de_paginas->lista_de_paginas));
 
+    particion->ocupado = false;
 
-    //
+    unificar_particiones_dinamicas(particion);
     
     list_remove_element(lista_miniPCBs, proceso);
 }
