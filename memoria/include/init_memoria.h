@@ -129,6 +129,7 @@ int checkProperties(char *path_config);
 int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
+void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
 int redondear_a_multiplo_mas_cercano_de(int base, int valor);
 //t_bitarray *crear_bitmap(int entradas);
 

@@ -35,8 +35,6 @@ t_particion_dinamica *asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_pro
 
     t_particion_dinamica *particion_resultante = NULL;
 
-    particion_resultante->pid = proceso_pid;
-    particion_resultante->tamanio = tamanio_proceso;
 
     // Selecciona la partición según el algoritmo
     if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "FIRST_FIT") == 0) {
@@ -49,14 +47,16 @@ t_particion_dinamica *asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_pro
         particion_resultante = buscar_worst_fit(tamanio_proceso);
     }
 
-    //particion_resultante->inicio = memoria;
 
     // Si es null no hay memoria
     if (particion_resultante == NULL) {
         return NULL; 
     }
 
-    // Marcar la partición como ocupada
+    // Divido la partición si es más grande que el tamaño del proceso
+    particion_resultante = dividir_particion(particion_resultante, tamanio_proceso);
+
+    particion_resultante->pid = proceso_pid;
     particion_resultante->ocupado = true;
 
     return particion_resultante;
@@ -141,6 +141,31 @@ t_particion_dinamica *buscar_worst_fit(uint32_t tamanio_proceso){
     return peor_particion;
 }
 
+
+
+
+//Funcion que va diviendo el espacio deacuerdo al tamaño del proceso
+t_particion_dinamica *dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso) {
+    
+    //Si la partición tiene exactamente el tamaño necesario, no la dividimos
+    if (particion->tamanio == tamanio_proceso) {
+        return particion;
+    }
+
+    //Creamos una nueva partición para la parte libre
+    t_particion_dinamica* nueva_particion = malloc(sizeof(t_particion_dinamica));
+    nueva_particion->inicio = particion->inicio + tamanio_proceso;
+    nueva_particion->tamanio = particion->tamanio - tamanio_proceso;
+    nueva_particion->ocupado = false;
+    nueva_particion->pid = 0;                                           //NO tiene proceso asignado
+    nueva_particion->siguiente = particion->siguiente;
+
+    // La partición original ahora se reduce al tamaño del proceso
+    particion->tamanio = tamanio_proceso;
+    particion->siguiente = nueva_particion;
+
+    return particion;
+}
 
 
 
