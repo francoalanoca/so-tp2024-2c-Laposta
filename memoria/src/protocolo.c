@@ -159,7 +159,8 @@ void memoria_atender_kernel(){
 				eliminar_proceso_de_lista(lista_miniPCBs,pid_proceso_a_finalizar);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel);
-				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,1/*buscar tamanio de proceso*/);
+				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
+				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
 				}
 				else{
 					//crear funcion de finalizar para particiones dinamicas

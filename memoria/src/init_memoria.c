@@ -207,18 +207,6 @@ int inicializar_memoria(){
 
 
 
-
-//Funcion que redondea el valor al multiplo cercano de base y retorna
-int redondear_a_multiplo_mas_cercano_de(int base, int valor){
-    int v = valor == 0 ? 1 : valor;
-    return (int) ceil((float) v / (float) base) * base;
-}
-
-
-
-
-
-
 void cerrar_programa(){
 
 
@@ -250,7 +238,15 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_p
     nuevo_hilo->lista_de_instrucciones = list_create();
     leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
     list_add(nuevo_proceso->hilos,nuevo_hilo);
+
     //PENDIENTE: ver de donde se consigue la base
+    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
+
+    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
+
+    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
+
+    nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
 
     nuevo_proceso->tamanio_proceso = tamanio_proceso;
 
@@ -463,6 +459,21 @@ bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid){
     return false; 
 
 }
+
+uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
+
+    for (int i = 0; i < list_size(lista_miniPCBs); i++) {
+        t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
+
+        if (proceso_actual->pid == pid) {
+            return proceso_actual->tamanio_proceso;
+        }
+    }
+    return -1; 
+
+}
+
+
 
 
 

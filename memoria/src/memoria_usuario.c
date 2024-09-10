@@ -346,3 +346,25 @@ void print_lista_pid_por_bloque(t_list* lista) {
         }
     }
 }
+//
+uint32_t calcular_base_proceso_fijas(uint32_t bloque, t_list* particiones){
+    uint32_t base = 0;
+
+    if (bloque < 0 || bloque >= list_size(particiones)) {
+        return -1; 
+    }
+
+    // Suma los tamaños de las particiones anteriores al índice dado
+    for (int i = 0; i < bloque; i++) {
+        uint32_t tamanio_actual = atoi(list_get(particiones,i));
+        base += tamanio_actual;
+    }
+
+    return base;
+}
+
+//Funcion que redondea el valor al multiplo cercano de base y retorna
+int redondear_a_multiplo_mas_cercano_de(int base, int valor){
+    int v = valor == 0 ? 1 : valor;
+    return (int) ceil((float) v / (float) base) * base;
+}

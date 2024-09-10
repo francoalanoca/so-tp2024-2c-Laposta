@@ -128,7 +128,6 @@ int checkProperties(char *path_config);
 int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
-int redondear_a_multiplo_mas_cercano_de(int base, int valor);
 //t_bitarray *crear_bitmap(int entradas);
 
 void cerrar_programa();
@@ -162,5 +161,7 @@ void print_bitarray(t_bitarray *bitarray);
 bool existe_proceso_en_memoria(uint32_t pid);
 
 bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
+
+uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
 
 #endif /* MEMORIA_H */
