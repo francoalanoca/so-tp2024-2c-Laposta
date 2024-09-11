@@ -7,7 +7,6 @@ t_particion_dinamica* lista_particiones_dinamicas; //variable que guarda la list
 t_list* lista_miniPCBs;                 //lista de los procesos
 uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
 t_bitarray *bitmap_particiones;         //bitmap para controlar los bloques libres y ocupados
-//t_dictionary* pids_por_bloque;
 t_list* pids_por_bloque;
 
 uint32_t tamanio_total_memoria;
@@ -23,11 +22,10 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
     strcpy(algoritmo_alocacion,algoritmo);
     cantidad_particiones_memoria = num_particiones;
     //bitmap_particiones = malloc(sizeof(t_bitarray));
+    lista_miniPCBs = list_create();
     bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
-    //pids_por_bloque = dictionary_create();
     pids_por_bloque = list_create();
 
-    //ingresar_valor_diccionario(pids_por_bloque,4,43);
     
     
     //PRUEBA
@@ -106,7 +104,6 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint3
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
                     bitarray_set_bit(bitmap_particiones, i);
-                    //ingresar_valor_diccionario(pids_por_bloque,i,pid);
                     t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
                     pid_por_bloque->pid = pid;
                     pid_por_bloque->bloque = i;
@@ -153,9 +150,6 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint3
             else{
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
-                //ingresar_valor_diccionario(pids_por_bloque,ultimo_bloque_best_fit,pid);
-                //printf("Elemento agregado al diccionario. Nuevo estado del diccionario:\n");
-   // dictionary_iterator(pids_por_bloque, print_element);
                  t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
                     pid_por_bloque->pid = pid;
                     pid_por_bloque->bloque = ultimo_bloque_best_fit;
@@ -198,7 +192,6 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint3
             else{
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
-                //ingresar_valor_diccionario(pids_por_bloque,ultimo_bloque_worst_fit,pid);
                 t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
                     pid_por_bloque->pid = pid;
                     pid_por_bloque->bloque = ultimo_bloque_worst_fit;
@@ -215,34 +208,13 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint3
 }
 
 void finalizar_proceso_fijas(uint32_t pid){
-    //buscar bloque segun pid del diccionario y eliminar del bitmap
- //printf("Elemento agreagado a diccionario, nuevo estado del diccionario:\n");
-   // dictionary_iterator(pids_por_bloque, print_element);
-
-    /*char key_str[sizeof(uint32_t)];
-    memcpy(key_str, &pid, sizeof(uint32_t));
-        // Imprimir cada byte de key_str en formato hexadecimal
-    printf("key_str (en hexadecimal): ");
-    for (int i = 0; i < sizeof(uint32_t); i++) {
-        printf("%02x ", (unsigned char)key_str[i]);
-    }
-    printf("\n");*/
     uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
 
     printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
 
     t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
     printf("bloque_x_pid: %d\n",bloque_x_pid->bloque);
-    //void *bloque_a_liberar = dictionary_get(pids_por_bloque, key_str);
-    //uint32_t valor_bloque_a_liberar;
-    /*if (bloque_a_liberar != NULL) {
-        valor_bloque_a_liberar = *(uint32_t *)bloque_a_liberar; // Convertir y acceder al valor
-        printf("Valor recuperado: %u\n", valor_bloque_a_liberar);
-    } else {
-        printf("No se encontró un elemento con la clave %u.\n", pid);
-    }*/
     bitarray_clean_bit(bitmap_particiones,bloque_x_pid->bloque);
-   // eliminar_valor_diccionario(pids_por_bloque,pid);
    list_remove_and_destroy_element(pids_por_bloque,indice_bloque_a_liberar,free);
     
 }
@@ -336,43 +308,6 @@ void uint32_to_string(uint32_t num, char *str, size_t size) {
     snprintf(str, size, "%u", num);
 }
 
-//Imprime valor de diccionario
-void print_element(char* key, void* value) {
-    printf("Clave: %s, Valor: %d\n", key, *(int*)value);
-}
-
-void verificar_diccionario(t_dictionary* diccionario, const char* mensaje) {
-    printf("%s\n", mensaje);
-    dictionary_iterator(diccionario, print_element);
-}
-
-/*void ingresar_valor_diccionario(t_dictionary* diccionario, uint32_t clave, uint32_t valor) {
-    char clave_string[12];
-    uint32_to_string(clave, clave_string, sizeof(clave_string));
-
-    // Imprimir el estado antes de la modificación
-    printf("Antes de agregar: Clave: %s, Valor: %d\n", clave_string, valor);
-    printf("Estado del diccionario antes de la inserción:\n");
-    dictionary_iterator(pids_por_bloque, print_element);
-
-    // Agregar o actualizar el valor en el diccionario
-    dictionary_put(pids_por_bloque, clave_string, &valor);
-
-    // Imprimir el estado después de la modificación
-    printf("Elemento agregado al diccionario. Nuevo estado del diccionario:\n");
-    dictionary_iterator(pids_por_bloque, print_element);
-}
-
-
-void eliminar_valor_diccionario(t_dictionary* diccionario, uint32_t clave){
-    char clave_string[12];
-    uint32_to_string(clave,clave_string,sizeof(clave_string));
-    //dictionary_remove(pids_por_bloque,clave_string);
-    dictionary_remove_and_destroy(pids_por_bloque,clave_string,free);
-    printf("Elemento eliminado de diccionario, nuevo estado del diccionario:\n");
-    dictionary_iterator(pids_por_bloque, print_element);
-}*/
-
 uint32_t buscar_indice_bloque_por_pid(t_list* lista, uint32_t pid) {
     for (int i = 0; i < list_size(lista); i++) {
         t_pid_por_bloque* pid_por_bloque = list_get(lista, i);
@@ -410,4 +345,26 @@ void print_lista_pid_por_bloque(t_list* lista) {
             printf("Elemento en la posición %d es NULL.\n", i);
         }
     }
+}
+//
+uint32_t calcular_base_proceso_fijas(uint32_t bloque, t_list* particiones){
+    uint32_t base = 0;
+
+    if (bloque < 0 || bloque >= list_size(particiones)) {
+        return -1; 
+    }
+
+    // Suma los tamaños de las particiones anteriores al índice dado
+    for (int i = 0; i < bloque; i++) {
+        uint32_t tamanio_actual = atoi(list_get(particiones,i));
+        base += tamanio_actual;
+    }
+
+    return base;
+}
+
+//Funcion que redondea el valor al multiplo cercano de base y retorna
+int redondear_a_multiplo_mas_cercano_de(int base, int valor){
+    int v = valor == 0 ? 1 : valor;
+    return (int) ceil((float) v / (float) base) * base;
 }

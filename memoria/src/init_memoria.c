@@ -162,9 +162,6 @@ int inicializar_memoria(){
         printf("No pude crear el logger\n");
         return false;
     }
-
-    crear_lista_procesos();
-
 	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //espacio del usuario
 	if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
         
@@ -181,47 +178,17 @@ int inicializar_memoria(){
     
                  
 	
-	    //prueba
-        void print_bitarray(t_bitarray *bitarray) {
-    // Obtén la cantidad máxima de bits que puede tener el bitarray
-    // printf("nuevo estado del diccionario1:\n");
-   // dictionary_iterator(pids_por_bloque, print_element);
-    size_t max_bits = bitarray_get_max_bit(bitarray);
- //printf("nuevo estado del diccionario1:\n");
-   //dictionary_iterator(pids_por_bloque, print_element);
-    printf("Contenido del bitarray:\n");
-
-    // Recorre cada bit en el bitarray
-    for (size_t i = 0; i < max_bits; i++) {
-        // Verifica el valor del bit en la posición 'i'
-        int bit_value = bitarray_test_bit(bitarray, i) ? 1 : 0;
-        printf("%d", bit_value);
-
-        // Opcional: añadir un espacio cada 8 bits para mayor legibilidad
-        if ((i + 1) % 8 == 0) {
-            printf(" ");
-        }
-    }
-    printf("\n");  // Nueva línea al final de la impresión
-}
+	    //PRUEBA
 
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
-        //verificar_diccionario(pids_por_bloque, "Estado del diccionario antesss de la llamada a la función crear_proceso");
         crear_proceso(100,lista_particiones,1);
-      // verificar_diccionario(pids_por_bloque, "Estado del diccionario despues de la llamada a la función crear_proceso");
     
         printf("Acualizo bitmap:\n");
-        //verificar_diccionario(pids_por_bloque, "Estado del diccionario despues de la llamada a la función print_bitarray");
         print_bitarray(bitmap_particiones);
-        //verificar_diccionario(pids_por_bloque, "Estado del diccionario despues de la llamada a la función print_bitarray");
 
         inicializar_proceso(1,64,"archivo");
         printf("Acualizo lista miniPCB:\n");
-        mostrar_lista_miniPCB(lista_miniPCBs);
-
- //printf("nuevo estado del diccionario3:\n");
-  //  dictionary_iterator(pids_por_bloque, print_element);
-        
+        mostrar_lista_miniPCB(lista_miniPCBs); 
 
         inicializar_hilo(1,1, "archivo_pseudocodigo");
         printf("Acualizo lista miniPCB:\n");
@@ -238,10 +205,8 @@ int inicializar_memoria(){
         eliminar_proceso_de_lista(lista_miniPCBs,1);
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
+        //FIN PRUEBA
 
-        
-
-	
     return true;   
 }
 
@@ -261,19 +226,6 @@ void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
 }
 
 
-
-
-//Funcion que redondea el valor al multiplo cercano de base y retorna
-int redondear_a_multiplo_mas_cercano_de(int base, int valor){
-    int v = valor == 0 ? 1 : valor;
-    return (int) ceil((float) v / (float) base) * base;
-}
-
-
-
-
-
-
 void cerrar_programa(){
 
 
@@ -283,10 +235,6 @@ void cerrar_programa(){
     log_info(logger_memoria,"TERMINADA_LA_CONFIG");
     log_info(logger_memoria, "TERMINANDO_EL_LOG");
     log_destroy(logger_memoria);
-}
-
-void crear_lista_procesos(){
-    lista_miniPCBs = list_create();
 }
 
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_pseudocodigo){
@@ -307,10 +255,17 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_p
     nuevo_hilo->registros.GX = 0;
     nuevo_hilo->registros.HX = 0;
     nuevo_hilo->lista_de_instrucciones = list_create();
-    //PENDIENTE: llenar la lista de instruciones usando funcion que lee el archivo de pseudicodigo
-
+    leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
     list_add(nuevo_proceso->hilos,nuevo_hilo);
+
     //PENDIENTE: ver de donde se consigue la base
+    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
+
+    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
+
+    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
+
+    nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
 
     nuevo_proceso->tamanio_proceso = tamanio_proceso;
 
@@ -320,7 +275,6 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_p
 void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
     t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
-    //PENDIENTE: ver si ya existe el tid para ese pid
     nuevo_hilo->tid = tid;
     nuevo_hilo->registros.PC = 0;
     nuevo_hilo->registros.AX = 0;
@@ -332,7 +286,7 @@ void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
     nuevo_hilo->registros.GX = 0;
     nuevo_hilo->registros.HX = 0;
     nuevo_hilo->lista_de_instrucciones = list_create();
-    //PENDIENTE: llenar la lista de instruciones usando funcion que lee el archivo de pseudicodigo
+    leer_instrucciones_particiones_fijas(nombre_archivo,nuevo_hilo);
     asignar_hilo_a_proceso(nuevo_hilo,pid);
     
 }
@@ -473,4 +427,72 @@ void mostrar_lista_miniPCB(t_list* lista_miniPCB) {
         mostrar_hilos(miniPCB->hilos);
     }
 }
+
+void print_bitarray(t_bitarray *bitarray) {
+    // Obtengo la cantidad máxima de bits que puede tener el bitarray
+    size_t max_bits = bitarray_get_max_bit(bitarray);
+    printf("Contenido del bitarray:\n");
+
+    // Recorro cada bit en el bitarray
+    for (size_t i = 0; i < max_bits; i++) {
+        // Verifico el valor del bit en la posición 'i'
+        int bit_value = bitarray_test_bit(bitarray, i) ? 1 : 0;
+        printf("%d", bit_value);
+
+        //añado un espacio cada 8 bits para mayor legibilidad
+        if ((i + 1) % 8 == 0) {
+            printf(" ");
+        }
+    }
+    printf("\n");  // Nueva línea al final de la impresión
+}
+
+bool existe_proceso_en_memoria(uint32_t pid){
+
+    for (int i = 0; i < list_size(lista_miniPCBs); i++) {
+        t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
+
+        if (proceso_actual->pid == pid) {
+            return true;
+        }
+    }
+    return false; 
+
+}
+
+bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid){
+
+    for (int i = 0; i < list_size(lista_miniPCBs); i++) {
+        t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
+
+        if (proceso_actual->pid == pid) {
+            for (int j = 0; j < list_size(proceso_actual->hilos); j++) {
+                t_hilo* hilo_actual = list_get(proceso_actual->hilos, j);
+
+                if (hilo_actual->tid == tid) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false; 
+
+}
+
+uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
+
+    for (int i = 0; i < list_size(lista_miniPCBs); i++) {
+        t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
+
+        if (proceso_actual->pid == pid) {
+            return proceso_actual->tamanio_proceso;
+        }
+    }
+    return -1; 
+
+}
+
+
+
+
 

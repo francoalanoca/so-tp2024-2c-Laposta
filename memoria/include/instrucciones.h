@@ -21,5 +21,6 @@
 
 void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hilo_tid);
 char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_counter);
+void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo);
 
 #endif 

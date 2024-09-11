@@ -4,12 +4,12 @@
 #include <pthread.h>
 #include <commons/string.h>
 #include <commons/bitarray.h>
-#include <commons/collections/dictionary.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <utils/utils.h>
+#include <math.h>
 
 
 //----------------------------------Estructuras---------------------------------
@@ -43,9 +43,13 @@ extern t_list* pids_por_bloque;
 
 
 //----------------------------------Prototipos---------------------------------
+int redondear_a_multiplo_mas_cercano_de(int base, int valor);
+
+void finalizar_proceso_fijas(uint32_t pid);
+
 void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo);
 
-void inicializar_memoria_particiones_dinamicas(size_t mem_size, char* algoritmo);
+//void inicializar_memoria_particiones_dinamicas(size_t mem_size, char* algoritmo);
 
 void* alocar_memoria(uint32_t size);
 
@@ -61,18 +65,12 @@ void write_mem(uint32_t direccion_fisica, uint32_t valor);
 
 void uint32_to_string(uint32_t num, char *str, size_t size);
 
-void print_element(char *key, void *value);
-
-void ingresar_valor_diccionario(t_dictionary* diccionario, uint32_t clave, uint32_t valor);
-
-void eliminar_valor_diccionario(t_dictionary* diccionario, uint32_t clave);
-
-void verificar_diccionario(t_dictionary* diccionario, const char* mensaje);
-
 uint32_t buscar_indice_bloque_por_pid(t_list* lista, uint32_t pid);
 
 void print_pid_por_bloque(void* element);
 
 void print_lista_pid_por_bloque(t_list* lista);
+
+uint32_t calcular_base_proceso_fijas(uint32_t bloque, t_list* particiones);
 
 #endif 

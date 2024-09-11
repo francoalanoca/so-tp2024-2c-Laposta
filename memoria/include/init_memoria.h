@@ -12,6 +12,7 @@
 #include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
+#include "../include/instrucciones.h"
 
 
 //----------------------------------Estructuras---------------------------------
@@ -115,7 +116,6 @@ extern pthread_mutex_t mutex_memoria;
 extern uint32_t cantidad_particiones_memoria;
      
 extern t_bitarray *bitmap_particiones;
-//extern t_dictionary* pids_por_bloque;
 
 
 
@@ -129,13 +129,13 @@ int checkProperties(char *path_config);
 int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
+
 void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
-int redondear_a_multiplo_mas_cercano_de(int base, int valor);
+
+
 //t_bitarray *crear_bitmap(int entradas);
 
 void cerrar_programa();
-
-void crear_lista_procesos();
 
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_pseudocodigo);
 
@@ -160,5 +160,15 @@ void mostrar_instrucciones(t_list* lista_de_instrucciones);
 void mostrar_hilos(t_list* lista_de_hilos);
 
 void mostrar_lista_miniPCB(t_list* lista_miniPCB);
+
+void print_bitarray(t_bitarray *bitarray);
+
+bool existe_proceso_en_memoria(uint32_t pid);
+
+bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
+
+uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
+
+void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
 
 #endif /* MEMORIA_H */
