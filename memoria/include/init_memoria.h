@@ -12,6 +12,7 @@
 #include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
+#include "../include/instrucciones.h"
 
 
 //----------------------------------Estructuras---------------------------------
@@ -128,6 +129,10 @@ int checkProperties(char *path_config);
 int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
+
+void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
+
+
 //t_bitarray *crear_bitmap(int entradas);
 
 void cerrar_programa();
@@ -163,5 +168,7 @@ bool existe_proceso_en_memoria(uint32_t pid);
 bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
 
 uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
+
+void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
 
 #endif /* MEMORIA_H */

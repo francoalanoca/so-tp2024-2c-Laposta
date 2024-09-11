@@ -168,6 +168,12 @@ int inicializar_memoria(){
         lista_particiones = char_array_to_list(cfg_memoria->PARTICIONES);
         cantidad_particiones_memoria = list_size(lista_particiones);
         inicializar_memoria_particiones_fijas(cfg_memoria->TAM_MEMORIA,cantidad_particiones_memoria,cfg_memoria->ALGORITMO_BUSQUEDA);
+    }else{
+
+        if (strcmp(cfg_memoria->ESQUEMA,"DINAMICAS") == 0){
+            inicializar_memoria_particiones_dinamicas(memoria_usuario);
+        }
+        
     }
     
                  
@@ -205,6 +211,19 @@ int inicializar_memoria(){
 }
 
 
+
+
+
+
+//Funcion que inicia las variables de memoria en dinamica
+void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
+    lista_particiones_dinamicas = malloc(sizeof(t_particion_dinamica));
+    lista_particiones_dinamicas->pid = 0;                   // 0 indica que está libre
+    lista_particiones_dinamicas->inicio = 0;
+    lista_particiones_dinamicas->tamanio = tamanio_memoria;
+    lista_particiones_dinamicas->ocupado = false;
+    lista_particiones_dinamicas->siguiente = NULL;
+}
 
 
 void cerrar_programa(){
