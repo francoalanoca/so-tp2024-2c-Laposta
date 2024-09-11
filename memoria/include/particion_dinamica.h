@@ -30,6 +30,10 @@
 //t_particion *buscar_worst_fit(int tamanio_proceso);
 //t_particion_dinamica *dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso);
 
+
+//char* escribir_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, char* valor, uint32_t tamanio_a_escribir);
+//char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tamanio_a_leer);
+
 //t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid);
 //t_miniPCB *busco_un_proceso_PID(uint32_t proceso_pid);
 //

@@ -173,6 +173,77 @@ t_particion_dinamica *dividir_particion(t_particion_dinamica* particion, uint32_
 
 
 
+char* escribir_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, char* valor, uint32_t tamanio_a_escribir) {
+    
+    //Se espera que tamanio_a_escribir sea 4 bytes.
+    if (tamanio_a_escribir != 4){
+        log_info(logger_memoria, "ERROR: Se espera escribir 4 bytes.");
+    }
+
+    //Reservar espacio para la respuesta
+    char* escrito;
+
+    //Busca la partición asociada al proceso y al bloque de memoria.
+    t_particion_dinamica* particion = busco_particion_dinamica_por_PID(proceso_pid);
+
+    if (particion == NULL){
+        log_info(logger_memoria, "ERROR: Partición no encontrada");
+    }
+
+    //Verificar que hay suficiente espacio desde la dirección física en la partición.
+    uint32_t espacio_disponible = particion->inicio + particion->tamanio - direccion_fisica;
+
+    if (espacio_disponible < tamanio_a_escribir){
+        log_info(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
+    }
+
+    //Copiar los 4 bytes del valor en la memoria.
+    memcpy(memoria + direccion_fisica, valor, tamanio_a_escribir);
+
+    escrito = "OK";
+
+    return escrito;
+}
+
+
+
+
+char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tamanio_a_leer) {
+    
+    //Se espera que tamanio_a_leer sea 4 bytes.
+    if (tamanio_a_leer != 4){
+        log_info(logger_memoria, "ERROR: Se espera leer 4 bytes.");
+    }
+
+    //Reservar espacio para los 4 bytes que se van a leer.
+    char* leido = (char*) malloc(tamanio_a_leer);
+
+    //Busca la partición asociada al proceso y al bloque de memoria.
+    t_particion_dinamica* particion = busco_particion_dinamica_por_PID(proceso_pid);
+
+    if (particion == NULL){
+
+        free(leido);
+        log_info(logger_memoria, "ERROR: Partición no encontrada");
+    }
+
+    //Verificar que hay suficiente espacio desde la dirección física en la partición.
+    uint32_t espacio_disponible = particion->inicio + particion->tamanio - direccion_fisica;
+
+    if (espacio_disponible < tamanio_a_leer){
+        free(leido);
+        log_info(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
+    }
+
+    //Copiar los 4 bytes de la memoria a la variable leída.
+    memcpy(leido, memoria + direccion_fisica, tamanio_a_leer);
+
+    return leido;
+}
+
+
+
+
 
 //Funciones para la finalizacion de un proceso
 
@@ -314,7 +385,7 @@ void finalizar_proceso(uint32_t proceso_pid){
         t_hilo *hilo = list_get(proceso->hilos, j);
 
         list_destroy_and_destroy_elements(hilo->lista_de_instrucciones, free);
-        free(hilo);
+        list_remove_element(proceso->hilos, hilo);
         
     }
 
