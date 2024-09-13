@@ -1,41 +1,111 @@
 #include "../include/init_kernel.h"
 
-void iniciar_planificador_largo_plazo()
-{
-    pthread_create(&(hilos->hilo_planif_largo_plazo), NULL, planificar_largo_plazo, NULL);
+//No se si esto esta bien aca
+t_list* lista_new;
+t_list* lista_ready;
+t_list* lista_exec;
+t_list* lista_blocked;
+t_list* lista_exit;
+t_list* lista_procesos_global;
+void inicializar_listas() {
+    lista_new = list_create();
+    lista_ready = list_create();
+    lista_exec = list_create();
+    lista_exit = list_create();
+    lista_blocked = list_create();
+    lista_procesos_global=list_create();
 }
+void  inicializar_hilos_largo_plazo(){
+    pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
+    pthread_detach(hilos->hilo_planif_largo_plazo);   
+}
+void* planificar_procesos(){
+    
+    while (1) {
+            
+        sem_wait(&(semaforos->sem_procesos_new));//se ingreso un proceso
+        log_info(logger_kernel, "Iniciando planificador de largo plazo");
+           int conexion=conectar_a_memoria();
+             int soli_hand=HANDSHAKE;
+        send(conexion,&soli_hand, sizeof(uint32_t), MSG_WAITALL);
+        log_info(logger_kernel,"ENIVADO DESDE LARGO PLAZO");
+        sem_wait(&(semaforos->mutex_lista_new));
+        t_pcb* un_pcb=NULL;
+        un_pcb=list_get(lista_new,0);
+        sem_post(&(semaforos->mutex_lista_new));
+                    // chequeamos si el pcb no es null
+         log_info(logger_kernel, "pcb obtenido de NEW");
 
-void *planificar_largo_plazo()
-{
-    // Crear mecanismo para que el hilo muera antes de que el kernel termine
-    while (true)
-    {
-        // Obtenemos procesos para pasar de NEW a READY por FIFO.
-        log_info(logger_kernel, "ESPERO proceso en NEW");
-        sem_wait(&(semaforos->sem_procesos_new));
-        log_info(logger_kernel, "EVENTO proceso en NEW");
-       
-        t_pcb *pcb = (t_pcb *)cola_mutex_peek(cola_de_new);
-
-        // chequeamos si el pcb no es null, ya que la cola puede estar vacia si justo se finalizaron todos los procesos
-        if (pcb == NULL) {
+        if (un_pcb == NULL) {
             
             continue;
         }else{
             int socket_memoria=conectar_a_memoria();
-            enviar_solicitud_espacio_a_memoria(pcb,socket_memoria);
+            enviar_solicitud_espacio_a_memoria(un_pcb,socket_memoria);
             int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
-            if(respuesta==OK){
-                 cola_mutex_pop(cola_de_new);
-                 agregar_proceso_a_ready(pcb);
-                 
+            if(respuesta==INICIAR_PROCESO_RTA_OK){
+                log_info(logger_kernel,"recibi ok para crear proceso");
+               t_tcb* tcb=NULL;
+               tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
+                //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
+                 sem_wait(&(semaforos->mutex_lista_new));
+                    list_remove(lista_new,0);
+                 sem_post(&(semaforos->mutex_lista_new));
+
             }else{
+                log_info(logger_kernel, "esperando liberacion de memoria \n");
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
-                 sem_post(&(semaforos->sem_espacio_liberado_por_proceso));
+                 sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             }
            
+           close(socket_memoria);
         }
-      
     }
+    log_info(logger_kernel, "No hay procesos en la cola NEW");
+    return NULL; 
+}
+
+
+void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado) {
+    if (!list_is_empty(lista_origen)) {
+        sem_wait(sem_origen);
+        t_pcb* pcb = list_remove(lista_origen, 0); 
+        sem_post(sem_origen);
+        sem_wait(sem_destino);
+        pcb->estado = nuevo_estado;
+        list_add(lista_destino, pcb);
+        sem_post(sem_destino);
+        if (nuevo_estado == NEW) {
+            log_trace(logger_kernel, "Proceso con PID %d movido a la lista NEW", pcb->pid);
+        }
+        else if(nuevo_estado == READY){
+            log_trace(logger_kernel, "Proceso con PID %d movido a la lista READY", pcb->pid);
+        }
+        else if(nuevo_estado == EXEC){
+            log_trace(logger_kernel, "Proceso con PID %d movido a la lista EXEC", pcb->pid);
+        }
+        else if(nuevo_estado == BLOCKED){
+            log_trace(logger_kernel, "Proceso con PID %d movido a la lista BLOCKED", pcb->pid);
+        }
+        else if(nuevo_estado == EXIT){
+            log_trace(logger_kernel, "Proceso con PID %d movido a la lista EXIT", pcb->pid);
+        }
+    }else 
+        log_info(logger_kernel, "No hay procesos en la lista origen");
+}
+
+
+void agregar_a_cola(t_pcb *pcb,t_list* lista,sem_t* sem){
+    list_add(lista,pcb);
+}
+void pasar_new_a_ready() {
+    log_info(logger_kernel, "Pasando thread de NEW a READY");
+    mover_procesos(lista_new, lista_ready, &(semaforos->mutex_lista_new), &(semaforos->mutex_lista_ready), READY); 
+}
+void pasar_ready_a_exit() { //se usara? ver finalizar proceso
+    mover_procesos(lista_ready, lista_exit, &(semaforos->mutex_lista_ready), &(semaforos->mutex_lista_exit), EXIT);
+}
+void pasar_new_a_exit() { //se usara? ver finalizar proceso
+    mover_procesos(lista_new, lista_exit, &(semaforos->mutex_lista_new), &(semaforos->mutex_lista_exit), EXIT);
 }
 

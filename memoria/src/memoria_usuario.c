@@ -18,7 +18,7 @@ char * algoritmo_alocacion;
 void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo) {
     tamanio_total_memoria = mem_size;
     memoria_usuario = malloc(tamanio_total_memoria);  // Espacio de memoria contiguo
-    algoritmo_alocacion = malloc(strlen(algoritmo)*sizeof(char));
+    algoritmo_alocacion = malloc(strlen(algoritmo)*sizeof(char) + 1);
     strcpy(algoritmo_alocacion,algoritmo);
     cantidad_particiones_memoria = num_particiones;
     //bitmap_particiones = malloc(sizeof(t_bitarray));
@@ -70,9 +70,9 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 }*/
 
 //Crear un Proceso
-uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
+int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
     printf("Entro crear proceso\n");
-    printf("Tamanio lista:%d\n", list_size(lista_de_particiones));
+    printf("Tamanio lista de particiones:%d\n", list_size(lista_de_particiones));
     //encontrar hueco libre y marcar bitmap, si no encuentra tira error
     uint32_t tamanio_bloque_actual = 0;
     bool bloque_libre_encontrado = false;
@@ -109,7 +109,7 @@ uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint3
                     pid_por_bloque->bloque = i;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
                     list_add(pids_por_bloque,pid_por_bloque);
-                    return 0;
+                    return INICIAR_PROCESO_RTA_OK;
                 }
             }
 

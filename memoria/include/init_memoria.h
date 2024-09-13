@@ -12,7 +12,7 @@
 #include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
-#include "../include/instrucciones.h"
+//#include "../include/instrucciones.h"
 
 
 //----------------------------------Estructuras---------------------------------

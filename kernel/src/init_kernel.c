@@ -2,21 +2,21 @@
 
 t_config_kernel* config_kernel;
 t_log* logger_kernel;
-t_cola_mutex *cola_de_ready;
-t_cola_mutex *cola_de_new;
-t_cola_mutex *cola_de_exit;
 t_semaforos* semaforos;
 t_hilos* hilos;
 int pid_AI_global;
+
 void iniciar_modulo( char *ruta_config){
     logger_kernel=log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
     cargar_config_kernel(ruta_config);
     pid_AI_global=0;
     semaforos=malloc(sizeof(t_semaforos));
     hilos=malloc(sizeof(t_hilos));
-    inicializar_estructuras_new();
-    inicializar_estructuras_ready();
-   
+    inicializar_listas();
+    inicializar_semaforos();
+    inicializar_hilos_planificador();//corto_plazo
+    inicializar_hilos_largo_plazo();
+    
 }
 void cargar_config_kernel(char* ruta_config){
     t_config* config=iniciar_config(ruta_config,logger_kernel);
@@ -33,46 +33,15 @@ void cargar_config_kernel(char* ruta_config){
     log_info(logger_kernel,"configuracion cargada");
 }
 
-void inicializar_estructuras_new()
-{
-
-    cola_de_new = cola_mutex_crear();
-    
-    if (sem_init(&(semaforos->sem_procesos_new), 0, 0) != 0)
-    {
-        log_error(logger_kernel, "Ocurrio un error al crear procesos_new_sem");
-        abort();
-    }
-}
-
-void inicializar_estructuras_ready()
-{
-    cola_de_ready = cola_mutex_crear();
-    if (sem_init(&(semaforos->sem_procesos_ready), 0, 0) != 0)
-    {
-        log_error(logger_kernel, "Ocurrio un error al crear semaforo procesos_ready_sem");
-        abort();
-    }
-}
-
-void inicializar_estructuras_exit()
-{
-
-    cola_de_exit = cola_mutex_crear();
-    
-    if (sem_init(&(semaforos->sem_espacio_liberado_por_proceso), 0, 0) != 0)
-    {
-        log_error(logger_kernel, "Ocurrio un error al crear sem_espacio_liberado_por_proceso");
-        abort();
-    }
-}
-void agregar_proceso_a_new(t_pcb* pcb){
-    cola_mutex_push(cola_de_new,pcb);
-    sem_post(&(semaforos->sem_procesos_new));
-}
-void agregar_proceso_a_ready(t_pcb* pcb){
-    cola_mutex_push(cola_de_ready,pcb);
-    sem_post(&(semaforos->sem_procesos_ready));
+void inicializar_semaforos(){
+    sem_init(&(semaforos->mutex_lista_new), 0, 1);
+    sem_init(&(semaforos->mutex_lista_ready), 0, 1);
+	sem_init(&(semaforos->mutex_lista_exit), 0, 1);
+	sem_init(&(semaforos->mutex_lista_exec), 0 ,1);
+	sem_init(&(semaforos->mutex_lista_blocked), 0 ,1);
+    sem_init(&(semaforos->inicializar_planificador), 0, 0);
+    sem_init(&(semaforos->sem_procesos_new), 0, 0);
+    sem_init(&(semaforos->mutex_lista_global_procesos), 0 ,1);
 }
 
 int conectar_a_memoria(){
@@ -95,7 +64,7 @@ void generar_conexiones_a_cpu() {
         ,config_kernel->puerto_dispatch
     );
 	
-	pthread_create(&conexion_cpu_dispatch_hilo,NULL,(void*) procesar_conexion,(void *)&(config_kernel->conexion_cpu_dispatch));
+	pthread_create(&conexion_cpu_dispatch_hilo,NULL,(void*) procesar_conexion_dispatch,(void *)&(config_kernel->conexion_cpu_dispatch));
 	pthread_detach(conexion_cpu_dispatch_hilo);
 
     //conecta a por interrupt a cpu
@@ -104,11 +73,11 @@ void generar_conexiones_a_cpu() {
         ,"CPU"
         ,config_kernel->ip_cpu
         ,config_kernel->puerto_interrupt);
-	pthread_create(&conexion_cpu_interrupt_hilo, NULL, (void*) procesar_conexion, (void *)&(config_kernel->conexion_cpu_interrupt));
+	pthread_create(&conexion_cpu_interrupt_hilo, NULL, (void*) procesar_conexion_interrupt, (void *)&(config_kernel->conexion_cpu_interrupt));
 	pthread_detach(conexion_cpu_interrupt_hilo);
 
 }
-void procesar_conexion(void* socket){
+void procesar_conexion_interrupt(void* socket){
     //TODO: operaciones a ejecutar
     int fd_conexion_cpu=*((int*)socket);
     int operacion=recibir_operacion(fd_conexion_cpu);
@@ -122,6 +91,39 @@ void procesar_conexion(void* socket){
         break;
     }
 }
+
+void procesar_conexion_dispatch(void* socket){
+    //TODO: operaciones a ejecutar
+    int fd_conexion_cpu=*((int*)socket);
+    int operacion=recibir_operacion(fd_conexion_cpu);
+    switch (operacion)
+    {
+    case INICIAR_PROCESO :
+            log_info(logger_kernel,"se recibio instruccion INICIAR PROCESO");
+             t_list* params_para_creacion=recibir_paquete(fd_conexion_cpu);
+             char* ruta_codigo=list_get(params_para_creacion,0);
+             int tamanio_proceso=*((int*)list_get(params_para_creacion,1));
+             int prioridad_main=*((int*)list_get(params_para_creacion,2));
+
+             process_create(ruta_codigo,tamanio_proceso,prioridad_main);
+             
+        
+        break;
+    case INICIAR_HILO:
+               log_info(logger_kernel,"se recibio instruccion INICIAR HILO");
+               t_list* params_thread=recibir_paquete(fd_conexion_cpu);
+               char* codigo_th=list_get(params_thread,0);
+               int prioridad_th=*((int*)list_get(params_thread,1));
+               int pid_asociado=*((int*)list_get(params_thread,2));
+               thread_create(codigo_th,prioridad_th,pid_asociado);
+               
+
+        break;
+    default:
+        break;
+    }
+}
+
 void mostrar_pcb(t_pcb* pcb, t_log* logger) {
     // Verificamos que el PCB no sea NULL
     if (pcb == NULL) {
@@ -148,8 +150,8 @@ void mostrar_pcb(t_pcb* pcb, t_log* logger) {
     if (pcb->lista_mutex != NULL) {
         log_info(logger, "Lista de Mutex:");
         for (int i = 0; i < list_size(pcb->lista_mutex); i++) {
-            int* mutex_id = (int*) list_get(pcb->lista_mutex, i);
-            log_info(logger, "\tMutex #%d: %d", i, *mutex_id);
+            t_mutex *mutex_aux = list_get(pcb->lista_mutex, i);
+            log_info(logger, "\tMutex #%d: %d", i, mutex_aux->cod_op);
         }
     } else {
         log_warning(logger, "La lista de Mutex es NULL");

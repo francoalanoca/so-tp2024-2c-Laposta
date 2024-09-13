@@ -7,7 +7,7 @@
 void iniciar_servidores(){
 
     iniciar_conexiones();
-    escuchar_modulos();
+    //escuchar_modulos();
 }
 
 
@@ -22,28 +22,37 @@ void iniciar_conexiones(){
     
     //Esperar al cliente Cpu
     //log_info(logger_memoria, "Conexion con Cpu exitosa");
-    socket_cpu = esperar_cliente(logger_memoria, "Cpu", socket_memoria);
-
+   // socket_cpu = esperar_cliente(logger_memoria, "Cpu", socket_memoria);
+    while (1)
+    {   
+        int socket_aux;
+         socket_aux = esperar_cliente(logger_memoria, "Kernel", socket_memoria);
+        pthread_t hilo_kernel;
+        pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, &socket_aux);
+        pthread_detach(hilo_kernel);
+        log_info(logger_memoria, "Kernel conectado- FD del socket:  %d", socket_aux);
+    }
+    
     //Esperar al cliente Kernel
     //log_info(logger_memoria, "Conexion con Kernel exitosa");
-    socket_kernel = esperar_cliente(logger_memoria, "Kernel", socket_memoria);
-    log_info(logger_memoria, "Kernel conectado- FD del socket:  %d", socket_kernel);
+
 
     //Conecctar con FileSystem
     //log_info(logger_memoria, "Conexion con File System exitosa");
-    socket_filesystem = crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
+   //  socket_filesystem = crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
 }
 
 
 
 void escuchar_modulos(){
-
+ 
 	//Atender a Kernel
     pthread_t hilo_kernel;
     //se crea un nuevo hilo que atiende al cliente
     pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, NULL);
     //se desacopla del hilo principal para no interferir
     pthread_detach(hilo_kernel);
+        log_info(logger_memoria,"SE CREEO EL HILO ATENDER_KERNEL");
 
     //Atender a Cpu
     pthread_t hilo_cpu;

@@ -353,18 +353,17 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, uint32_t tamanio_pag, int conexion, t_log* logger){
+uint32_t mmu(uint32_t direccion_logica, uint32_t base_particion, int conexion){
     uint32_t direccion_resultado;// = malloc(sizeof(uint32_t));
     bool encontro_en_tlb = false;
     uint32_t indice_encontrado; //= malloc(sizeof(uint32_t));
    // char* valor_direccion_logica = concatenar_cadenas(uint32_to_string(direccion_logica->nro_pag),uint32_to_string(direccion_logica->nro_pag));
-    uint32_t nro_pagina;// = malloc(sizeof(uint32_t));
-    uint32_t desplazamiento;// = malloc(sizeof(uint32_t));
- //CALCULAR NRO DE PAGINA Y DESPLAZAMIENTO
-    nro_pagina =  floor(direccion_logica / tamanio_pag);
-    desplazamiento = direccion_logica - nro_pagina * tamanio_pag;
+ 
+    uint32_t desplazamiento = direccion_logica;// = malloc(sizeof(uint32_t));
+ 
+    direccion_resultado = base_particion+desplazamiento ;
 
- log_info(logger, "PID: %u - TLB HIT- Pagina: %u", proceso_actual->pid,nro_pagina); //LOG OBLIGATORIO
+ log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
             
 	 
 
@@ -384,7 +383,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
     uint32_t dir_fisica_result = malloc(sizeof(uint32_t));
-    dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger);
+    dir_fisica_result = mmu(valor_registro_direccion,base,conexion);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
 
@@ -427,7 +426,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion,logger);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion);
     //TODO: Si el tamanio de valor_registro_datos(es un int de 32 siempre?) es mayor a tamanio_pagina hay
     //que dividir ambos y tomar el floor para obtener cant de paginas, con eso dividir datos a enviar en *cant de paginas*, y
     //por cada pedacito de intfo llamar a mmu y agregar dir fisca obtenida en lista 
@@ -445,17 +444,17 @@ void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t
 
 
 
-void wait_inst(char* recurso, int conexion_kernel){
+void mutex_lock_inst(char* recurso, int conexion_kernel){
     // Esta instrucción solicita al Kernel que se asigne una instancia del recurso
     //indicado por parámetro.
 
-    solicitar_wait_kernel(proceso_actual,(strlen(recurso) + 1) * sizeof(char),recurso, conexion_kernel); 
+    solicitar_mutex_lock_kernel(proceso_actual,(strlen(recurso) + 1) * sizeof(char),recurso, conexion_kernel); 
 }
 
-void signal_inst(char* recurso, int conexion_kernel){
+void mutex_unlock_inst(char* recurso, int conexion_kernel){
     //Esta instrucción solicita al Kernel que se libere una instancia del recurso
     //indicado por parámetro
-    solicitar_signal_kernel(proceso_actual,(strlen(recurso) + 1) * sizeof(char) ,recurso, conexion_kernel);
+    solicitar_mutex_unlock_kernel(proceso_actual,(strlen(recurso) + 1) * sizeof(char) ,recurso, conexion_kernel);
 }
 
 
@@ -483,7 +482,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 
 
 
-void solicitar_wait_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
+void solicitar_mutex_lock_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
         printf("entro a solicitar_wait_kernel\n");
         
         t_paquete* paquete_wait_kernel;
@@ -496,7 +495,7 @@ void solicitar_wait_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, i
 
 }
 
-void solicitar_signal_kernel(t_pcb* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel){
+void solicitar_mutex_unlock_kernel(t_pcb* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel){
         printf("entro a solicitar_wait_kernel\n");
         t_paquete* paquete_signal_kernel;
    
@@ -525,10 +524,11 @@ void imprimir_contenido_paquete(t_paquete* paquete) {
     printf("\n");
 }
 
-void obtenerTamanioPagina(int conexion){
-    printf("entro a obtenerTamanioPagina\n");
+void obtener_base_particion(int conexion, t_pcb* pcb){ // PCB O PROCESS ID?
+    printf("entro a obtener base particion\n");
     t_paquete* paquete_pedido_tamanio_pag;
-    paquete_pedido_tamanio_pag = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
+    paquete_pedido_tamanio_pag = crear_paquete(BASE_PARTICION); // TODO: Crear codigo de operacion
+    //AGREGAR A PAQUETE
     enviar_paquete(paquete_pedido_tamanio_pag, conexion); 
     eliminar_paquete(paquete_pedido_tamanio_pag);
 

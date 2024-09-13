@@ -90,24 +90,22 @@ void memoria_atender_cpu(){
 /*---------------------------- KERNEL-------------------------*/
 
 
-void memoria_atender_kernel(){
-    
-
-
+void memoria_atender_kernel(void* socket){
+    int fd_kernel=*((int*)socket);
 	while (1) {
         //Se queda esperando a que KErnel le envie algo y extrae el cod de operacion
-		int cod_op = recibir_operacion(socket_kernel);
+		int cod_op = recibir_operacion(fd_kernel);
 		op_code response;
-		t_list* valores =  malloc(sizeof(t_list));
+		t_list* valores;
 		//pthread_t
 
 
 		switch (cod_op) {
 		case HANDSHAKE:
 			//pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, NULL));
-			log_info(logger_memoria, "Handshake realizado con cliente(%d)",socket_kernel);
+			log_info(logger_memoria, "Handshake realizado con cliente(%d)",fd_kernel);
             response = HANDSHAKE_OK;
-            if (send(socket_kernel, &response, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
+            if (send(fd_kernel, &response, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
                 log_error(logger_memoria, "Error al enviar respuesta de handshake a cliente");
                    
                 break;
@@ -116,41 +114,45 @@ void memoria_atender_kernel(){
 		
 		case INICIAR_PROCESO:
 			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
-			valores = recibir_paquete(socket_kernel);
+			valores = recibir_paquete(fd_kernel);
+
 			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
 			if(existe_proceso_en_memoria(iniciar_proceso->pid)){
 				//Enviar rta ERROR:Ya existe
-				//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,ERROR);
+				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_ERROR_YA_EXISTE);
 			}
 			else{
-				if(crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid) != -1){
+				int rta_crear_proceso = crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
 				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
 				//enviar rta OK
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,OK);
+				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_OK);
 				log_info(logger_memoria, "## Proceso Creado- PID: %d Tamaño: %d\n",iniciar_proceso->pid,iniciar_proceso->tamanio_proceso);
+				log_info(logger_memoria, "enviada respuesta OK hay espacio \n");
 				}
 				else{
 					//enviar rta con error:no hay espacio en memoria
 					usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-					//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,ERROR);
+					enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,rta_crear_proceso);
+						log_info(logger_memoria, "enviada respuesta no hay espacio \n");
 				}
 			}
 			
 			
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-			//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel);
+			//enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_PROCESO_RTA \n");
 			break;
 
 		case FINALIZAR_PROCESO:
 			log_info(logger_memoria, "Recibí FINALIZAR_PROCESO \n");
-			valores = recibir_paquete(socket_kernel);
+			valores = recibir_paquete(fd_kernel);
 			uint32_t pid_proceso_a_finalizar = deserializar_finalizar_proceso(valores);
             //finalizar_proceso(pid_proceso_a_finalizar);
 			if(!existe_proceso_en_memoria(pid_proceso_a_finalizar)){
 				//Enviar rta ERROR:No existe
-				//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,ERROR);
+				enviar_respuesta_iniciar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
 				if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
@@ -158,35 +160,35 @@ void memoria_atender_kernel(){
 				//Elimino de lista miniPBCs
 				eliminar_proceso_de_lista(lista_miniPCBs,pid_proceso_a_finalizar);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel);
+				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_OK);
 				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
 				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
 				}
 				else{
 					//crear funcion de finalizar para particiones dinamicas
 					usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-					//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel);
+					//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel);
 				}
 			}
 			
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-			//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel);
+			//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel);
 			log_info(logger_memoria, "enviada respuesta de FINALIZAR_PROCESO_RTA \n");
 			break;
 
 		case INICIAR_HILO:
 			log_info(logger_memoria, "Recibí INICIAR_HILO \n");
-			valores = recibir_paquete(socket_kernel);
+			valores = recibir_paquete(fd_kernel);
 			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores);
 			if(existe_hilo_en_memoria(iniciar_hilo->pid,iniciar_hilo->tid)){
 				//Enviar rta ERROR:Ya existe
-				//enviar_respuesta_iniciar_hilo(iniciar_hilo, socket_kernel,ERROR);
+				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_ERROR_YA_EXISTE);
 			}
 			else{
 				//leer_instrucciones(iniciar_hilo->archivo_pseudocodigo, iniciar_hilo->pid, iniciar_hilo->tid);
 				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_iniciar_hilo(iniciar_hilo, socket_kernel,OK);
+				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Creado- (PID:TID)- (%d:%d)\n",iniciar_hilo->pid,iniciar_hilo->tid);
 			}
 			
@@ -195,18 +197,18 @@ void memoria_atender_kernel(){
 
 		case FINALIZAR_HILO:
 			log_info(logger_memoria, "Recibí FINALIZAR_HILO \n");
-			valores = recibir_paquete(socket_kernel);
+			valores = recibir_paquete(fd_kernel);
 			uint32_t pid_hilo = *(uint32_t*)list_get(valores, 0);
 			uint32_t tid_hilo = *(uint32_t*)list_get(valores, 1);
 
 			if(!existe_hilo_en_memoria(pid_hilo,tid_hilo)){
 				//Enviar rta ERROR:No existe
-				//enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, socket_kernel,ERROR);
+				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, fd_kernel,FINALIZAR_HILO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
 				eliminar_hilo_de_lista(lista_miniPCBs,pid_hilo,tid_hilo);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, socket_kernel,OK);
+				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, fd_kernel,FINALIZAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Destruido- (PID:TID)- (%d:%d)\n",pid_hilo,tid_hilo);
 			}
 
@@ -216,7 +218,7 @@ void memoria_atender_kernel(){
 
 		case PEDIDO_MEMORY_DUMP:
 			log_info(logger_memoria, "Recibí PEDIDO_MEMORY_DUMP \n");
-			//valores = recibir_paquete(socket_kernel);
+			//valores = recibir_paquete(fd_kernel);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;

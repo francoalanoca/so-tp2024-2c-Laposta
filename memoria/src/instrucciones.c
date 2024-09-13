@@ -92,6 +92,7 @@ void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
 	//Si no se puede abrir el archivo marca error
 	if (!archivo){
         log_error(logger_memoria, "Error al abrir el archivo %s.", path_total);
+        free(path_total);
         exit(EXIT_FAILURE);
     }
 
@@ -128,7 +129,8 @@ void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
             list_add(hilo->lista_de_instrucciones, linea2);
         }
 	}
-
+    free(path_total);
+    free(linea);
     fclose(archivo);
 }
 
