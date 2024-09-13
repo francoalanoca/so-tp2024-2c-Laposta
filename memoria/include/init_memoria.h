@@ -9,8 +9,10 @@
 #include <utils/utils.h>
 
 #include <commons/bitarray.h>
+#include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
+//#include "../include/instrucciones.h"
 
 
 //----------------------------------Estructuras---------------------------------
@@ -72,6 +74,7 @@ typedef struct{
 //struct para deserializar/serializar al leer instruccion
 typedef struct{
     uint32_t pid;
+    uint32_t tid;
     uint32_t program_counter;
 }t_proceso_memoria;
 
@@ -126,12 +129,13 @@ int checkProperties(char *path_config);
 int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
-int redondear_a_multiplo_mas_cercano_de(int base, int valor);
-t_bitarray *crear_bitmap(int entradas);
+
+void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
+
+
+//t_bitarray *crear_bitmap(int entradas);
 
 void cerrar_programa();
-
-void crear_lista_procesos();
 
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_pseudocodigo);
 
@@ -140,5 +144,31 @@ void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
 void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
 
 t_list* char_array_to_list(char** array);
+
+void liberar_hilo(t_hilo *hilo);
+
+void liberar_miniPCB(t_miniPCB *miniPCB);
+
+uint32_t buscar_indice_pcb_por_pid(t_list* lista, uint32_t pid);
+
+void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid);
+
+uint32_t buscar_indice_hilos_por_tid(t_list* lista, uint32_t tid);
+
+void mostrar_instrucciones(t_list* lista_de_instrucciones);
+
+void mostrar_hilos(t_list* lista_de_hilos);
+
+void mostrar_lista_miniPCB(t_list* lista_miniPCB);
+
+void print_bitarray(t_bitarray *bitarray);
+
+bool existe_proceso_en_memoria(uint32_t pid);
+
+bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
+
+uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
+
+void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
 
 #endif /* MEMORIA_H */

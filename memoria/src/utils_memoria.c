@@ -24,10 +24,10 @@ t_m_crear_proceso* deserializar_iniciar_proceso(t_list*  lista_paquete ){
 
 
 //Memoria envia proceso creado a Kernel
-void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int socket_kernel) {
+void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int socket_kernel, op_code cod_ope) {
     t_paquete* paquete_crear_proceso;
  
-    paquete_crear_proceso = crear_paquete(INICIAR_PROCESO_RTA);
+    paquete_crear_proceso = crear_paquete(cod_ope);
  
     agregar_a_paquete(paquete_crear_proceso, &crear_proceso->pid,  sizeof(uint32_t));
      
@@ -56,16 +56,16 @@ t_m_crear_hilo* deserializar_iniciar_hilo(t_list*  lista_paquete ){
 
 
 //Memoria envia proceso creado a Kernel
-void enviar_respuesta_iniciar_hilo(t_m_crear_hilo* crear_hilo ,int socket_kernel) {
+void enviar_respuesta_iniciar_hilo(t_m_crear_hilo* crear_hilo ,int socket_kernel, op_code cod_ope) {
     t_paquete* paquete_crear_hilo;
  
-    paquete_crear_hilo = crear_paquete(INICIAR_PROCESO_RTA);
+    paquete_crear_hilo = crear_paquete(cod_ope);
  
     agregar_a_paquete(paquete_crear_hilo, &crear_hilo->pid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_crear_hilo, &crear_hilo->tid,  sizeof(uint32_t));
      
     enviar_paquete(paquete_crear_hilo, socket_kernel);   
-    printf("Proceso enviado: %i\n", crear_hilo->pid); 
+    printf("Hilo enviado: %i\n", crear_hilo->pid); 
     eliminar_paquete(paquete_crear_hilo);
     printf("PAQUETE ELIMINADO\n"); 
 }
@@ -82,16 +82,42 @@ uint32_t deserializar_finalizar_proceso(t_list*  lista_paquete ){
 }
 
 
-void enviar_respuesta_finalizar_proceso(uint32_t pid_proceso_a_finalizar ,int socket_kernel) {
+void enviar_respuesta_finalizar_proceso(uint32_t pid_proceso_a_finalizar ,int socket_kernel, op_code cod_ope) {
     t_paquete* paquete_finalizar_proceso;
  
-    paquete_finalizar_proceso = crear_paquete(FINALIZAR_PROCESO_RTA);
+    paquete_finalizar_proceso = crear_paquete(cod_ope);
  
     agregar_a_paquete(paquete_finalizar_proceso, &pid_proceso_a_finalizar,  sizeof(uint32_t));
     
     enviar_paquete(paquete_finalizar_proceso, socket_kernel);   
     printf("Proceso enviado \n"); 
     eliminar_paquete(paquete_finalizar_proceso); 
+}
+
+
+
+uint32_t deserializar_finalizar_hilo(t_list*  lista_paquete ){
+
+    uint32_t hilo_a_finalizar;
+    
+    hilo_a_finalizar = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Tid recibido: %d \n", hilo_a_finalizar);
+
+    return hilo_a_finalizar;
+}
+
+
+void enviar_respuesta_finalizar_hilo(uint32_t pid_proceso_a_finalizar ,uint32_t tid_proceso_a_finalizar,int socket_kernel,op_code cod_ope){
+    t_paquete* paquete_finalizar_hilo;
+ 
+    paquete_finalizar_hilo = crear_paquete(cod_ope);
+ 
+    agregar_a_paquete(paquete_finalizar_hilo, &pid_proceso_a_finalizar,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_finalizar_hilo, &tid_proceso_a_finalizar,  sizeof(uint32_t));
+    
+    enviar_paquete(paquete_finalizar_hilo, socket_kernel);   
+    printf("Hilo enviado \n"); 
+    eliminar_paquete(paquete_finalizar_hilo); 
 }
 
 
