@@ -17,9 +17,6 @@ void iniciar_modulo( char *ruta_config){
     inicializar_hilos_planificador();//corto_plazo
     inicializar_hilos_largo_plazo();
     
-   
- 
-   
 }
 void cargar_config_kernel(char* ruta_config){
     t_config* config=iniciar_config(ruta_config,logger_kernel);
@@ -37,7 +34,6 @@ void cargar_config_kernel(char* ruta_config){
 }
 
 void inicializar_semaforos(){
-    semaforos=malloc(sizeof(t_semaforos));
     sem_init(&(semaforos->mutex_lista_new), 0, 1);
     sem_init(&(semaforos->mutex_lista_ready), 0, 1);
 	sem_init(&(semaforos->mutex_lista_exit), 0, 1);
@@ -110,10 +106,19 @@ void procesar_conexion_dispatch(void* socket){
              int prioridad_main=*((int*)list_get(params_para_creacion,2));
 
              process_create(ruta_codigo,tamanio_proceso,prioridad_main);
-             list_destroy(params_para_creacion);
-        /* code */
+             
+        
         break;
-    
+    case INICIAR_HILO:
+               log_info(logger_kernel,"se recibio instruccion INICIAR HILO");
+               t_list* params_thread=recibir_paquete(fd_conexion_cpu);
+               char* codigo_th=list_get(params_thread,0);
+               int prioridad_th=*((int*)list_get(params_thread,1));
+               int pid_asociado=*((int*)list_get(params_thread,2));
+               thread_create(codigo_th,prioridad_th,pid_asociado);
+               
+
+        break;
     default:
         break;
     }

@@ -122,7 +122,6 @@ void crear_hilo_planificador_colas_multinivel();
 void *planificar_fifo();
 void *planificar_prioridades();
 void *planificar_colas_multinivel();
-void mover_hilo(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado);
 void agregar_a_cola(t_pcb *pcb,t_list* lista,sem_t* sem);
 void pasar_new_a_ready();
 void pasar_ready_a_exit();
@@ -137,5 +136,7 @@ void pasar_execute_a_blocked();
 void* planificar_procesos();
 void inicializar_listas();
 t_pcb* buscar_proceso_por(int pid_buscado);
+void mostrar_pcb(t_pcb* pcb, t_log* logger);
+t_tcb* thread_create(char* pseudocodigo,int prio,int pid);
 
 #endif /* KERNEL_H_ */

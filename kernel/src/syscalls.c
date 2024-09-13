@@ -9,7 +9,6 @@ t_pcb* crear_pcb(int tam_proceso,char* archivo_instrucciones,int prioridad_th0) 
     pid_AI_global++;
     pcb->prioridad_th_main=prioridad_th0;
     pcb->ruta_pseudocodigo=strdup(archivo_instrucciones);
-    free(archivo_instrucciones);
     //TCB-main
     añadir_tid_a_proceso(pcb);
 
@@ -29,8 +28,9 @@ void enviar_solicitud_espacio_a_memoria(void* pcb_solicitante,int socket){
     enviar_paquete(paquete_a_enviar,socket);
 }
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
-   int respuesta=recibir_operacion(socket_memoria); 
-   return respuesta;
+  int respuesta=recibir_operacion(socket_memoria); 
+ return respuesta;
+return OK;
 }
 
 int asignar_tid(t_pcb* pcb){
