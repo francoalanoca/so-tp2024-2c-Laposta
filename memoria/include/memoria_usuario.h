@@ -53,7 +53,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 
 void* alocar_memoria(uint32_t size);
 
-uint32_t crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid);
+int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid);
 
 t_bitarray *crear_bitmap(int entradas);
 

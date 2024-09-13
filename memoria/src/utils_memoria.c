@@ -5,23 +5,25 @@
 /*---------------------------- KERNEL-------------------------*/
 
 //Memoria deserializa lo enviado de Kernel
-t_m_crear_proceso* deserializar_iniciar_proceso(t_list*  lista_paquete ){
-
-    //Creamos una variable de tipo struct que ira guardando todo del paquete y le asignamos tamaño
+t_m_crear_proceso* deserializar_iniciar_proceso(t_list* lista_paquete) {
+  
+    // Crear la estructura del proceso y asignar espacio
     t_m_crear_proceso* crear_proceso = malloc(sizeof(t_m_crear_proceso));
-    
-    crear_proceso->pid = *(uint32_t*)list_get(lista_paquete, 0);
+
+    // Deserializar el PID
+    crear_proceso->pid = *((uint32_t*) list_get(lista_paquete, 0));
     printf("Pid recibido: %d \n", crear_proceso->pid);
 
-    crear_proceso->tamanio_proceso = *(uint32_t*)list_get(lista_paquete, 1);
+    // Deserializar el tamaño del proceso
+    crear_proceso->tamanio_proceso = *((uint32_t*) list_get(lista_paquete, 1));
     printf("Tamanio recibido: %d \n", crear_proceso->tamanio_proceso);
 
-    printf("Nombre del archivo: %s \n", (char*) list_get(lista_paquete, 2));
-    crear_proceso->archivo_pseudocodigo = (char*) list_get(lista_paquete, 2);
-    
+    // Deserializar el archivo de pseudocódigo (es un puntero a char)
+    // crear_proceso->archivo_pseudocodigo = (char*) list_get(lista_paquete, 2);
+    // printf("Nombre del archivo: %s \n", crear_proceso->archivo_pseudocodigo);
+
     return crear_proceso;
 }
-
 
 //Memoria envia proceso creado a Kernel
 void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int socket_kernel, op_code cod_ope) {
@@ -29,7 +31,7 @@ void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int sock
  
     paquete_crear_proceso = crear_paquete(cod_ope);
  
-    agregar_a_paquete(paquete_crear_proceso, &crear_proceso->pid,  sizeof(uint32_t));
+    // agregar_a_paquete(paquete_crear_proceso, &crear_proceso->pid,  sizeof(uint32_t));
      
     enviar_paquete(paquete_crear_proceso, socket_kernel);   
     printf("Proceso enviado: %i\n", crear_proceso->pid); 

@@ -22,7 +22,7 @@
 
 //----------------------------------Prototipos---------------------------------
 void memoria_atender_cpu();
-void memoria_atender_kernel();
+void memoria_atender_kernel(void* arg);
 
 
 

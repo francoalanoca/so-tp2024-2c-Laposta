@@ -19,12 +19,13 @@ void añadir_tid_a_proceso(t_pcb* pcb){
     pcb->contador_AI_tids++;
 }
 
-void enviar_solicitud_espacio_a_memoria(void* pcb_solicitante,int socket){
-    t_pcb* pcb=(t_pcb*) pcb_solicitante;
+void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
     //memoria solo necesita tamanio de proceso y el pid 
     t_paquete* paquete_a_enviar=crear_paquete(INICIAR_PROCESO);
-    agregar_a_paquete(paquete_a_enviar,&(pcb->tamanio_proceso),sizeof(int));
-    agregar_a_paquete(paquete_a_enviar,&(pcb->pid),sizeof(int));
+    agregar_a_paquete(paquete_a_enviar,&(pcb->pid),sizeof(uint32_t));
+    log_info(logger_kernel,"valor de pid:%d",pcb->pid);
+    agregar_a_paquete(paquete_a_enviar,&(pcb->tamanio_proceso),sizeof(uint32_t));
+    log_info(logger_kernel,"valor de tamanio:%d",pcb->tamanio_proceso);
     enviar_paquete(paquete_a_enviar,socket);
 }
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
@@ -82,7 +83,7 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
          list_add(lista_new,pcb_nuevo);
     sem_post(&(semaforos->mutex_lista_new));
     sem_post(&(semaforos->sem_procesos_new));
-
+    
 }
 
 t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){

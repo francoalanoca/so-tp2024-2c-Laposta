@@ -22,15 +22,20 @@ void  inicializar_hilos_largo_plazo(){
 void* planificar_procesos(){
     
     while (1) {
-        log_info(logger_kernel, "Iniciando planificador de largo plazo");
-        
+            
         sem_wait(&(semaforos->sem_procesos_new));//se ingreso un proceso
-        
+        log_info(logger_kernel, "Iniciando planificador de largo plazo");
+           int conexion=conectar_a_memoria();
+             int soli_hand=HANDSHAKE;
+        send(conexion,&soli_hand, sizeof(uint32_t), MSG_WAITALL);
+        log_info(logger_kernel,"ENIVADO DESDE LARGO PLAZO");
         sem_wait(&(semaforos->mutex_lista_new));
         t_pcb* un_pcb=NULL;
         un_pcb=list_get(lista_new,0);
         sem_post(&(semaforos->mutex_lista_new));
                     // chequeamos si el pcb no es null
+         log_info(logger_kernel, "pcb obtenido de NEW");
+
         if (un_pcb == NULL) {
             
             continue;
@@ -39,6 +44,7 @@ void* planificar_procesos(){
             enviar_solicitud_espacio_a_memoria(un_pcb,socket_memoria);
             int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
             if(respuesta==INICIAR_PROCESO_RTA_OK){
+                log_info(logger_kernel,"recibi ok para crear proceso");
                t_tcb* tcb=NULL;
                tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
@@ -47,6 +53,7 @@ void* planificar_procesos(){
                  sem_post(&(semaforos->mutex_lista_new));
 
             }else{
+                log_info(logger_kernel, "esperando liberacion de memoria \n");
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
                  sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             }
