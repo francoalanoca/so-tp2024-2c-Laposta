@@ -18,7 +18,7 @@ char * algoritmo_alocacion;
 void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo) {
     tamanio_total_memoria = mem_size;
     memoria_usuario = malloc(tamanio_total_memoria);  // Espacio de memoria contiguo
-    algoritmo_alocacion = malloc(strlen(algoritmo)*sizeof(char));
+    algoritmo_alocacion = malloc(strlen(algoritmo)*sizeof(char) + 1);
     strcpy(algoritmo_alocacion,algoritmo);
     cantidad_particiones_memoria = num_particiones;
     //bitmap_particiones = malloc(sizeof(t_bitarray));

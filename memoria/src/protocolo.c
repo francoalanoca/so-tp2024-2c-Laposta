@@ -120,20 +120,21 @@ void memoria_atender_kernel(){
 			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
 			if(existe_proceso_en_memoria(iniciar_proceso->pid)){
 				//Enviar rta ERROR:Ya existe
-				//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,ERROR);
+				enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,INICIAR_PROCESO_RTA_ERROR_YA_EXISTE);
 			}
 			else{
-				if(crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid) != -1){
+				op_code rta_crear_proceso = crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
 				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
 				//enviar rta OK
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,OK);
+				enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,INICIAR_PROCESO_RTA_OK);
 				log_info(logger_memoria, "## Proceso Creado- PID: %d Tamaño: %d\n",iniciar_proceso->pid,iniciar_proceso->tamanio_proceso);
 				}
 				else{
 					//enviar rta con error:no hay espacio en memoria
 					usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-					//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,ERROR);
+					enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,rta_crear_proceso);
 				}
 			}
 			
@@ -150,7 +151,7 @@ void memoria_atender_kernel(){
             //finalizar_proceso(pid_proceso_a_finalizar);
 			if(!existe_proceso_en_memoria(pid_proceso_a_finalizar)){
 				//Enviar rta ERROR:No existe
-				//enviar_respuesta_iniciar_proceso(iniciar_proceso, socket_kernel,ERROR);
+				enviar_respuesta_iniciar_proceso(pid_proceso_a_finalizar, socket_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
 				if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
@@ -158,7 +159,7 @@ void memoria_atender_kernel(){
 				//Elimino de lista miniPBCs
 				eliminar_proceso_de_lista(lista_miniPCBs,pid_proceso_a_finalizar);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel);
+				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, socket_kernel,FINALIZAR_PROCESO_RTA_OK);
 				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
 				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
 				}
@@ -180,13 +181,13 @@ void memoria_atender_kernel(){
 			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores);
 			if(existe_hilo_en_memoria(iniciar_hilo->pid,iniciar_hilo->tid)){
 				//Enviar rta ERROR:Ya existe
-				//enviar_respuesta_iniciar_hilo(iniciar_hilo, socket_kernel,ERROR);
+				enviar_respuesta_iniciar_hilo(iniciar_hilo, socket_kernel,INICIAR_HILO_RTA_ERROR_YA_EXISTE);
 			}
 			else{
 				//leer_instrucciones(iniciar_hilo->archivo_pseudocodigo, iniciar_hilo->pid, iniciar_hilo->tid);
 				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_iniciar_hilo(iniciar_hilo, socket_kernel,OK);
+				enviar_respuesta_iniciar_hilo(iniciar_hilo, socket_kernel,INICIAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Creado- (PID:TID)- (%d:%d)\n",iniciar_hilo->pid,iniciar_hilo->tid);
 			}
 			
@@ -201,12 +202,12 @@ void memoria_atender_kernel(){
 
 			if(!existe_hilo_en_memoria(pid_hilo,tid_hilo)){
 				//Enviar rta ERROR:No existe
-				//enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, socket_kernel,ERROR);
+				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, socket_kernel,FINALIZAR_HILO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
 				eliminar_hilo_de_lista(lista_miniPCBs,pid_hilo,tid_hilo);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				//enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, socket_kernel,OK);
+				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, socket_kernel,FINALIZAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Destruido- (PID:TID)- (%d:%d)\n",pid_hilo,tid_hilo);
 			}
 

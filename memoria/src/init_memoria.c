@@ -325,7 +325,7 @@ void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid){
     uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_procesos,pid);
 	t_miniPCB* proceso_a_eliminar = malloc(sizeof(t_miniPCB));
     proceso_a_eliminar = list_get(lista_procesos,indice_a_eliminar);
-	list_remove_and_destroy_element(lista_procesos,indice_a_eliminar,liberar_miniPCB);
+	list_remove_and_destroy_element(lista_procesos,indice_a_eliminar,(void*)liberar_miniPCB);
     printf("Se elimina pid %d\n",pid);
 }
 
@@ -334,7 +334,7 @@ void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid){
 	t_miniPCB* proceso_hilo_a_eliminar = malloc(sizeof(t_miniPCB));
     proceso_hilo_a_eliminar = list_get(lista_procesos,indice_proceso_hilo);
     uint32_t indice_hilo_a_eliminar = buscar_indice_hilos_por_tid(proceso_hilo_a_eliminar->hilos,tid);
-	list_remove_and_destroy_element(proceso_hilo_a_eliminar->hilos,indice_hilo_a_eliminar,liberar_hilo);
+	list_remove_and_destroy_element(proceso_hilo_a_eliminar->hilos,indice_hilo_a_eliminar,(void*)liberar_hilo);
     printf("Se elimina tid %d correspondiente a pid %d\n",tid,pid);
 }
 
