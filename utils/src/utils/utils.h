@@ -40,6 +40,8 @@ typedef  enum
     WRITE_MEMORIA_RTA,
     DEVOLUCION_CONTEXTO,
     DEVOLUCION_CONTEXTO_RTA,
+    BASE_PARTICION,
+    BASE_PARTICION_RTA,
 
 
 //---------------FILESYSTEM-KERNEL-------------------

@@ -21,11 +21,10 @@ int conexion_kernel_dispatch = -1;
 int conexion_kernel_interrupt = -1;
 
 sem_t sem_valor_instruccion;
-uint32_t marco_recibido;
-sem_t sem_marco_recibido;
+
 sem_t sem_valor_registro_recibido;
 sem_t sem_valor_resize_recibido;
-sem_t sem_valor_tamanio_pagina;
+sem_t sem_valor_base_particion;
 sem_t sem_servidor_creado;
 sem_t sem_interrupcion_kernel;
 sem_t sem_check_interrupcion_kernel;
@@ -52,10 +51,10 @@ int main(int argc, char *argv[])
     lista_sockets_global = list_create();
 
     sem_init(&sem_valor_instruccion, 0, 0);
-    sem_init(&sem_marco_recibido, 0, 0);
+
     sem_init(&sem_valor_registro_recibido, 0, 0);
-    sem_init(&sem_valor_resize_recibido, 0, 0);
-    sem_init(&sem_valor_tamanio_pagina, 0, 0);
+
+    sem_init(&sem_valor_base_particion, 0, 0);
     sem_init(&sem_servidor_creado, 0, 0);
     sem_init(&sem_interrupcion_kernel, 0, 0);
     sem_init(&sem_check_interrupcion_kernel, 0, 0);
@@ -108,8 +107,8 @@ int main(int argc, char *argv[])
        log_info(logger_cpu,"conexion memoria %d",socket_memoria);
     printf("Paso  sem_servidor_creado\n");
     // Obtener tamaño de página
-    obtenerTamanioPagina(socket_memoria);
-    sem_wait(&sem_valor_tamanio_pagina);
+
+
 
 
     pthread_t servidor_dispatch;
@@ -132,7 +131,7 @@ int main(int argc, char *argv[])
     ciclo_params_t *params = malloc(sizeof(ciclo_params_t));
     params->socket_memoria = socket_memoria;
     params->proceso_actual = proceso_actual;
-    params->tlb = tlb;
+  
     params->lista_conexion_kernel_dispatch = lista_sockets_global;
     params->conexion_kernel_interrupt = conexion_kernel_interrupt;
 
@@ -178,10 +177,8 @@ void liberar_memoria()
 
     // Liberar semáforos
     sem_destroy(&sem_valor_instruccion);
-    sem_destroy(&sem_marco_recibido);
-    sem_destroy(&sem_valor_registro_recibido);
-    sem_destroy(&sem_valor_resize_recibido);
-    sem_destroy(&sem_valor_tamanio_pagina);
+
+    sem_destroy(&sem_valor_base_particion);
 
     free(prox_inst);
 
@@ -191,7 +188,7 @@ void liberar_memoria()
     free(path_config);
     free(ip_cpu);
     free(valor_registro_obtenido);
-    free(rta_resize);
+
 
     // Liberar config y logger(declarados en init_cpu)
     cerrar_programa();
