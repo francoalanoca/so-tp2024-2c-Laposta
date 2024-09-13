@@ -179,7 +179,7 @@ int inicializar_memoria(){
                  
 	
 	    //PRUEBA
-
+        /*
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
         crear_proceso(100,lista_particiones,1);
     
@@ -206,7 +206,7 @@ int inicializar_memoria(){
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
         //FIN PRUEBA
-
+*/
     return true;   
 }
 

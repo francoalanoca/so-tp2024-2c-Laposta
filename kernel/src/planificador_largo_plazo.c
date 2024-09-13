@@ -38,7 +38,7 @@ void* planificar_procesos(){
             int socket_memoria=conectar_a_memoria();
             enviar_solicitud_espacio_a_memoria(un_pcb,socket_memoria);
             int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
-            if(respuesta==OK){
+            if(respuesta==INICIAR_PROCESO_RTA_OK){
                t_tcb* tcb=NULL;
                tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos

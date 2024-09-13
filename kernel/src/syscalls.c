@@ -30,7 +30,6 @@ void enviar_solicitud_espacio_a_memoria(void* pcb_solicitante,int socket){
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
   int respuesta=recibir_operacion(socket_memoria); 
  return respuesta;
-return OK;
 }
 
 int asignar_tid(t_pcb* pcb){
@@ -51,12 +50,10 @@ t_tcb* crear_tcb(int prioridad_th,int pid){
 void enviar_a_memoria_creacion_thread(t_tcb* tcb_nuevo,char* pseudo,int socket){
     t_paquete* paquete_a_enviar=crear_paquete(INICIAR_HILO);
     int longitud=strlen(pseudo)+1;
-    agregar_a_paquete(paquete_a_enviar,&longitud,sizeof(int));
     agregar_a_paquete(paquete_a_enviar,pseudo,longitud);
     agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->tid),sizeof(int));
     agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->pid),sizeof(int));
-    enviar_paquete(paquete_a_enviar,socket);
-    
+    enviar_paquete(paquete_a_enviar,socket);  
 }
 t_pcb* buscar_proceso_por(int pid_buscado){
     t_pcb* un_pcb=NULL;
