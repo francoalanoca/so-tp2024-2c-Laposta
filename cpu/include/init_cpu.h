@@ -29,6 +29,7 @@ extern sem_t sem_conexion_dispatch_iniciado;
 extern pthread_mutex_t mutex_proceso_actual;
 extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
+extern int base_particion;
 
 extern  uint32_t base;
 typedef struct {
@@ -38,10 +39,11 @@ typedef struct {
 } t_procesar_conexion_args;
 
 typedef struct {
-    uint32_t pid; // Tamaño del payload
-    uint32_t program_counter;
-} t_pcb;
-extern t_pcb* proceso_actual;
+    uint32_t pid; 
+    uint32_t tid;
+    t_registros_CPU registros_cpu;
+} t_proceso;
+extern t_proceso* proceso_actual;
 typedef struct 
 {
     uint32_t PC;

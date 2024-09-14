@@ -2,9 +2,9 @@
 
 int tamanioParams;
 int tamanioInterfaces;
-t_pcb* proceso_actual;
+t_proceso* proceso_actual;
 t_registros_CPU* registros_cpu;
-instr_t* fetch(int conexion, t_pcb* proceso){
+instr_t* fetch(int conexion, t_proceso* proceso){
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
     log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->program_counter); //LOG OBLIGATORIO
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
@@ -21,7 +21,7 @@ tipo_instruccion decode(instr_t* instr){
 }
 
 
-void execute(instr_t* inst,tipo_instruccion tipo_inst, t_pcb* proceso, int conexion,t_list* tlb,  int socket_dispatch, int socket_interrupt){
+void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion,t_list* tlb,  int socket_dispatch, int socket_interrupt){
     
     switch(tipo_inst){
         case SET:
@@ -91,20 +91,21 @@ void check_interrupt(int conexion_kernel){
     
 }
 
-void pedir_instruccion(t_pcb* proceso,int conexion){
+void pedir_instruccion(t_proceso* proceso,int conexion){
   
     
     t_paquete* paquete_pedido_instruccion;
     paquete_pedido_instruccion = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
         
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->pid,  sizeof(uint32_t)); 
+ 
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->program_counter,  sizeof(uint32_t));  
         
     enviar_paquete(paquete_pedido_instruccion, conexion); 
     eliminar_paquete(paquete_pedido_instruccion);
 }
 
-void set(char* registro, uint32_t valor, t_pcb* proceso){
+void set(char* registro, uint32_t valor, t_proceso* proceso){
     //printf("El valor del set es : %d ", valor);
     registros registro_elegido = identificarRegistro(registro);
     //pthread_mutex_lock(&mutex_proceso_actual);
@@ -164,7 +165,7 @@ void set(char* registro, uint32_t valor, t_pcb* proceso){
    // registro = valor;
 }
 
-void sum(char* registro_destino, char* registro_origen, t_pcb* proceso){
+void sum(char* registro_destino, char* registro_origen, t_proceso* proceso){
     registros id_registro_destino = identificarRegistro(registro_destino);
     registros id_registro_origen = identificarRegistro(registro_origen);
 
@@ -228,7 +229,7 @@ void sum(char* registro_destino, char* registro_origen, t_pcb* proceso){
 }
 
 
-void jnz(char* registro, uint32_t inst, t_pcb* proceso){
+void jnz(char* registro, uint32_t inst, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
     if(valor_registro != 0){
@@ -295,7 +296,7 @@ registros identificarRegistro(char* registro){
     }
 }
 
-uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso){
+uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
     switch(id_registro){
         case PC:
         {
@@ -353,28 +354,24 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, uint32_t base_particion, int conexion){
-    uint32_t direccion_resultado;// = malloc(sizeof(uint32_t));
-    bool encontro_en_tlb = false;
-    uint32_t indice_encontrado; //= malloc(sizeof(uint32_t));
-   // char* valor_direccion_logica = concatenar_cadenas(uint32_to_string(direccion_logica->nro_pag),uint32_to_string(direccion_logica->nro_pag));
+uint32_t mmu(uint32_t direccion_logica, int conexion, int pid){
+    uint32_t direccion_resultado;
+    uint32_t desplazamiento = direccion_logica;
+    obtener_base_particion(conexion,pid);
  
-    uint32_t desplazamiento = direccion_logica;// = malloc(sizeof(uint32_t));
- 
+    
+    sem_wait(&sem_valor_base_particion);
     direccion_resultado = base_particion+desplazamiento ;
 
- log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
+    log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
             
-	 
 
-       
-    //ver el caso en que me piden un tamaño que no entra en la pagina
     return direccion_resultado;
 }
 
 
 
-void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion){
+void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, t_log* logger, int conexion){
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el 
     //Registro Dirección y lo almacena en el Registro Datos
     registros id_registro_direccion = identificarRegistro(registro_direccion);
@@ -382,7 +379,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
     //uint32_t valor_registro_direccion = malloc(sizeof(uint32_t));
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = malloc(sizeof(uint32_t));
+    uint32_t dir_fisica_result;
     dir_fisica_result = mmu(valor_registro_direccion,base,conexion);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
@@ -415,7 +412,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
 
 }
 
-void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger, int conexion){
+void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, t_log* logger, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
     printf("registro: %s\n",registro_datos);
@@ -471,9 +468,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
          
             
         enviar_paquete(paquete_pedido_valor_memoria, conexion); 
-        free(paquete_pedido_valor_memoria->buffer->stream);
-        free(paquete_pedido_valor_memoria->buffer);
-        free(paquete_pedido_valor_memoria);
+        eliminar_paquete(paquete_pedido_valor_memoria);
 
 }
 
@@ -482,7 +477,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 
 
 
-void solicitar_mutex_lock_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
+void solicitar_mutex_lock_kernel(t_proceso* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
         printf("entro a solicitar_wait_kernel\n");
         
         t_paquete* paquete_wait_kernel;
@@ -495,7 +490,7 @@ void solicitar_mutex_lock_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recu
 
 }
 
-void solicitar_mutex_unlock_kernel(t_pcb* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel){
+void solicitar_mutex_unlock_kernel(t_proceso* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel){
         printf("entro a solicitar_wait_kernel\n");
         t_paquete* paquete_signal_kernel;
    
@@ -524,20 +519,20 @@ void imprimir_contenido_paquete(t_paquete* paquete) {
     printf("\n");
 }
 
-void obtener_base_particion(int conexion, t_pcb* pcb){ // PCB O PROCESS ID?
+void obtener_base_particion(int conexion, int pid){ 
     printf("entro a obtener base particion\n");
-    t_paquete* paquete_pedido_tamanio_pag;
-    paquete_pedido_tamanio_pag = crear_paquete(BASE_PARTICION); // TODO: Crear codigo de operacion
-    //AGREGAR A PAQUETE
-    enviar_paquete(paquete_pedido_tamanio_pag, conexion); 
-    eliminar_paquete(paquete_pedido_tamanio_pag);
+    t_paquete* paquete_pedido_tamanio_base;
+    paquete_pedido_tamanio_base = crear_paquete(BASE_PARTICION); 
+    agregar_a_paquete(paquete_pedido_tamanio_base, pid,  sizeof(uint32_t));
+    enviar_paquete(paquete_pedido_tamanio_base, conexion); 
+    eliminar_paquete(paquete_pedido_tamanio_base);
 
 }
 
 
  
 
-void ciclo_de_instrucciones(int *conexion_mer, t_pcb *proceso, t_list *tlb, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
+void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, t_list *tlb, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
 {   log_info(logger_cpu, "Entro al ciclo");
     int conexion_mem = *conexion_mer;
     int dispatch = *socket_dispatch;
