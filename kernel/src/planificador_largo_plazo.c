@@ -17,19 +17,16 @@ void inicializar_listas() {
 }
 void  inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
-    pthread_detach(hilos->hilo_planif_largo_plazo);   
+
 }
 
 void* planificar_procesos(){
     
     while (1) {
-            
+              log_info(logger_kernel, "Iniciando planificador de largo plazo");
         sem_wait(&(semaforos->sem_procesos_new));//se ingreso un proceso
-        log_info(logger_kernel, "Iniciando planificador de largo plazo");
-           int conexion=conectar_a_memoria();
-             int soli_hand=HANDSHAKE;
-        send(conexion,&soli_hand, sizeof(uint32_t), MSG_WAITALL);
-        log_info(logger_kernel,"ENIVADO DESDE LARGO PLAZO");
+      
+
         sem_wait(&(semaforos->mutex_lista_new));
         t_pcb* un_pcb=NULL;
         un_pcb=list_get(lista_new,0);
@@ -43,8 +40,9 @@ void* planificar_procesos(){
         }else{
             int socket_memoria=conectar_a_memoria();
             enviar_solicitud_espacio_a_memoria(un_pcb,socket_memoria);
-            sleep(20);
+          
             int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
+            close(socket_memoria);
             if(respuesta==INICIAR_PROCESO_RTA_OK){
                 log_info(logger_kernel,"recibi ok para crear proceso");
                t_tcb* tcb=NULL;
@@ -64,7 +62,7 @@ void* planificar_procesos(){
                  sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             }
            
-           close(socket_memoria);
+          
         }
     }
     log_info(logger_kernel, "No hay procesos en la cola NEW");

@@ -70,8 +70,6 @@ t_pcb* buscar_proceso_por(int pid_buscado){
 }
 //******************      SYSCALLS         *******************************
 void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_main){
-    log_info(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
-
     t_pcb* pcb_nuevo=NULL;
     pcb_nuevo=crear_pcb(tam_proceso,ruta_instrucciones, prioridad_hilo_main);
 
@@ -83,7 +81,7 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
          list_add(lista_new,pcb_nuevo);
     sem_post(&(semaforos->mutex_lista_new));
     sem_post(&(semaforos->sem_procesos_new));
-    
+    log_info(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
 }
 
 t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
@@ -94,6 +92,7 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
     if(rta_memoria==INICIAR_HILO_RTA_OK){
         log_info(logger_kernel,"memoria cargo las estructuras de  thread");
     }
+    close(socket_memoria);
     return tcb_th;
 
 }
@@ -104,10 +103,10 @@ void mutex_create(char* nombre_mutex,int pid_mutex){
     mutex_nuevo->tid_asignado=-1;
     mutex_nuevo->estado=SIN_ASIGNAR;//sin ASIGNAR
     mutex_nuevo->lista_threads_bloquedos=list_create();
-    sem_wait(semaforos->mutex_lista_global_procesos);
+    sem_wait(&(semaforos->mutex_lista_global_procesos));
     t_pcb* pcb=NULL;
     pcb=buscar_proceso_por(pid_mutex);
-    sem_post(semaforos->mutex_lista_global_procesos);
+    sem_post(&(semaforos->mutex_lista_global_procesos));
 
     list_add(pcb->lista_mutex,mutex_nuevo);
 

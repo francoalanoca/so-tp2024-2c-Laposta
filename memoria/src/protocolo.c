@@ -92,14 +92,13 @@ void memoria_atender_cpu(){
 
 void memoria_atender_kernel(void* socket){
     int fd_kernel=*((int*)socket);
-	while (1) {
+	// while (1) {
         //Se queda esperando a que KErnel le envie algo y extrae el cod de operacion
 		int cod_op = recibir_operacion(fd_kernel);
 		op_code response;
 		t_list* valores;
 		//pthread_t
-
-
+		sleep(5);
 		switch (cod_op) {
 		case HANDSHAKE:
 			//pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, NULL));
@@ -124,7 +123,7 @@ void memoria_atender_kernel(void* socket){
 			else{
 				int rta_crear_proceso = crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
 				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
-				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
+				//inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
 				//enviar rta OK
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_OK);
@@ -224,6 +223,7 @@ void memoria_atender_kernel(void* socket){
 			break;
 
 		case -1:
+		
 			log_error(logger_memoria, "Kernel se desconecto. Terminando servidor.\n");
 			//return EXIT_FAILURE;
 			break;
@@ -232,7 +232,9 @@ void memoria_atender_kernel(void* socket){
 			log_warning(logger_memoria,"Operacion desconocida: %d",cod_op);
 			break;
 		}
-    }
+
+		free(socket);
+    //  }
 }
 
 

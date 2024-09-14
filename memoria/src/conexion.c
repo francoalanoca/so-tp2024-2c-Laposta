@@ -26,9 +26,12 @@ void iniciar_conexiones(){
     while (1)
     {   
         int socket_aux;
+        int* nuevo_socket = malloc(sizeof(int));
+      
          socket_aux = esperar_cliente(logger_memoria, "Kernel", socket_memoria);
         pthread_t hilo_kernel;
-        pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, &socket_aux);
+          *nuevo_socket = socket_aux;
+        pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, nuevo_socket);
         pthread_detach(hilo_kernel);
         log_info(logger_memoria, "Kernel conectado- FD del socket:  %d", socket_aux);
     }

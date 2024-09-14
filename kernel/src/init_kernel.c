@@ -42,6 +42,9 @@ void inicializar_semaforos(){
     sem_init(&(semaforos->inicializar_planificador), 0, 0);
     sem_init(&(semaforos->sem_procesos_new), 0, 0);
     sem_init(&(semaforos->mutex_lista_global_procesos), 0 ,1);
+    sem_init(&(semaforos->espacio_en_cpu), 0 ,1);
+    sem_init(&(semaforos->contador_threads_en_ready), 0 ,0);
+    
 }
 
 int conectar_a_memoria(){
@@ -161,7 +164,7 @@ void mostrar_pcb(t_pcb* pcb, t_log* logger) {
         log_info(logger, "Lista de Mutex:");
         for (int i = 0; i < list_size(pcb->lista_mutex); i++) {
             t_mutex *mutex_aux = list_get(pcb->lista_mutex, i);
-            log_info(logger, "\tMutex #%d: %d", i, mutex_aux->cod_op);
+            log_info(logger, "\tMutex #%d: %s", i, mutex_aux->recurso);
         }
     } else {
         log_warning(logger, "La lista de Mutex es NULL");

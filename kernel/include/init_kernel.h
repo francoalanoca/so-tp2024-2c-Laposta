@@ -93,6 +93,8 @@ typedef struct{
     sem_t sem_procesos_ready;
     sem_t sem_espacio_liberado_por_proceso;
     sem_t mutex_lista_global_procesos;
+    sem_t contador_threads_en_ready;
+    sem_t espacio_en_cpu;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
