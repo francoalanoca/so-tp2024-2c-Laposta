@@ -27,6 +27,7 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete );
 void enviar_respuesta_read_memoria(void* respuesta_leer, int socket_cpu);
 t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete);
 void enviar_respuesta_write_memoria(char* respuesta_escribir, int socket_cliente);
+void enviar_respuesta_actualizar_contexto(t_m_contexto* contexto ,int socket_cpu, op_code cod_ope);
 
 
 #endif /* MEMORIA_H */
