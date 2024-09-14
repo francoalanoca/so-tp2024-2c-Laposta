@@ -29,8 +29,8 @@ void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
     enviar_paquete(paquete_a_enviar,socket);
 }
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
-  int respuesta=recibir_operacion(socket_memoria); 
- return respuesta;
+    return recibir_operacion(socket_memoria);
+
 }
 
 int asignar_tid(t_pcb* pcb){
@@ -91,10 +91,25 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
     int socket_memoria=conectar_a_memoria();
     enviar_a_memoria_creacion_thread( tcb_th,pseudo_codigo, socket_memoria);
     int rta_memoria=recibir_resp_de_memoria_a_solicitud(socket_memoria);
-    if(rta_memoria==OK){
+    if(rta_memoria==INICIAR_HILO_RTA_OK){
         log_info(logger_kernel,"memoria cargo las estructuras de  thread");
     }
     return tcb_th;
+
+}
+//TODO: deberiamos tener un mutext para cada proceso.Aca modifico su estuctura
+void mutex_create(char* nombre_mutex,int pid_mutex){
+    t_mutex* mutex_nuevo=malloc(sizeof(t_mutex));
+    mutex_nuevo->recurso=nombre_mutex;
+    mutex_nuevo->tid_asignado=-1;
+    mutex_nuevo->estado=SIN_ASIGNAR;//sin ASIGNAR
+    mutex_nuevo->lista_threads_bloquedos=list_create();
+    sem_wait(semaforos->mutex_lista_global_procesos);
+    t_pcb* pcb=NULL;
+    pcb=buscar_proceso_por(pid_mutex);
+    sem_post(semaforos->mutex_lista_global_procesos);
+
+    list_add(pcb->lista_mutex,mutex_nuevo);
 
 }
 

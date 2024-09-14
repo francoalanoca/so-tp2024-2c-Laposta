@@ -98,7 +98,7 @@ void procesar_conexion_dispatch(void* socket){
     int operacion=recibir_operacion(fd_conexion_cpu);
     switch (operacion)
     {
-    case INICIAR_PROCESO :
+    case PROCESS_CREATE :
             log_info(logger_kernel,"se recibio instruccion INICIAR PROCESO");
              t_list* params_para_creacion=recibir_paquete(fd_conexion_cpu);
              char* ruta_codigo=list_get(params_para_creacion,0);
@@ -109,7 +109,7 @@ void procesar_conexion_dispatch(void* socket){
              
         
         break;
-    case INICIAR_HILO:
+    case THREAD_CREATE:
                log_info(logger_kernel,"se recibio instruccion INICIAR HILO");
                t_list* params_thread=recibir_paquete(fd_conexion_cpu);
                char* codigo_th=list_get(params_thread,0);
@@ -119,6 +119,16 @@ void procesar_conexion_dispatch(void* socket){
                
 
         break;
+    case MUTEX_CREATE://recurso,pid
+               log_info(logger_kernel,"se recibio instruccion MUTEX_CREATE");
+               t_list* params_mutex_create=recibir_paquete(fd_conexion_cpu);
+               char* nombre_mutex=list_get(params_mutex_create,0);
+               int pid_mutex=*((int*)list_get(params_mutex_create,1));
+               mutex_create(nombre_mutex,pid_mutex);
+               
+
+        break;
+        
     default:
         break;
     }

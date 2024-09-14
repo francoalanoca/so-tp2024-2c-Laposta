@@ -19,6 +19,7 @@ void  inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
     pthread_detach(hilos->hilo_planif_largo_plazo);   
 }
+
 void* planificar_procesos(){
     
     while (1) {
@@ -42,6 +43,7 @@ void* planificar_procesos(){
         }else{
             int socket_memoria=conectar_a_memoria();
             enviar_solicitud_espacio_a_memoria(un_pcb,socket_memoria);
+            sleep(20);
             int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
             if(respuesta==INICIAR_PROCESO_RTA_OK){
                 log_info(logger_kernel,"recibi ok para crear proceso");
@@ -51,6 +53,10 @@ void* planificar_procesos(){
                  sem_wait(&(semaforos->mutex_lista_new));
                     list_remove(lista_new,0);
                  sem_post(&(semaforos->mutex_lista_new));
+                 //agrego thread a ready
+                 sem_wait(&(semaforos->mutex_lista_ready));
+                    list_add(lista_ready,tcb);
+                 sem_post(&(semaforos->mutex_lista_ready));
 
             }else{
                 log_info(logger_kernel, "esperando liberacion de memoria \n");
