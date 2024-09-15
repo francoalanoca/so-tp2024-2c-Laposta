@@ -29,6 +29,7 @@ extern sem_t sem_conexion_dispatch_iniciado;
 extern pthread_mutex_t mutex_proceso_actual;
 extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
+extern int base_particion;
 
 extern  uint32_t base;
 typedef struct {
@@ -37,11 +38,7 @@ typedef struct {
     char *server_name;
 } t_procesar_conexion_args;
 
-typedef struct {
-    uint32_t pid; // Tamaño del payload
-    uint32_t program_counter;
-} t_pcb;
-extern t_pcb* proceso_actual;
+
 typedef struct 
 {
     uint32_t PC;
@@ -54,8 +51,13 @@ typedef struct
     uint32_t GX;
     uint32_t HX;
 }t_registros_CPU;
+typedef struct {
+    uint32_t pid; 
+    uint32_t tid;
+    t_registros_CPU registros_cpu;
+} t_proceso;
+extern t_proceso* proceso_actual;
 
-extern t_registros_CPU* registros_cpu;
 typedef enum
 {
     SET,
@@ -64,11 +66,7 @@ typedef enum
 	SUM,
     SUB,
     JNZ,
-    LOG
-}tipo_instruccion;
-
-typedef enum
-{
+    LOG,
     DUMP_MEMORY,
     IO,
     PROCESS_CREATE,
@@ -79,8 +77,9 @@ typedef enum
     MUTEX_LOCK,
     MUTEX_UNLOCK,
     THREAD_EXIT,
-    PROCESS_EXIT   
-}sycall;
+    PROCESS_EXIT  
+}tipo_instruccion;
+
 
 typedef struct {
     uint8_t idLength;
