@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
     log_info(logger_cpu, "empieza el programa");
     socket_memoria = crear_conexion(logger_cpu, "MEMORIA", cfg_cpu->IP_MEMORIA, cfg_cpu->PUERTO_MEMORIA);
     log_info(logger_cpu, "cree la conexion con memoria");
-    if (hacer_handshake(socket_memoria) == HANDSHAKE_OK)
+   /* if (hacer_handshake(socket_memoria) == HANDSHAKE_OK)
     {
         log_info(logger_cpu, "Correcto en handshake con memoria");
         sem_post(&sem_servidor_creado);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         liberar_memoria();
         return EXIT_FAILURE;
     }
-    
+    */
 
    
   

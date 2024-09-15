@@ -27,6 +27,8 @@ typedef  enum
     OK,
 
 //---------------CPU-KERNEL-------------------
+    CREAR_PROCESO,
+    CREAR_PROCESO_RTA,
 
 
 //---------------CPU-MEMORIA-------------------
