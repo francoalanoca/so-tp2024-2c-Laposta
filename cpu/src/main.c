@@ -165,26 +165,22 @@ void ejecutar_ciclo(void* arg) {
 
 void liberar_memoria()
 {
-    // Liberar la lista tlb
-    if (tlb)
-    {
-        list_destroy_and_destroy_elements(tlb, free);
-    }
+   
 
     // Liberar semáforos
     sem_destroy(&sem_valor_instruccion);
 
     sem_destroy(&sem_valor_base_particion);
 
-    free(prox_inst);
+    /*free(prox_inst);*/
 
    
 
     // Liberar strings
-    free(path_config);
+   /* free(path_config);
     free(ip_cpu);
     free(valor_registro_obtenido);
-
+*/
 
     // Liberar config y logger(declarados en init_cpu)
     cerrar_programa();
