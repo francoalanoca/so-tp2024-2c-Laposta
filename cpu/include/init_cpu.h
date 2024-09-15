@@ -38,12 +38,7 @@ typedef struct {
     char *server_name;
 } t_procesar_conexion_args;
 
-typedef struct {
-    uint32_t pid; 
-    uint32_t tid;
-    t_registros_CPU registros_cpu;
-} t_proceso;
-extern t_proceso* proceso_actual;
+
 typedef struct 
 {
     uint32_t PC;
@@ -56,7 +51,12 @@ typedef struct
     uint32_t GX;
     uint32_t HX;
 }t_registros_CPU;
-
+typedef struct {
+    uint32_t pid; 
+    uint32_t tid;
+    t_registros_CPU registros_cpu;
+} t_proceso;
+extern t_proceso* proceso_actual;
 
 typedef enum
 {
