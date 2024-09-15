@@ -2,11 +2,11 @@
 
 int tamanioParams;
 int tamanioInterfaces;
-t_pcb* proceso_actual;
-t_registros_CPU* registros_cpu;
-instr_t* fetch(int conexion, t_pcb* proceso){
+t_proceso* proceso_actual;
+
+instr_t* fetch(int conexion, t_proceso* proceso){
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
-    log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->program_counter); //LOG OBLIGATORIO
+    log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
     pedir_instruccion(proceso, conexion); 
     //TODO:WAIT semaforo
@@ -21,58 +21,104 @@ tipo_instruccion decode(instr_t* instr){
 }
 
 
-void execute(instr_t* inst,tipo_instruccion tipo_inst, t_pcb* proceso, int conexion,t_list* tlb,  int socket_dispatch, int socket_interrupt){
+void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion, int socket_dispatch, int socket_interrupt){
     
-    switch(tipo_inst){
-        case SET:
-        {   log_info(logger_cpu, "ENTRO EN SET ");
-            log_info(logger_cpu, "PID: %u - Ejecutando: SET - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-            char *endptr;
-            uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
-            set(inst->param1, param2_num, proceso);
-            break;
+        switch(tipo_inst){
+            case SET:
+            {   
+                log_info(logger_cpu, "ENTRO EN SET ");
+                log_info(logger_cpu, "PID: %u - Ejecutando: SET - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                char *endptr;
+                uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
+                set(inst->param1, param2_num, proceso);
+                break;
+            }
+            case SUM:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: SUM - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                sum(inst->param1, inst->param2,proceso);
+                break;
+            }
+
+            case JNZ:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: JNZ - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                jnz(inst->param1, inst->param2,proceso);
+                break;
+            }        
+
+            case READ_MEM:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                break;
+            }   
+
+            case WRITE_MEM:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                break;
+            }   
+
+            case LOG:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
+                break;
+            }
+
+            // SYSCALLS:
+            case DUMP_MEMORY:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: DUMP_MEMORY", proceso->pid);
+                break;
+            }
+            case IO:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: IO", proceso->pid);
+                break;
+            }
+            case PROCESS_CREATE:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
+               
+                enviar_process_create_a_kernel(proceso->pid,inst->param1, inst->param2,inst->param3,socket_dispatch);
+                
+                
+                break;
+            }
+            case THREAD_CREATE:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CREATE", proceso->pid);
+                break;
+            }
+            case THREAD_JOIN:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_JOIN", proceso->pid);
+                break;
+            }
+            case THREAD_CANCEL:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CANCEL", proceso->pid);
+                break;
+            }
+            case MUTEX_CREATE:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_CREATE", proceso->pid);
+                break;
+            }
+            case MUTEX_LOCK:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_LOCK", proceso->pid);
+                break;
+            }
+            case MUTEX_UNLOCK:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_UNLOCK", proceso->pid);
+                break;
+            }
+
+            default:
+                log_warning(logger_cpu, "Hubo un error: instrucción no encontrada");
         }
-        case SUM:
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: SUM - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-            sum(inst->param1, inst->param2,proceso);
-            break;
-        }
-
-        case JNZ:
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: JNZ - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-            jnz(inst->param1, inst->param2,proceso);
-            break;
-        }        
-        
-        case READ_MEM :
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
-            
-            break;
-        }   
-       
-        case WRITE_MEM  :
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
-            
-            break;
-        }   
-
-
-        case LOG:
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
-           
-            break;
-        }
-
-
-
-        default:
-        	log_warning(logger_cpu, "Huvo un error: instruccion no encontrada");
-    }
 
 }
 
@@ -91,67 +137,68 @@ void check_interrupt(int conexion_kernel){
     
 }
 
-void pedir_instruccion(t_pcb* proceso,int conexion){
+void pedir_instruccion(t_proceso* proceso,int conexion){
   
     
     t_paquete* paquete_pedido_instruccion;
     paquete_pedido_instruccion = crear_paquete(HANDSHAKE); // TODO: Crear codigo de operacion
         
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->pid,  sizeof(uint32_t)); 
-    agregar_a_paquete(paquete_pedido_instruccion,  &proceso->program_counter,  sizeof(uint32_t));  
+ 
+    agregar_a_paquete(paquete_pedido_instruccion,  &proceso->registros_cpu.PC,  sizeof(uint32_t));  
         
     enviar_paquete(paquete_pedido_instruccion, conexion); 
     eliminar_paquete(paquete_pedido_instruccion);
 }
 
-void set(char* registro, uint32_t valor, t_pcb* proceso){
+void set(char* registro, uint32_t valor, t_proceso* proceso){
     //printf("El valor del set es : %d ", valor);
     registros registro_elegido = identificarRegistro(registro);
     //pthread_mutex_lock(&mutex_proceso_actual);
     switch(registro_elegido){
         case PC:
         {
-          registros_cpu->PC = valor;
+          proceso->registros_cpu.PC = valor;
             break;
         }
         case AX:
         {
-          registros_cpu->AX = valor;
+          proceso->registros_cpu.AX = valor;
             break;
         }
         case BX:
         {
-          registros_cpu->BX = valor;
+          proceso->registros_cpu.BX = valor;
             break;
         }
         case CX:
         {
-          registros_cpu->CX = valor;
+          proceso->registros_cpu.CX = valor;
             break;
         }
         case DX:
         {
-          registros_cpu->DX = valor;
+          proceso->registros_cpu.DX = valor;
             break;
         }
         case EX:
         {
-          registros_cpu->EX = valor;
+          proceso->registros_cpu.EX = valor;
             break;
         }
         case FX:
         {
-          registros_cpu->FX = valor;
+          proceso->registros_cpu.FX = valor;
             break;
         }
         case GX:
         {
-          registros_cpu->GX = valor;
+          proceso->registros_cpu.GX = valor;
             break;
         }
         case HX:
         {
-          registros_cpu->HX = valor;
+          proceso->registros_cpu.HX = valor;
             break;
         }
         
@@ -164,7 +211,7 @@ void set(char* registro, uint32_t valor, t_pcb* proceso){
    // registro = valor;
 }
 
-void sum(char* registro_destino, char* registro_origen, t_pcb* proceso){
+void sum(char* registro_destino, char* registro_origen, t_proceso* proceso){
     registros id_registro_destino = identificarRegistro(registro_destino);
     registros id_registro_origen = identificarRegistro(registro_origen);
 
@@ -174,47 +221,47 @@ void sum(char* registro_destino, char* registro_origen, t_pcb* proceso){
     switch(id_registro_destino){
         case PC:
         {
-           registros_cpu->PC = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.PC = valor_reg_destino + valor_reg_origen;
             break;
         }
         case AX:
         {
-           registros_cpu->AX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.AX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case BX:
         {
-           registros_cpu->BX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.BX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case CX:
         {
-           registros_cpu->CX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.CX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case DX:
         {
-           registros_cpu->DX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.DX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case EX:
         {
-           registros_cpu->EX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.EX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case FX:
         {
-           registros_cpu->FX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.FX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case GX:
         {
-           registros_cpu->GX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.GX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case HX:
         {
-           registros_cpu->HX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.HX = valor_reg_destino + valor_reg_origen;
             break;
         }
         
@@ -228,12 +275,12 @@ void sum(char* registro_destino, char* registro_origen, t_pcb* proceso){
 }
 
 
-void jnz(char* registro, uint32_t inst, t_pcb* proceso){
+void jnz(char* registro, uint32_t inst, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
     if(valor_registro != 0){
         pthread_mutex_lock(&mutex_proceso_actual);
-        proceso->program_counter = inst;
+        proceso->registros_cpu.PC = inst;
         pthread_mutex_unlock(&mutex_proceso_actual);
     }
 }
@@ -295,51 +342,51 @@ registros identificarRegistro(char* registro){
     }
 }
 
-uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso){
+uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
     switch(id_registro){
         case PC:
         {
-           return registros_cpu->PC;
+           return proceso->registros_cpu.PC;
             break;
         }
         case AX:
         {
-           return registros_cpu->AX;
+           return proceso->registros_cpu.AX;
             break;
         }
         case BX:
         {
-           return registros_cpu->BX;
+           return proceso->registros_cpu.BX;
             break;
         }
         case CX:
         {
-           return registros_cpu->CX;
+           return proceso->registros_cpu.CX;
             break;
         }
         case DX:
         {
-           return registros_cpu->DX;
+           return proceso->registros_cpu.DX;
             break;
         }
         case EX:
         {
-           return registros_cpu->EX;
+           return proceso->registros_cpu.EX;
             break;
         }
         case FX:
         {
-           return registros_cpu->FX;
+           return proceso->registros_cpu.FX;
             break;
         }
         case GX:
         {
-           return registros_cpu->GX;
+           return proceso->registros_cpu.GX;
             break;
         }
         case HX:
         {
-           return registros_cpu->HX;
+           return proceso->registros_cpu.HX;
             break;
         }
       
@@ -353,28 +400,24 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_pcb* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, uint32_t base_particion, int conexion){
-    uint32_t direccion_resultado;// = malloc(sizeof(uint32_t));
-    bool encontro_en_tlb = false;
-    uint32_t indice_encontrado; //= malloc(sizeof(uint32_t));
-   // char* valor_direccion_logica = concatenar_cadenas(uint32_to_string(direccion_logica->nro_pag),uint32_to_string(direccion_logica->nro_pag));
+uint32_t mmu(uint32_t direccion_logica, int conexion, int pid){
+    uint32_t direccion_resultado;
+    uint32_t desplazamiento = direccion_logica;
+    obtener_base_particion(conexion,pid);
  
-    uint32_t desplazamiento = direccion_logica;// = malloc(sizeof(uint32_t));
- 
+    
+    sem_wait(&sem_valor_base_particion);
     direccion_resultado = base_particion+desplazamiento ;
 
- log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
+    log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
             
-	 
 
-       
-    //ver el caso en que me piden un tamaño que no entra en la pagina
     return direccion_resultado;
 }
 
 
 
-void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_log* logger, int conexion){
+void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, t_log* logger, int conexion){
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el 
     //Registro Dirección y lo almacena en el Registro Datos
     registros id_registro_direccion = identificarRegistro(registro_direccion);
@@ -382,7 +425,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
     //uint32_t valor_registro_direccion = malloc(sizeof(uint32_t));
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = malloc(sizeof(uint32_t));
+    uint32_t dir_fisica_result;
     dir_fisica_result = mmu(valor_registro_direccion,base,conexion);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
@@ -415,7 +458,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_pcb* proceso, t_
 
 }
 
-void write_mem(char* registro_direccion, char* registro_datos, t_pcb* proceso, t_log* logger, int conexion){
+void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, t_log* logger, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
     printf("registro: %s\n",registro_datos);
@@ -471,9 +514,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
          
             
         enviar_paquete(paquete_pedido_valor_memoria, conexion); 
-        free(paquete_pedido_valor_memoria->buffer->stream);
-        free(paquete_pedido_valor_memoria->buffer);
-        free(paquete_pedido_valor_memoria);
+        eliminar_paquete(paquete_pedido_valor_memoria);
 
 }
 
@@ -482,7 +523,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 
 
 
-void solicitar_mutex_lock_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
+void solicitar_mutex_lock_kernel(t_proceso* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel){
         printf("entro a solicitar_wait_kernel\n");
         
         t_paquete* paquete_wait_kernel;
@@ -495,7 +536,7 @@ void solicitar_mutex_lock_kernel(t_pcb* pcb,uint32_t recurso_tamanio ,char* recu
 
 }
 
-void solicitar_mutex_unlock_kernel(t_pcb* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel){
+void solicitar_mutex_unlock_kernel(t_proceso* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel){
         printf("entro a solicitar_wait_kernel\n");
         t_paquete* paquete_signal_kernel;
    
@@ -524,20 +565,20 @@ void imprimir_contenido_paquete(t_paquete* paquete) {
     printf("\n");
 }
 
-void obtener_base_particion(int conexion, t_pcb* pcb){ // PCB O PROCESS ID?
+void obtener_base_particion(int conexion, int pid){ 
     printf("entro a obtener base particion\n");
-    t_paquete* paquete_pedido_tamanio_pag;
-    paquete_pedido_tamanio_pag = crear_paquete(BASE_PARTICION); // TODO: Crear codigo de operacion
-    //AGREGAR A PAQUETE
-    enviar_paquete(paquete_pedido_tamanio_pag, conexion); 
-    eliminar_paquete(paquete_pedido_tamanio_pag);
+    t_paquete* paquete_pedido_tamanio_base;
+    paquete_pedido_tamanio_base = crear_paquete(BASE_PARTICION); 
+    agregar_a_paquete(paquete_pedido_tamanio_base, pid,  sizeof(uint32_t));
+    enviar_paquete(paquete_pedido_tamanio_base, conexion); 
+    eliminar_paquete(paquete_pedido_tamanio_base);
 
 }
 
 
  
 
-void ciclo_de_instrucciones(int *conexion_mer, t_pcb *proceso, t_list *tlb, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
+void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, t_list *tlb, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
 {   log_info(logger_cpu, "Entro al ciclo");
     int conexion_mem = *conexion_mer;
     int dispatch = *socket_dispatch;
@@ -556,10 +597,10 @@ void ciclo_de_instrucciones(int *conexion_mer, t_pcb *proceso, t_list *tlb, int 
     log_info(logger_cpu, "Voy a entrar a decode");
     tipo_inst = decode(inst);
     log_info(logger_cpu, "Voy a entrar a execute");
-    execute(inst, tipo_inst, proceso, conexion_mem, tlb, dispatch, interrupt);
+    execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != HANDSHAKE) //TODO: Crear tipo de instruccion
     {
-        proceso_actual->program_counter += 1;
+        proceso_actual->registros_cpu.PC += 1;
     }
     log_info(logger_cpu, "Voy a entrar a check_interrupt");
     check_interrupt(dispatch_interrupt);
@@ -602,3 +643,27 @@ void generar_interrupcion_a_kernel(int conexion){
     eliminar_paquete(paquete_interrupcion_kernel);
     log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
  }
+
+  void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
+    printf("entro a enviar_process_create_a_kernel\n");
+    t_paquete* paquete_create_process;
+    char *endptr;
+    paquete_create_process = crear_paquete(CREAR_PROCESO); //AGREGAR LA OPERACION CORESPONDENTIE
+    int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
+
+     
+    agregar_a_paquete(paquete_create_process, &pid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
+    uint32_t tamanio_proceso_num = (uint32_t)strtoul(tamanio_proceso, &endptr, 10);// Convertir la cadena a uint32_t
+    agregar_a_paquete(paquete_create_process, &tamanio_proceso_num,  sizeof(uint32_t));
+    uint32_t prioridad_hilo_num = (uint32_t)strtoul(prioridad_hilo, &endptr, 10);// Convertir la cadena a uint32_t
+    agregar_a_paquete(paquete_create_process, &prioridad_hilo_num,  sizeof(uint32_t));
+    enviar_paquete(paquete_create_process, socket_dispatch); 
+    eliminar_paquete(paquete_create_process);
+
+  }
+
+
+    
+   

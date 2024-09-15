@@ -66,9 +66,9 @@ int main(int argc, char *argv[])
 
     prox_inst = malloc(sizeof(instr_t));
     printf("Creo prox_inst\n");
-    tlb = list_create();
+    
 
-    printf("TLB size: %d\n", list_size(tlb));
+
 
     printf("iniciando ");
     if (!init(path_config) || !cargar_configuracion(path_config))
@@ -80,9 +80,9 @@ int main(int argc, char *argv[])
     }
 
     log_info(logger_cpu, "empieza el programa");
-      socket_memoria = crear_conexion(logger_cpu, "MEMORIA", cfg_cpu->IP_MEMORIA, cfg_cpu->PUERTO_MEMORIA);
+    socket_memoria = crear_conexion(logger_cpu, "MEMORIA", cfg_cpu->IP_MEMORIA, cfg_cpu->PUERTO_MEMORIA);
     log_info(logger_cpu, "cree la conexion con memoria");
-    if (hacer_handshake(socket_memoria) == HANDSHAKE_OK)
+   /* if (hacer_handshake(socket_memoria) == HANDSHAKE_OK)
     {
         log_info(logger_cpu, "Correcto en handshake con memoria");
         sem_post(&sem_servidor_creado);
@@ -93,18 +93,14 @@ int main(int argc, char *argv[])
         liberar_memoria();
         return EXIT_FAILURE;
     }
-    
+    */
 
-    
+   
   
-    //sem_wait(&sem_conexion_dispatch_iniciado);
-    //sem_wait(&sem_conexion_interrupt_iniciado);
-
-
-   log_info(logger_cpu,"conexion memoria %d",socket_memoria);
+    log_info(logger_cpu,"conexion memoria %d",socket_memoria);
     pthread_create(&hilo_atender_memoria, NULL, (void *)atender_memoria, &socket_memoria);
     
-       log_info(logger_cpu,"conexion memoria %d",socket_memoria);
+    log_info(logger_cpu,"conexion memoria %d",socket_memoria);
     printf("Paso  sem_servidor_creado\n");
     // Obtener tamaño de página
 
@@ -122,7 +118,7 @@ int main(int argc, char *argv[])
 
     /*ANTERIOR
         proceso_interrumpido_actual = malloc(sizeof(t_proceso_interrumpido));
-        proceso_interrumpido_actual->pcb = malloc(sizeof(t_pcb));
+        proceso_interrumpido_actual->pcb = malloc(sizeof(t_proceso));
         proceso_interrumpido_actual->pcb->pid = NULL;*/
     sem_wait(&sem_servidor_creado);
     sem_wait(&sem_conexion_dispatch_iniciado);
@@ -135,9 +131,9 @@ int main(int argc, char *argv[])
     params->lista_conexion_kernel_dispatch = lista_sockets_global;
     params->conexion_kernel_interrupt = conexion_kernel_interrupt;
 
-   pthread_t hilo_ejecutar_ciclo;
-   log_info(logger_cpu,"conexion memoria %d",socket_memoria);
-      log_info(logger_cpu,"voy a crear hilo");
+    pthread_t hilo_ejecutar_ciclo;
+    log_info(logger_cpu,"conexion memoria %d",socket_memoria);
+    log_info(logger_cpu,"voy a crear hilo");
     int result = pthread_create(&hilo_ejecutar_ciclo, NULL, ejecutar_ciclo,(void*)params);
     //pthread_join(hilo_ejecutar_ciclo,NULL);
     pthread_join(servidor_dispatch, NULL);
@@ -169,26 +165,22 @@ void ejecutar_ciclo(void* arg) {
 
 void liberar_memoria()
 {
-    // Liberar la lista tlb
-    if (tlb)
-    {
-        list_destroy_and_destroy_elements(tlb, free);
-    }
+   
 
     // Liberar semáforos
     sem_destroy(&sem_valor_instruccion);
 
     sem_destroy(&sem_valor_base_particion);
 
-    free(prox_inst);
+    /*free(prox_inst);*/
 
    
 
     // Liberar strings
-    free(path_config);
+   /* free(path_config);
     free(ip_cpu);
     free(valor_registro_obtenido);
-
+*/
 
     // Liberar config y logger(declarados en init_cpu)
     cerrar_programa();

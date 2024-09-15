@@ -27,6 +27,7 @@ typedef  enum
     OK,
 
 //---------------CPU-KERNEL-------------------
+
     MUTEX_CREATE,
     MUTEXT_LOCK,
     MUTEXT_UNLOCK,
@@ -36,6 +37,7 @@ typedef  enum
     THREAD_CREATE,
     PROCESS_CREATE,
     PROCESS_EXIT,
+
 
 //---------------CPU-MEMORIA-------------------
     SOLICITUD_CONTEXTO,
