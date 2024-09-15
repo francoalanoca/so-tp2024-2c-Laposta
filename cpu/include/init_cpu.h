@@ -57,7 +57,7 @@ typedef struct
     uint32_t HX;
 }t_registros_CPU;
 
-extern t_registros_CPU* registros_cpu;
+
 typedef enum
 {
     SET,
@@ -66,11 +66,7 @@ typedef enum
 	SUM,
     SUB,
     JNZ,
-    LOG
-}tipo_instruccion;
-
-typedef enum
-{
+    LOG,
     DUMP_MEMORY,
     IO,
     PROCESS_CREATE,
@@ -81,8 +77,9 @@ typedef enum
     MUTEX_LOCK,
     MUTEX_UNLOCK,
     THREAD_EXIT,
-    PROCESS_EXIT   
-}sycall;
+    PROCESS_EXIT  
+}tipo_instruccion;
+
 
 typedef struct {
     uint8_t idLength;

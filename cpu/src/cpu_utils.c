@@ -3,10 +3,10 @@
 int tamanioParams;
 int tamanioInterfaces;
 t_proceso* proceso_actual;
-t_registros_CPU* registros_cpu;
+
 instr_t* fetch(int conexion, t_proceso* proceso){
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
-    log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->program_counter); //LOG OBLIGATORIO
+    log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
     pedir_instruccion(proceso, conexion); 
     //TODO:WAIT semaforo
@@ -23,56 +23,98 @@ tipo_instruccion decode(instr_t* instr){
 
 void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion,t_list* tlb,  int socket_dispatch, int socket_interrupt){
     
-    switch(tipo_inst){
-        case SET:
-        {   log_info(logger_cpu, "ENTRO EN SET ");
-            log_info(logger_cpu, "PID: %u - Ejecutando: SET - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-            char *endptr;
-            uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
-            set(inst->param1, param2_num, proceso);
-            break;
+        switch(tipo_inst){
+            case SET:
+            {   
+                log_info(logger_cpu, "ENTRO EN SET ");
+                log_info(logger_cpu, "PID: %u - Ejecutando: SET - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                char *endptr;
+                uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
+                set(inst->param1, param2_num, proceso);
+                break;
+            }
+            case SUM:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: SUM - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                sum(inst->param1, inst->param2,proceso);
+                break;
+            }
+
+            case JNZ:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: JNZ - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                jnz(inst->param1, inst->param2,proceso);
+                break;
+            }        
+
+            case READ_MEM:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                break;
+            }   
+
+            case WRITE_MEM:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                break;
+            }   
+
+            case LOG:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
+                break;
+            }
+
+            // SYSCALLS:
+            case DUMP_MEMORY:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: DUMP_MEMORY", proceso->pid);
+                break;
+            }
+            case IO:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: IO", proceso->pid);
+                break;
+            }
+            case PROCESS_CREATE:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
+                break;
+            }
+            case THREAD_CREATE:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CREATE", proceso->pid);
+                break;
+            }
+            case THREAD_JOIN:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_JOIN", proceso->pid);
+                break;
+            }
+            case THREAD_CANCEL:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CANCEL", proceso->pid);
+                break;
+            }
+            case MUTEX_CREATE:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_CREATE", proceso->pid);
+                break;
+            }
+            case MUTEX_LOCK:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_LOCK", proceso->pid);
+                break;
+            }
+            case MUTEX_UNLOCK:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_UNLOCK", proceso->pid);
+                break;
+            }
+
+            default:
+                log_warning(logger_cpu, "Hubo un error: instrucción no encontrada");
         }
-        case SUM:
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: SUM - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-            sum(inst->param1, inst->param2,proceso);
-            break;
-        }
-
-        case JNZ:
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: JNZ - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-            jnz(inst->param1, inst->param2,proceso);
-            break;
-        }        
-        
-        case READ_MEM :
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
-            
-            break;
-        }   
-       
-        case WRITE_MEM  :
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
-            
-            break;
-        }   
-
-
-        case LOG:
-        {
-            log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
-           
-            break;
-        }
-
-
-
-        default:
-        	log_warning(logger_cpu, "Huvo un error: instruccion no encontrada");
-    }
 
 }
 
@@ -99,7 +141,7 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
         
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->pid,  sizeof(uint32_t)); 
  
-    agregar_a_paquete(paquete_pedido_instruccion,  &proceso->program_counter,  sizeof(uint32_t));  
+    agregar_a_paquete(paquete_pedido_instruccion,  &proceso->registros_cpu.PC,  sizeof(uint32_t));  
         
     enviar_paquete(paquete_pedido_instruccion, conexion); 
     eliminar_paquete(paquete_pedido_instruccion);
@@ -112,47 +154,47 @@ void set(char* registro, uint32_t valor, t_proceso* proceso){
     switch(registro_elegido){
         case PC:
         {
-          registros_cpu->PC = valor;
+          proceso->registros_cpu.PC = valor;
             break;
         }
         case AX:
         {
-          registros_cpu->AX = valor;
+          proceso->registros_cpu.AX = valor;
             break;
         }
         case BX:
         {
-          registros_cpu->BX = valor;
+          proceso->registros_cpu.BX = valor;
             break;
         }
         case CX:
         {
-          registros_cpu->CX = valor;
+          proceso->registros_cpu.CX = valor;
             break;
         }
         case DX:
         {
-          registros_cpu->DX = valor;
+          proceso->registros_cpu.DX = valor;
             break;
         }
         case EX:
         {
-          registros_cpu->EX = valor;
+          proceso->registros_cpu.EX = valor;
             break;
         }
         case FX:
         {
-          registros_cpu->FX = valor;
+          proceso->registros_cpu.FX = valor;
             break;
         }
         case GX:
         {
-          registros_cpu->GX = valor;
+          proceso->registros_cpu.GX = valor;
             break;
         }
         case HX:
         {
-          registros_cpu->HX = valor;
+          proceso->registros_cpu.HX = valor;
             break;
         }
         
@@ -175,47 +217,47 @@ void sum(char* registro_destino, char* registro_origen, t_proceso* proceso){
     switch(id_registro_destino){
         case PC:
         {
-           registros_cpu->PC = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.PC = valor_reg_destino + valor_reg_origen;
             break;
         }
         case AX:
         {
-           registros_cpu->AX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.AX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case BX:
         {
-           registros_cpu->BX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.BX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case CX:
         {
-           registros_cpu->CX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.CX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case DX:
         {
-           registros_cpu->DX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.DX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case EX:
         {
-           registros_cpu->EX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.EX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case FX:
         {
-           registros_cpu->FX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.FX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case GX:
         {
-           registros_cpu->GX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.GX = valor_reg_destino + valor_reg_origen;
             break;
         }
         case HX:
         {
-           registros_cpu->HX = valor_reg_destino + valor_reg_origen;
+           proceso->registros_cpu.HX = valor_reg_destino + valor_reg_origen;
             break;
         }
         
@@ -234,7 +276,7 @@ void jnz(char* registro, uint32_t inst, t_proceso* proceso){
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
     if(valor_registro != 0){
         pthread_mutex_lock(&mutex_proceso_actual);
-        proceso->program_counter = inst;
+        proceso->registros_cpu.PC = inst;
         pthread_mutex_unlock(&mutex_proceso_actual);
     }
 }
@@ -300,47 +342,47 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
     switch(id_registro){
         case PC:
         {
-           return registros_cpu->PC;
+           return proceso->registros_cpu.PC;
             break;
         }
         case AX:
         {
-           return registros_cpu->AX;
+           return proceso->registros_cpu.AX;
             break;
         }
         case BX:
         {
-           return registros_cpu->BX;
+           return proceso->registros_cpu.BX;
             break;
         }
         case CX:
         {
-           return registros_cpu->CX;
+           return proceso->registros_cpu.CX;
             break;
         }
         case DX:
         {
-           return registros_cpu->DX;
+           return proceso->registros_cpu.DX;
             break;
         }
         case EX:
         {
-           return registros_cpu->EX;
+           return proceso->registros_cpu.EX;
             break;
         }
         case FX:
         {
-           return registros_cpu->FX;
+           return proceso->registros_cpu.FX;
             break;
         }
         case GX:
         {
-           return registros_cpu->GX;
+           return proceso->registros_cpu.GX;
             break;
         }
         case HX:
         {
-           return registros_cpu->HX;
+           return proceso->registros_cpu.HX;
             break;
         }
       
@@ -554,7 +596,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, t_list *tlb, 
     execute(inst, tipo_inst, proceso, conexion_mem, tlb, dispatch, interrupt);
     if (tipo_inst != HANDSHAKE) //TODO: Crear tipo de instruccion
     {
-        proceso_actual->program_counter += 1;
+        proceso_actual->registros_cpu.PC += 1;
     }
     log_info(logger_cpu, "Voy a entrar a check_interrupt");
     check_interrupt(dispatch_interrupt);
