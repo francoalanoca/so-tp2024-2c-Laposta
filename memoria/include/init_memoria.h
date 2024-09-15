@@ -7,6 +7,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <utils/utils.h>
+#include "semaphore.h"
 
 #include <commons/bitarray.h>
 #include <commons/collections/list.h>

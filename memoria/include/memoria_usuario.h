@@ -22,7 +22,7 @@ typedef struct{
     uint32_t inicio;                // Posición de inicio en el espacio de memoria
     uint32_t tamanio;               // Tamaño de la partición
     bool ocupado;                   // Estado de la partición: libre u ocupada
-    struct t_particion* siguiente;  // Puntero a la siguiente partición (lista enlazada)
+    //t_particion_dinamica* siguiente;  // Puntero a la siguiente partición (lista enlazada)
 } t_particion_dinamica;
 
 //struct para controlar los pids asociados a cada bloque en particiones fijas

@@ -371,7 +371,7 @@ void unificar_particiones_dinamicas(t_particion_dinamica *particion){
 
 
 //Funcion que en base al id de un proceso finalizamos sus estructuras
-void finalizar_proceso(uint32_t proceso_pid){
+void finalizar_proceso_dinamico(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Liberacion del proceso PID %i", proceso_pid);
 
@@ -392,7 +392,7 @@ void finalizar_proceso(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Log Obligatorio: \n");
     log_info(logger_memoria, "Destruccion de particion: \n");
-    log_info(logger_memoria, "PID: %d - Tamaño: %d", proceso_pid, list_size(tabla_de_paginas->lista_de_paginas));
+    //log_info(logger_memoria, "PID: %d - Tamaño: %d", proceso_pid, list_size(tabla_de_paginas->lista_de_paginas));
 
     particion->ocupado = false;
 
