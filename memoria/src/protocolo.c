@@ -30,9 +30,16 @@ void memoria_atender_cpu(){
 		
 		case SOLICITUD_CONTEXTO:
 			log_info(logger_memoria, "Recibí SOLICITUD_CONTEXTO \n");
-			//valores = recibir_paquete(socket_cpu);
+			valores = recibir_paquete(socket_cpu);
+			uint32_t pid = *(uint32_t*)list_get(valores, 0);
+			uint32_t tid = *(uint32_t*)list_get(valores, 1);
+			t_m_contexto* contexto_encontrado = buscar_contexto_en_lista(pid,tid);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			contexto_encontrado->pid = pid;
+			contexto_encontrado->tid = tid;
+			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_CONTEXTO_RTA \n");
+			free(contexto_encontrado);
 			break;
 
 		case SOLICITUD_INSTRUCCION:
@@ -67,7 +74,15 @@ void memoria_atender_cpu(){
 		
 		case DEVOLUCION_CONTEXTO:
 			log_info(logger_memoria, "Recibí DEVOLUCION_CONTEXTO \n");
-			//valores = recibir_paquete(socket_cpu);
+			valores = recibir_paquete(socket_cpu);
+			t_m_contexto* contexto_actualizado = deserializar_contexto(valores);
+			if(actualizar_contexto(contexto_actualizado)){
+				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_OK);
+			}
+			else{
+				printf("No se encontro el pid/tid\n");
+				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_ERROR);
+			}
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de DEVOLUCION_CONTEXTO_RTA \n");
 			break;

@@ -206,7 +206,7 @@ int inicializar_memoria(){
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
         //FIN PRUEBA
-*/
+        */
     return true;   
 }
 
@@ -323,8 +323,8 @@ t_list* char_array_to_list(char** array) {
 
 void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid){
     uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_procesos,pid);
-	t_miniPCB* proceso_a_eliminar = malloc(sizeof(t_miniPCB));
-    proceso_a_eliminar = list_get(lista_procesos,indice_a_eliminar);
+	//t_miniPCB* proceso_a_eliminar = malloc(sizeof(t_miniPCB));
+    //proceso_a_eliminar = list_get(lista_procesos,indice_a_eliminar);
 	list_remove_and_destroy_element(lista_procesos,indice_a_eliminar,(void*)liberar_miniPCB);
     printf("Se elimina pid %d\n",pid);
 }
@@ -407,6 +407,9 @@ void mostrar_hilos(t_list* lista_de_hilos) {
     for (int i = 0; i < list_size(lista_de_hilos); i++) {
         t_hilo *hilo = list_get(lista_de_hilos, i);
         printf("  Hilo TID: %u\n", hilo->tid);
+        printf("  Registro PC: %u\n", hilo->registros.PC);
+        printf("  Registro AX: %u\n", hilo->registros.AX);
+
 
         // Llama a la función para mostrar las instrucciones de este hilo
         mostrar_instrucciones(hilo->lista_de_instrucciones);
@@ -491,6 +494,69 @@ uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
     return -1; 
 
 }
+
+// Función que busca un miniPCB con el pid y un hilo con el tid y devuelve el contexto asociado
+t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid) {
+    size_t cantidad_miniPCBs = list_size(lista_miniPCBs);
+
+    for (size_t i = 0; i < cantidad_miniPCBs; i++) {
+        t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
+
+        if (miniPCB->pid == pid) {
+            size_t cantidad_hilos = list_size(miniPCB->hilos);
+
+            for (size_t j = 0; j < cantidad_hilos; j++) {
+                t_hilo* hilo = list_get(miniPCB->hilos, j);
+
+                if (hilo->tid == tid) {
+                    t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
+                    contexto->registros = hilo->registros;  
+                    contexto->base = miniPCB->base;        
+                    contexto->limite = miniPCB->tamanio_proceso; 
+
+                    return contexto;  
+                }
+            }
+        }
+    }
+
+    // Si no encontramos el miniPCB o el hilo, retornamos NULL
+    return NULL;
+}
+
+// Función que actualiza los registros del hilo con el tid correspondiente dentro del miniPCB con el pid correspondiente
+bool actualizar_contexto(t_m_contexto* contexto) {
+    // Verificamos si el contexto es válido
+    if (contexto == NULL) {
+        return false;
+    }
+
+    // Iteramos sobre la lista de miniPCBs
+    size_t cantidad_miniPCBs = list_size(lista_miniPCBs);
+    for (size_t i = 0; i < cantidad_miniPCBs; i++) {
+        t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
+
+        // Verificamos si el pid coincide
+        if (miniPCB->pid == contexto->pid) {
+            // Ahora iteramos sobre la lista de hilos dentro de este miniPCB
+            size_t cantidad_hilos = list_size(miniPCB->hilos);
+            for (size_t j = 0; j < cantidad_hilos; j++) {
+                t_hilo* hilo = list_get(miniPCB->hilos, j);
+
+                // Verificamos si el tid coincide
+                if (hilo->tid == contexto->tid) {
+                    // Actualizamos los registros del hilo con los del contexto
+                    hilo->registros = contexto->registros;
+                    return true;  // Retornamos true para indicar que se actualizó correctamente
+                }
+            }
+        }
+    }
+
+    // Si no encontramos el pid o el tid, retornamos false
+    return false;
+}
+
 
 
 
