@@ -2,11 +2,11 @@
 int main(int argc, char* argv[]) {
     char* path_config = argv[1];
     iniciar_modulo(path_config);
-    //generar_conexiones_a_cpu();
-           int conexion=conectar_a_memoria();
-             int soli_hand=HANDSHAKE;
-        send(conexion,&soli_hand, sizeof(uint32_t), MSG_WAITALL);
-        log_info(logger_kernel,"ENIVADO DESDE MAIN");
+    generar_conexiones_a_cpu();
+        //    int conexion=conectar_a_memoria();
+        //      int soli_hand=HANDSHAKE;
+        // send(conexion,&soli_hand, sizeof(uint32_t), MSG_WAITALL);
+        // log_info(logger_kernel,"ENIVADO DESDE MAIN");
     
     int tamanio=atoi(argv[3]);
     process_create(argv[2],tamanio,HILO_MAIN);//PROCESO KERNEL INICIAL
