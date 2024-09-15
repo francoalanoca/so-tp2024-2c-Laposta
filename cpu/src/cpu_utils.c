@@ -80,7 +80,7 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
                
-                enviar_process_create_a_kernel(proceso->pid,inst->param1, inst->param2,inst->param3,socket_dispatch);
+                enviar_process_create_a_kernel(inst->param1, inst->param2,inst->param3,socket_dispatch);
                 
                 
                 break;
@@ -644,15 +644,15 @@ void generar_interrupcion_a_kernel(int conexion){
     log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
  }
 
-  void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
+  void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
     printf("entro a enviar_process_create_a_kernel\n");
     t_paquete* paquete_create_process;
     char *endptr;
-    paquete_create_process = crear_paquete(CREAR_PROCESO); //AGREGAR LA OPERACION CORESPONDENTIE
+    paquete_create_process = crear_paquete(PROCESO_CREAR); //AGREGAR LA OPERACION CORESPONDENTIE
     int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
 
      
-    agregar_a_paquete(paquete_create_process, &pid,  sizeof(uint32_t));
+    
     agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
     agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
     uint32_t tamanio_proceso_num = (uint32_t)strtoul(tamanio_proceso, &endptr, 10);// Convertir la cadena a uint32_t
