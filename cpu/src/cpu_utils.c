@@ -648,7 +648,7 @@ void generar_interrupcion_a_kernel(int conexion){
     printf("entro a enviar_process_create_a_kernel\n");
     t_paquete* paquete_create_process;
     char *endptr;
-    paquete_create_process = crear_paquete(HANDSHAKE); //AGREGAR LA OPERACION CORESPONDENTIE
+    paquete_create_process = crear_paquete(CREAR_PROCESO); //AGREGAR LA OPERACION CORESPONDENTIE
     int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
 
      
