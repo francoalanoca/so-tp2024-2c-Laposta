@@ -21,7 +21,7 @@ tipo_instruccion decode(instr_t* instr){
 }
 
 
-void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion,t_list* tlb,  int socket_dispatch, int socket_interrupt){
+void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion, int socket_dispatch, int socket_interrupt){
     
         switch(tipo_inst){
             case SET:
@@ -79,6 +79,9 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case PROCESS_CREATE:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
+                enviar_process_create_a_kernel(proceso->pid,inst->param1, inst->param2,inst->param3,socket_dispatch);
+                
+                
                 break;
             }
             case THREAD_CREATE:
@@ -593,7 +596,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, t_list *tlb, 
     log_info(logger_cpu, "Voy a entrar a decode");
     tipo_inst = decode(inst);
     log_info(logger_cpu, "Voy a entrar a execute");
-    execute(inst, tipo_inst, proceso, conexion_mem, tlb, dispatch, interrupt);
+    execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != HANDSHAKE) //TODO: Crear tipo de instruccion
     {
         proceso_actual->registros_cpu.PC += 1;
@@ -639,3 +642,22 @@ void generar_interrupcion_a_kernel(int conexion){
     eliminar_paquete(paquete_interrupcion_kernel);
     log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
  }
+
+  void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, int tamanio_proceso, int prioridad_hilo, int socket_dispatch){
+    printf("entro a enviar_process_create_a_kernel\n");
+    t_paquete* paquete_create_process;
+    paquete_create_process = crear_paquete(HANDSHAKE); //AGREGAR LA OPERACION CORESPONDENTIE
+    int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
+    agregar_a_paquete(paquete_create_process, &pid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
+    agregar_a_paquete(paquete_create_process, &tamanio_proceso,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_process, &prioridad_hilo,  sizeof(uint32_t));
+    enviar_paquete(paquete_create_process, socket_dispatch); 
+    eliminar_paquete(paquete_create_process);
+
+  }
+
+
+    
+   
