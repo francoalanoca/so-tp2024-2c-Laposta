@@ -5,6 +5,7 @@
 #include "semaphore.h"
 #include <commons/collections/list.h>
 #define HILO_MAIN 0
+#define SIN_ASIGNAR 1
 typedef struct
 {
     /* data */
@@ -59,9 +60,10 @@ typedef struct
 
 typedef struct
 {
-    int cod_op;//recurso, identificador del mutex
+    char* recurso;//recurso, identificador del mutex
     t_list* lista_threads_bloquedos;
-    bool locked;
+    int tid_asignado;
+    int estado;
 } t_mutex;
 
 //---------------------- HILOS ------------------------------
@@ -91,6 +93,8 @@ typedef struct{
     sem_t sem_procesos_ready;
     sem_t sem_espacio_liberado_por_proceso;
     sem_t mutex_lista_global_procesos;
+    sem_t contador_threads_en_ready;
+    sem_t espacio_en_cpu;
 }t_semaforos;
 extern t_semaforos* semaforos;
 

@@ -35,8 +35,21 @@ void crear_hilo_planificador_colas_multinivel(){
 }
 
 void *planificar_fifo(){
+    //mueve procesos de ready a exec
     while(1){
-        //RELLENAR
+        sem_wait(&(semaforos->contador_threads_en_ready));
+        sem_wait(&(semaforos->espacio_en_cpu));
+        //saco de ready
+        sem_wait(&(semaforos->mutex_lista_ready));
+        t_tcb* tcb=NULL;
+        tcb=list_remove(lista_ready,0);
+        sem_post(&(semaforos->mutex_lista_ready));
+        //agrego a exec
+        sem_wait(&(semaforos->mutex_lista_exec));
+            list_add(lista_exec,tcb);
+        sem_post(&(semaforos->mutex_lista_exec));
+        
+        
     }
 }
 
