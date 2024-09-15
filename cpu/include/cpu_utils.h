@@ -34,7 +34,7 @@ void set(char* registro, uint32_t valor, t_proceso* proceso);
 void sum(char* registro_destino, char* registro_origen, t_proceso* proceso);
 void sub(char* registro_destino, char* registro_origen, t_proceso* proceso);
 void jnz(char* registro, uint32_t inst, t_proceso* proceso);
-void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, int tamanio_proceso, int prioridad_hilo, int socket_dispatch);
+void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch);
 void generar_interrupcion_a_kernel(int conexion);
 //t_proceso_memoria* crear_proceso_memoria(t_proceso* proceso);
 void* crear_servidor_dispatch(char* ip_cpu);//

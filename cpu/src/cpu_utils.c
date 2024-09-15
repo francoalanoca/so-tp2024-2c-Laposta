@@ -644,18 +644,20 @@ void generar_interrupcion_a_kernel(int conexion){
     log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
  }
 
-  void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, int tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
+  void enviar_process_create_a_kernel(int pid, char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
     printf("entro a enviar_process_create_a_kernel\n");
     t_paquete* paquete_create_process;
     char *endptr;
     paquete_create_process = crear_paquete(HANDSHAKE); //AGREGAR LA OPERACION CORESPONDENTIE
     int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
 
-     uint32_t prioridad_hilo_num = (uint32_t)strtoul(prioridad_hilo, &endptr, 10);// Convertir la cadena a uint32_t
+     
     agregar_a_paquete(paquete_create_process, &pid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
     agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
-    agregar_a_paquete(paquete_create_process, &tamanio_proceso,  sizeof(uint32_t));
+    uint32_t tamanio_proceso_num = (uint32_t)strtoul(tamanio_proceso, &endptr, 10);// Convertir la cadena a uint32_t
+    agregar_a_paquete(paquete_create_process, &tamanio_proceso_num,  sizeof(uint32_t));
+    uint32_t prioridad_hilo_num = (uint32_t)strtoul(prioridad_hilo, &endptr, 10);// Convertir la cadena a uint32_t
     agregar_a_paquete(paquete_create_process, &prioridad_hilo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_create_process, socket_dispatch); 
     eliminar_paquete(paquete_create_process);
