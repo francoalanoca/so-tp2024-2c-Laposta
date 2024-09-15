@@ -222,7 +222,7 @@ void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
     lista_particiones_dinamicas->inicio = 0;
     lista_particiones_dinamicas->tamanio = tamanio_memoria;
     lista_particiones_dinamicas->ocupado = false;
-    lista_particiones_dinamicas->siguiente = NULL;
+    //lista_particiones_dinamicas->siguiente = NULL;
 }
 
 
@@ -409,6 +409,13 @@ void mostrar_hilos(t_list* lista_de_hilos) {
         printf("  Hilo TID: %u\n", hilo->tid);
         printf("  Registro PC: %u\n", hilo->registros.PC);
         printf("  Registro AX: %u\n", hilo->registros.AX);
+        printf("  Registro BX: %u\n", hilo->registros.BX);
+        printf("  Registro CX: %u\n", hilo->registros.CX);
+        printf("  Registro DX: %u\n", hilo->registros.DX);
+        printf("  Registro EX: %u\n", hilo->registros.EX);
+        printf("  Registro FX: %u\n", hilo->registros.FX);
+        printf("  Registro GX: %u\n", hilo->registros.GX);
+        printf("  Registro HX: %u\n", hilo->registros.HX);
 
 
         // Llama a la función para mostrar las instrucciones de este hilo
