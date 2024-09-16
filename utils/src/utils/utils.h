@@ -37,6 +37,7 @@ typedef  enum
     HILO_CREAR,
     PROCESO_CREAR,
     PROCESO_SALIR,
+    PROCESO_EJECUTAR,
 
 
 //---------------CPU-MEMORIA-------------------

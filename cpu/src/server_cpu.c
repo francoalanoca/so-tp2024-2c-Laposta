@@ -85,7 +85,20 @@ void procesar_conexion_dispatch(void *v_args){
 
         switch (cop){
     
-            
+            case PROCESO_EJECUTAR:
+            {
+                printf("Ejecutando procesoo\n");
+                t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
+                t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
+              
+                pthread_mutex_lock(&mutex_proceso_actual);
+                proceso_actual = proceso; //Agregar a lista de procesos?               
+                pthread_mutex_unlock(&mutex_proceso_actual);
+                list_destroy_and_destroy_elements(lista_paquete_proceso_ejecutar,free); //guarda con esto
+                free(proceso);
+                printf("pase free proceso\n"); 
+                break;
+            }
             default:
             {
                 printf("Codigo de operacion no identifcado\n");
@@ -212,6 +225,7 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
     t_proceso *proceso_nuevo = malloc(sizeof(t_proceso));
    
     proceso_nuevo->pid = *(uint32_t*)list_get(lista_paquete_proceso, 0);
+    proceso_nuevo->tid = *(uint32_t*)list_get(lista_paquete_proceso, 1);
     
 	return proceso_nuevo;
 }
