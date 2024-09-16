@@ -38,6 +38,10 @@ typedef  enum
     PROCESO_CREAR,
     PROCESO_SALIR,
     PROCESO_EJECUTAR,
+    IO_EJECUTAR,
+    FIN_DE_QUANTUM,
+    SOLICITUD_DE_MUTEX_BLOQUEADA,
+    
 
 //---------------CPU-MEMORIA-------------------
     SOLICITUD_CONTEXTO,

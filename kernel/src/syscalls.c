@@ -40,7 +40,7 @@ int asignar_tid(t_pcb* pcb){
 t_tcb* crear_tcb(int prioridad_th,int pid){
     t_tcb* nuevo_tcb=malloc(sizeof(t_tcb));
     nuevo_tcb->prioridad=prioridad_th;
-    nuevo_tcb->quantum_th=config_kernel->quantum;
+
     t_pcb* pcb=buscar_proceso_por(pid);
     nuevo_tcb->tid=asignar_tid(pcb);
     nuevo_tcb->pid=pid;
@@ -61,7 +61,7 @@ t_pcb* buscar_proceso_por(int pid_buscado){
     t_pcb* un_pcb=NULL;
     
     for(int i=0;i<list_size(lista_procesos_global);i++){
-        un_pcb=list_get(lista_procesos_global,i);
+        un_pcb=(t_pcb*)list_get(lista_procesos_global,i);
         if(un_pcb->pid==pid_buscado){
             return un_pcb;
         }
@@ -118,4 +118,58 @@ void mutex_create(char* nombre_mutex,int pid_mutex){
     list_add(pcb->lista_mutex,mutex_nuevo);
 
 }
+
+void ejecutar_io(int tiempo){
+    //quito de el thread de exec
+    sem_wait(&(semaforos->mutex_lista_exec));
+    t_tcb* tcb=list_remove(lista_exec,0);
+    sem_post(&(semaforos->mutex_lista_exec));
+    //agrego a io
+    sem_wait(&(semaforos->mutex_interfaz_io));
+    tcb->tiempo_de_io=tiempo;
+    list_add(interfaz_io->threads_en_espera,tcb);//lo maneja el hilo de bloqueados
+    log_info(config_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>");
+    sem_post(&(semaforos->mutex_interfaz_io));
+}
+
+//TODO: revisar semaforos 
+void mutex_lock(char* recurso){
+    t_mutex* mutex;
+    t_tcb* tcb_ejecutando=(t_tcb*)list_get(lista_exec,0);
+    if(mutex=buscar_mutex(recurso,tcb_ejecutando->pid)!=NULL){
+        if(mutex->estado==SIN_ASIGNAR){
+            asignar_mutex(tcb_ejecutando,mutex);
+        }else{
+            //bloquear thread por mutex lock:interrumpir th, mover a bloq, mover otro th a exec
+            sem_wait(&(semaforos->mutex_lista_exec));
+            list_remove(mutex->lista_threads_bloquedos,0);
+            sem_post(&(semaforos->mutex_lista_exec));
+            list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);
+            enviar_interrumpir_cpu(tcb_ejecutando,SOLICITUD_DE_MUTEX_BLOQUEADA);
+        }   
+    }
+}
+//TODO: revisar semaforos
+//busca el proceso en la lista global de procesos y dentro del proceso el mutex 
+t_mutex* buscar_mutex(char* recurso,int pid){
+    t_mutex *mutex=NULL;
+    sem_wait(&(semaforos->mutex_lista_global_procesos));
+    t_pcb *pcb=buscar_proceso_por(pid);
+    sem_post(&(semaforos->mutex_lista_global_procesos));
+    for (int i = 0; i < list_size(pcb->lista_mutex ); i++)
+    {
+        if(strcmp(recurso,(char*)list_get(pcb->lista_mutex,i))==0){
+            mutex=list_get(pcb->lista_mutex,i);
+            break;
+        }
+        
+    }
+    return mutex;
+    
+}
+void asignar_mutex(t_tcb * tcb, t_mutex* mutex){
+        mutex->estado=ASIGNADO;
+        mutex->tid_asignado=tcb->tid;
+}
+
 

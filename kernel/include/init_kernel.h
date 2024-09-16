@@ -5,7 +5,9 @@
 #include "semaphore.h"
 #include <commons/collections/list.h>
 #define HILO_MAIN 0
-#define SIN_ASIGNAR 1
+#define SIN_ASIGNAR -1
+#define ASIGNADO 1
+
 typedef struct
 {
     /* data */
@@ -48,14 +50,14 @@ typedef struct
     int prioridad_th_main;
 } t_pcb;
 
-typedef struct
-{
+typedef struct{
     /* data */
     int tid;
     int prioridad;
     int pid;
-    int quantum_th;
+    int tiempo_de_io;
     t_estado estado;
+    struct t_tcb *thread_joined;
 } t_tcb;
 
 typedef struct
@@ -73,6 +75,8 @@ typedef struct{
     pthread_t hilo_fifo;
     pthread_t hilo_prioridades;
     pthread_t hilo_colas_multinivel;
+    pthread_t hilo_bloqueados;//maneja io,mutex, join
+    
 }t_hilos;
 
 extern t_hilos *hilos;
@@ -95,9 +99,16 @@ typedef struct{
     sem_t mutex_lista_global_procesos;
     sem_t contador_threads_en_ready;
     sem_t espacio_en_cpu;
+    sem_t mutex_interfaz_io;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
+typedef struct{
+    t_list* threads_en_espera;
+    t_tcb* thread_en_io;
+    bool en_ejecucion;
+}t_io;
+extern t_io* interfaz_io;
 //------------------------------LISTAS-------------------------
 extern t_list* lista_ready; 
 extern t_list* lista_exec;
@@ -105,6 +116,7 @@ extern t_list* lista_blocked;
 extern t_list* lista_exit;
 extern t_list* lista_new;
 extern t_list* lista_procesos_global;
+
 
 int conectar_a_memoria();
 void generar_conexiones_a_cpu();
@@ -143,6 +155,13 @@ t_pcb* buscar_proceso_por(int pid_buscado);
 void mostrar_pcb(t_pcb* pcb, t_log* logger);
 t_tcb* thread_create(char* pseudocodigo,int prio,int pid);
 void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar);
-
+void ejecutar_io(int tiempo);
+void *manejar_bloqueados();
+void *procesar_espera_io(void * t);
+void *interrupcion_quantum(void *t);
+t_mutex* buscar_mutex(char* recurso,int pid);
+void asignar_mutex(t_tcb * tcb, t_mutex* mutex);
+void mutex_lock(char* recurso);
+void enviar_interrumpir_cpu(t_tcb* tcb, int motivo_interrrupt);
 
 #endif /* KERNEL_H_ */

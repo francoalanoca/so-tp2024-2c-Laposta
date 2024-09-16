@@ -5,6 +5,7 @@ t_log* logger_kernel;
 t_semaforos* semaforos;
 t_hilos* hilos;
 int pid_AI_global;
+t_io* interfaz_io;
 
 void iniciar_modulo( char *ruta_config){
     logger_kernel=log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
@@ -44,7 +45,7 @@ void inicializar_semaforos(){
     sem_init(&(semaforos->mutex_lista_global_procesos), 0 ,1);
     sem_init(&(semaforos->espacio_en_cpu), 0 ,1);
     sem_init(&(semaforos->contador_threads_en_ready), 0 ,0);
-    
+    sem_init(&(semaforos->mutex_interfaz_io), 0 ,1);
 }
 
 int conectar_a_memoria(){
@@ -79,6 +80,13 @@ void generar_conexiones_a_cpu() {
 	pthread_create(&conexion_cpu_interrupt_hilo, NULL, (void*) procesar_conexion_interrupt, (void *)&(config_kernel->conexion_cpu_interrupt));
 	pthread_detach(conexion_cpu_interrupt_hilo);
 
+}
+void iniciar_interfaz_io(){
+    t_io* interfaz_io=malloc(sizeof(t_io));
+    interfaz_io->en_ejecucion=false;
+    interfaz_io->thread_en_io=NULL;
+    interfaz_io->threads_en_espera=list_create();
+    
 }
 void procesar_conexion_interrupt(void* socket){
     //TODO: operaciones a ejecutar
@@ -131,11 +139,27 @@ void procesar_conexion_dispatch(void* socket){
                
 
         break;
+    case IO_EJECUTAR://PID, TID, tiempo de io en milisegundos
+               log_info(logger_kernel,"se recibio instruccion MUTEX_CREATE");
+               t_list* params_io=recibir_paquete(fd_conexion_cpu);
+
+               int tiempo_io=*((int*)list_get(params_io,1));
+               ejecutar_io(tiempo_io);
+               
+        break;
+    case MUTEX_BLOQUEAR://recurso
+               log_info(logger_kernel,"se recibio instruccion MUTEX_CREATE");
+               t_list* params_lock=recibir_paquete(fd_conexion_cpu);
+                char* recurso=list_get(params_lock,0);
+               mutex_lock( recurso);
+               
+        break;
         
     default:
         break;
     }
 }
+
 
 void mostrar_pcb(t_pcb* pcb, t_log* logger) {
     // Verificamos que el PCB no sea NULL
