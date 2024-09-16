@@ -46,22 +46,63 @@ void *planificar_fifo(){
         sem_post(&(semaforos->mutex_lista_ready));
         //agrego a exec
         sem_wait(&(semaforos->mutex_lista_exec));
-            list_add(lista_exec,tcb);
+        list_add(lista_exec,tcb);
         sem_post(&(semaforos->mutex_lista_exec));
-        
-        
+        enviar_thread_a_cpu(tcb);
     }
 }
 
 void *planificar_prioridades(){
     while(1){
-        //RELLENAR
+        sem_wait(&(semaforos->contador_threads_en_ready));
+        sem_wait(&(semaforos->espacio_en_cpu));
+        //saco de ready
+        sem_wait(&(semaforos->mutex_lista_ready));
+        t_tcb* tcb=NULL;
+        int indice_del_prioritario=buscar_indice_de_mayor_prioridad();
+        tcb=list_remove(lista_ready,indice_del_prioritario);
+        sem_post(&(semaforos->mutex_lista_ready));
+        //agrego a exec
+        sem_wait(&(semaforos->mutex_lista_exec));
+        list_add(lista_exec,tcb);
+        sem_post(&(semaforos->mutex_lista_exec));
+        enviar_thread_a_cpu(tcb);
     }
 }
 
+int buscar_indice_de_mayor_prioridad() {
+    t_tcb* tcb_mayor_prioridad = NULL;
+    int indice_mayor_prioridad = -1;
+
+    // Recorremos la lista
+    for (int i = 0; i < list_size(lista_ready); i++) {
+        t_tcb* tcb_actual = (t_tcb*) list_get(lista_ready, i);
+
+        // Si es el primer elemento o el actual tiene mayor prioridad (menor valor)
+        if (tcb_mayor_prioridad == NULL || tcb_actual->prioridad < tcb_mayor_prioridad->prioridad) {
+            tcb_mayor_prioridad = tcb_actual;
+            indice_mayor_prioridad = i; 
+        }
+    }
+    return indice_mayor_prioridad;
+}
+
+
 void *planificar_colas_multinivel(){
     while(1){
-        //RELLENAR
+        sem_wait(&(semaforos->contador_threads_en_ready));
+        sem_wait(&(semaforos->espacio_en_cpu));
+        //saco de ready
+        sem_wait(&(semaforos->mutex_lista_ready));
+        t_tcb* tcb=NULL;
+        int indice_del_prioritario=buscar_indice_de_mayor_prioridad();
+        tcb=list_remove(lista_ready,indice_del_prioritario);
+        sem_post(&(semaforos->mutex_lista_ready));
+        //agrego a exec
+        sem_wait(&(semaforos->mutex_lista_exec));
+        list_add(lista_exec,tcb);
+        sem_post(&(semaforos->mutex_lista_exec));
+        enviar_thread_a_cpu(tcb);
     }
 }
 

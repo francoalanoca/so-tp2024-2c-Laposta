@@ -142,5 +142,7 @@ void inicializar_listas();
 t_pcb* buscar_proceso_por(int pid_buscado);
 void mostrar_pcb(t_pcb* pcb, t_log* logger);
 t_tcb* thread_create(char* pseudocodigo,int prio,int pid);
+void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar);
+
 
 #endif /* KERNEL_H_ */

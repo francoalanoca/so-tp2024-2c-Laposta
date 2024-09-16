@@ -69,6 +69,12 @@ t_pcb* buscar_proceso_por(int pid_buscado){
    
     return un_pcb;
 }
+void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar){
+    t_paquete * paquete=crear_paquete(PROCESO_EJECUTAR);
+    agregar_a_paquete(paquete,&(tcb_a_ejetucar->pid),sizeof(int));
+    agregar_a_paquete(paquete,&(tcb_a_ejetucar->tid),sizeof(int));
+    enviar_paquete(paquete,config_kernel->conexion_cpu_dispatch);
+}
 //******************      SYSCALLS         *******************************
 void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_main){
     t_pcb* pcb_nuevo=NULL;
