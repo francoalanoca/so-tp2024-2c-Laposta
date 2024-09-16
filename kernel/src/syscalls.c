@@ -9,9 +9,7 @@ t_pcb* crear_pcb(int tam_proceso,char* archivo_instrucciones,int prioridad_th0) 
     pid_AI_global++;
     pcb->prioridad_th_main=prioridad_th0;
     pcb->ruta_pseudocodigo=strdup(archivo_instrucciones);
-    //TCB-main
-    añadir_tid_a_proceso(pcb);
-
+ 
     return pcb;
 }
 void añadir_tid_a_proceso(t_pcb* pcb){
@@ -51,9 +49,12 @@ t_tcb* crear_tcb(int prioridad_th,int pid){
 void enviar_a_memoria_creacion_thread(t_tcb* tcb_nuevo,char* pseudo,int socket){
     t_paquete* paquete_a_enviar=crear_paquete(INICIAR_HILO);
     int longitud=strlen(pseudo)+1;
-    agregar_a_paquete(paquete_a_enviar,pseudo,longitud);
-    agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->tid),sizeof(int));
     agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->pid),sizeof(int));
+    log_info(logger_kernel,"valor de pid:%d",tcb_nuevo->pid);
+    agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->tid),sizeof(int));
+    log_info(logger_kernel,"valor de tid:%d",tcb_nuevo->tid);
+    agregar_a_paquete(paquete_a_enviar,pseudo,longitud);
+    log_info(logger_kernel,"ruta pseudocodigo:%s",pseudo);
     enviar_paquete(paquete_a_enviar,socket);  
 }
 t_pcb* buscar_proceso_por(int pid_buscado){
