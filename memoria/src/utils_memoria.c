@@ -44,10 +44,10 @@ t_m_crear_hilo* deserializar_iniciar_hilo(t_list*  lista_paquete ){
     //Creamos una variable de tipo struct que ira guardando todo del paquete y le asignamos tamaño
     t_m_crear_hilo* crear_hilo = malloc(sizeof(t_m_crear_hilo));
     
-    crear_hilo->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    crear_hilo->pid = *((uint32_t*)list_get(lista_paquete, 0));
     printf("Pid recibido: %d \n", crear_hilo->pid);
 
-    crear_hilo->tid = *(uint32_t*)list_get(lista_paquete, 1);
+    crear_hilo->tid = *((uint32_t*)list_get(lista_paquete, 1));
     printf("Tid recibido: %d \n", crear_hilo->tid);
 
     printf("Nombre del archivo: %s \n", (char*) list_get(lista_paquete, 2));

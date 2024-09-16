@@ -137,7 +137,7 @@ void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
 
 void cerrar_programa();
 
-void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_pseudocodigo);
+void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso);
 
 void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
 

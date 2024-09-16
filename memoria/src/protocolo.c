@@ -123,7 +123,7 @@ void memoria_atender_kernel(void* socket){
 			else{
 				int rta_crear_proceso = crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
 				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
-				//inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso, iniciar_proceso->archivo_pseudocodigo);
+				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso);
 				//enviar rta OK
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_OK);
