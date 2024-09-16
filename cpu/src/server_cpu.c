@@ -149,51 +149,56 @@ void atender_memoria (int *socket_mr) {
 
             break;
         }
-    switch (cop) {
+        switch (cop) {
 
-        case SOLICITUD_INSTRUCCION_RTA:
-                    {
-                        log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
-                         
-                        t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
-                         log_info(logger_cpu, "Paquete recibido");
-                        instr_t* instruccion_recibida = instruccion_deserializar(lista_paquete_instruccion_rec);
-                         log_info(logger_cpu, "EL codigo de instrucción es %d ",instruccion_recibida->id);
-                        if(instruccion_recibida != NULL){
-                            prox_inst = instruccion_recibida;
-                            log_info(logger_cpu, "EL codigo de instrucción es %d ",prox_inst->id);
-                            //SEMAFORO QUE ACTIVA EL SEGUIMIENTO DEL FLUJO EN FETCH
-                            list_destroy_and_destroy_elements(lista_paquete_instruccion_rec,free);
-                            /*free(instruccion_recibida->param1);
-                            free(instruccion_recibida->param2);
-                            free(instruccion_recibida->param3);
-                            free(instruccion_recibida->param4);
-                            free(instruccion_recibida->param5);
-                            free(instruccion_recibida);*/
-                            log_info(logger_cpu, "POST SEMAFORO");
-                            sem_post(&sem_valor_instruccion);
-                        }
-                        else{
-                            log_info(logger_cpu, "ERROR AL  RECIBIR INSTRUCCION DE MEMORIA");
-                            list_destroy_and_destroy_elements(lista_paquete_instruccion_rec,free);
-                            /*free(instruccion_recibida->param1);
-                            free(instruccion_recibida->param2);
-                            free(instruccion_recibida->param3);
-                            free(instruccion_recibida->param4);
-                            free(instruccion_recibida->param5);
-                            free(instruccion_recibida);*/
-                        }
-                        break;
-                    }
-
-                    default:
-                    {
-                        log_error(logger_cpu, "Operacion invalida enviada desde Memoria:%d",cop);
-                        break;
-                    }
+            case SOLICITUD_INSTRUCCION_RTA:
+                {
+                log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
+                    
+                t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
+                    log_info(logger_cpu, "Paquete recibido");
+                instr_t* instruccion_recibida = instruccion_deserializar(lista_paquete_instruccion_rec);
+                    log_info(logger_cpu, "EL codigo de instrucción es %d ",instruccion_recibida->id);
+                if(instruccion_recibida != NULL){
+                    prox_inst = instruccion_recibida;
+                    log_info(logger_cpu, "EL codigo de instrucción es %d ",prox_inst->id);
+                    //SEMAFORO QUE ACTIVA EL SEGUIMIENTO DEL FLUJO EN FETCH
+                    list_destroy_and_destroy_elements(lista_paquete_instruccion_rec,free);
+                    /*free(instruccion_recibida->param1);
+                    free(instruccion_recibida->param2);
+                    free(instruccion_recibida->param3);
+                    free(instruccion_recibida->param4);
+                    free(instruccion_recibida->param5);
+                    free(instruccion_recibida);*/
+                    log_info(logger_cpu, "POST SEMAFORO");
+                    sem_post(&sem_valor_instruccion);
+                }
+                else{
+                    log_info(logger_cpu, "ERROR AL  RECIBIR INSTRUCCION DE MEMORIA");
+                    list_destroy_and_destroy_elements(lista_paquete_instruccion_rec,free);
+                    /*free(instruccion_recibida->param1);
+                    free(instruccion_recibida->param2);
+                    free(instruccion_recibida->param3);
+                    free(instruccion_recibida->param4);
+                    free(instruccion_recibida->param5);
+                    free(instruccion_recibida);*/
+                }
+                break;
+                }
+            case BASE_PARTICION_RTA:
+                t_list* lista_paquete_base = recibir_paquete(socket_memoria_server);
+                base_particion = list_get(lista_paquete_base,0);
+                sem_post(&sem_valor_base_particion);
+                list_destroy(lista_paquete_base);
+            break;
+            default:
+                {
+                    log_error(logger_cpu, "Operacion invalida enviada desde Memoria:%d",cop);
                     break;
-            }
+                }
+            break;
         }
+    }
 }
 
 int hacer_handshake (int socket_cliente){
@@ -203,8 +208,8 @@ int hacer_handshake (int socket_cliente){
     return recibir_operacion(socket_cliente);
 }
 
-t_pcb *proceso_deserializar(t_list*  lista_paquete_proceso ) {
-    t_pcb *proceso_nuevo = malloc(sizeof(t_pcb));
+t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
+    t_proceso *proceso_nuevo = malloc(sizeof(t_proceso));
    
     proceso_nuevo->pid = *(uint32_t*)list_get(lista_paquete_proceso, 0);
     

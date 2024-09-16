@@ -100,7 +100,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
 
-                if (tam_proceso < tamanio_bloque_actual) {
+                if (tam_proceso < tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
                     bitarray_set_bit(bitmap_particiones, i);
@@ -135,7 +135,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
-                if(tam_proceso<tamanio_bloque_actual){ //El proceso entra en el bloque actual
+                if(tam_proceso<tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
                     if(tamanio_ultimo_bloque_best_fit == 0 || (tamanio_bloque_actual<tamanio_ultimo_bloque_best_fit)){
                         tamanio_ultimo_bloque_best_fit = tamanio_bloque_actual;
                         ultimo_bloque_best_fit = i;
@@ -147,7 +147,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
             if(!bloque_libre_encontrado){
                 return -1;
             }
-            else{
+            else {
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
                  t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
@@ -157,7 +157,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                     list_add(pids_por_bloque,pid_por_bloque);
                     printf("Se agrego a lista. Estado actual:\n");
                     print_lista_pid_por_bloque(pids_por_bloque);
-
+                     return INICIAR_PROCESO_RTA_OK; 
             }
         }
         else if(strcmp(algoritmo_alocacion, "WORST") == 0){
@@ -172,24 +172,28 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 if (tamanio_bloque_str == NULL) {
                     printf("Error: puntero a tamaño de bloque es NULL para índice %d\n", i);
                     continue; // Salta al siguiente elemento de la lista
+                   
+
                 }
 
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
-                if(tam_proceso<tamanio_bloque_actual){ //El proceso entra en el bloque actual
+                if(tam_proceso<tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
                     if(tamanio_ultimo_bloque_worst_fit == 0 || (tamanio_bloque_actual>tamanio_ultimo_bloque_worst_fit)){
                         tamanio_ultimo_bloque_worst_fit = tamanio_bloque_actual;
                         ultimo_bloque_worst_fit = i;
                         bloque_libre_encontrado = true;
                     }
+               
                 }
             }
 
             if(!bloque_libre_encontrado){
+                printf("saliro por !bloque_libre_encontrado");
                 return -1;
             }
-            else{
+            else {
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
                 t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
@@ -197,12 +201,15 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                     pid_por_bloque->bloque = ultimo_bloque_worst_fit;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
                     list_add(pids_por_bloque,pid_por_bloque);
+                
+                return INICIAR_PROCESO_RTA_OK;
             }
         }
         else{
             printf("Error: algoritmo incorrecto\n");
             return -1;
         }
+            printf("saliro por return 0");
         return 0;
     }
 }

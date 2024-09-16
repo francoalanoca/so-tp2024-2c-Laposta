@@ -3,7 +3,7 @@
 t_log *logger_cpu; // Definición de la variable global
 t_config_cpu *cfg_cpu;
 t_config *file_cfg_cpu;
-
+int base_particion;
 
 int checkProperties(char *path_config) {
     // config valida

@@ -55,7 +55,8 @@ void* planificar_procesos(){
                  sem_wait(&(semaforos->mutex_lista_ready));
                     list_add(lista_ready,tcb);
                  sem_post(&(semaforos->mutex_lista_ready));
-
+                //Le avisamos a planif_corto_plazo que tiene un thread en ready
+                sem_post(&(semaforos->contador_threads_en_ready));
             }else{
                 log_info(logger_kernel, "esperando liberacion de memoria \n");
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)

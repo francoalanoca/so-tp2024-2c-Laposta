@@ -237,28 +237,28 @@ void cerrar_programa(){
     log_destroy(logger_memoria);
 }
 
-void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso, char* archivo_pseudocodigo){
+void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
     t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
     nuevo_proceso->pid = pid;
     nuevo_proceso->hilos = list_create();
 
-    nuevo_hilo->tid = 0;
-    nuevo_hilo->registros.PC = 0;
-    nuevo_hilo->registros.AX = 0;
-    nuevo_hilo->registros.BX = 0;
-    nuevo_hilo->registros.CX = 0;
-    nuevo_hilo->registros.DX = 0;
-    nuevo_hilo->registros.EX = 0;
-    nuevo_hilo->registros.FX = 0;
-    nuevo_hilo->registros.GX = 0;
-    nuevo_hilo->registros.HX = 0;
-    nuevo_hilo->lista_de_instrucciones = list_create();
-    leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
+    // nuevo_hilo->tid = 0;
+    // nuevo_hilo->registros.PC = 0;
+    // nuevo_hilo->registros.AX = 0;
+    // nuevo_hilo->registros.BX = 0;
+    // nuevo_hilo->registros.CX = 0;
+    // nuevo_hilo->registros.DX = 0;
+    // nuevo_hilo->registros.EX = 0;
+    // nuevo_hilo->registros.FX = 0;
+    // nuevo_hilo->registros.GX = 0;
+    // nuevo_hilo->registros.HX = 0;
+    // nuevo_hilo->lista_de_instrucciones = list_create();
+    // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
     list_add(nuevo_proceso->hilos,nuevo_hilo);
 
-    //PENDIENTE: ver de donde se consigue la base
+ 
     uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
 
     printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);

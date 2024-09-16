@@ -18,7 +18,7 @@ int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket
 void procesar_conexion_interrupt(void *v_args);
 void procesar_conexion_dispatch(void *v_args);
 int hacer_handshake (int socket_cliente);
-t_pcb *proceso_deserializar(t_list*  lista_paquete_proceso ) ;
+t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) ;
 void* crear_servidor_interrupt(char* ip_cpu);
 instr_t* instruccion_deserializar(t_list* lista_paquete_inst);
 uint32_t deserealizar_marco(t_list*  lista_paquete );
