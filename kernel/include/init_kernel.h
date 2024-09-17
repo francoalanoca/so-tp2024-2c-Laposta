@@ -100,6 +100,7 @@ typedef struct{
     sem_t contador_threads_en_ready;
     sem_t espacio_en_cpu;
     sem_t mutex_interfaz_io;
+    sem_t contador_tcb_en_io;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
@@ -126,6 +127,7 @@ void iniciar_modulo(char *ruta_config);
 void cargar_config_kernel(char *ruta_config);
 void process_create(char* ruta_instrucciones,int tamanio_proceso,int prioridad_hilo_main);
 t_pcb* crear_pcb(int tam_proceso,char*archivo_instrucciones,int prioridad) ;
+t_tcb* crear_tcb(int prio,int pid);
 void añadir_tid_a_proceso(t_pcb* pcb);
 void enviar_solicitud_espacio_a_memoria(t_pcb* pcb_solicitante,int socket);
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria);
@@ -157,11 +159,20 @@ t_tcb* thread_create(char* pseudocodigo,int prio,int pid);
 void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar);
 void ejecutar_io(int tiempo);
 void *manejar_bloqueados();
-void *procesar_espera_io(void * t);
+
 void *interrupcion_quantum(void *t);
 t_mutex* buscar_mutex(char* recurso,int pid);
 void asignar_mutex(t_tcb * tcb, t_mutex* mutex);
 void mutex_lock(char* recurso);
+void mutex_create(char* nombre_mutex,int pid_mutex);
+void thread_exit(t_tcb* t);
+void thread_cancel(int tid,int pid);
+
 void enviar_interrumpir_cpu(t_tcb* tcb, int motivo_interrrupt);
+void enviar_a_memoria_creacion_thread(t_tcb* tcb_nuevo,char* pseudo,int socket);
+void* enviar_a_memoria_thread_saliente(void* t);
+bool quitar_tid_de_proceso(t_tcb *t);
+void destruir_tcb(t_tcb* t);
+int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid);
 
 #endif /* KERNEL_H_ */

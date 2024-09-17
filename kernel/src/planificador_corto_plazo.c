@@ -120,7 +120,7 @@ void *planificar_colas_multinivel()
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
         enviar_thread_a_cpu(tcb);
-        iniciar_quantum();
+        iniciar_quantum(tcb);//se inicia el contador de tiempo RR en un hilo
     }
 }
 
