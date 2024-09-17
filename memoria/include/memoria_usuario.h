@@ -59,9 +59,9 @@ t_bitarray *crear_bitmap(int entradas);
 
 void finalizar_proceso(void* direccion_proceso);
 
-uint32_t read_mem(uint32_t direccion_fisica);
+//uint32_t read_mem(uint32_t direccion_fisica);
 
-void write_mem(uint32_t direccion_fisica, uint32_t valor);
+//bool write_mem(uint32_t direccion_fisica, uint32_t valor);
 
 void uint32_to_string(uint32_t num, char *str, size_t size);
 

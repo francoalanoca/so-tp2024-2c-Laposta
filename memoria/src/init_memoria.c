@@ -565,7 +565,66 @@ bool actualizar_contexto(t_m_contexto* contexto) {
 }
 
 
+// Función que busca el miniPCB al que pertenece la dirección física
+t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
+    for (int i = 0; i < list_size(lista_particiones); i++) {
+        t_miniPCB* proceso = list_get(lista_particiones, i);
+        if (direccion_fisica >= proceso->base && 
+            direccion_fisica < proceso->base + proceso->tamanio_proceso) {
+            return proceso;
+        }
+    }
+    return NULL; // Si no se encuentra un proceso que contenga la dirección
+}
 
+bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
+    // Obtenemos el proceso correspondiente a la dirección
+    t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
+
+    if (proceso == NULL) {
+        // No se encontró ningún proceso que contenga la dirección
+        return false;
+    }
+
+    // Verificamos que los 4 bytes no se pasen del espacio del proceso
+    if (direccion_fisica + sizeof(uint32_t) > proceso->base + proceso->tamanio_proceso) {
+        // No hay suficiente espacio para escribir los 4 bytes
+        return false;
+    }
+
+    // Calculamos la posición en la memoria a partir de la dirección física
+    uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+
+    // Escribimos el valor de 4 bytes en la posición calculada
+    memcpy(posicion_memoria, &valor, sizeof(uint32_t));
+
+    return true;  // La escritura fue exitosa
+}
+
+// Función para leer 4 bytes si la dirección está dentro del proceso
+bool read_mem(uint32_t direccion_fisica, uint32_t* resultado) {
+    // Obtenemos el proceso correspondiente a la dirección
+    t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
+
+    if (proceso == NULL) {
+        // No se encontró ningún proceso que contenga la dirección
+        return false;
+    }
+
+    // Verificamos que los 4 bytes no se pasen del espacio del proceso
+    if (direccion_fisica + sizeof(uint32_t) > proceso->base + proceso->tamanio_proceso) {
+        // No hay suficiente espacio para leer los 4 bytes
+        return false;
+    }
+
+    // Calculamos la posición en la memoria a partir de la dirección física
+    uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+
+    // Leemos los 4 bytes de la posición calculada
+    memcpy(resultado, posicion_memoria, sizeof(uint32_t));
+
+    return true;  // La lectura fue exitosa
+}
 
 
 
