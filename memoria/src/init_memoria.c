@@ -217,12 +217,18 @@ int inicializar_memoria(){
 
 //Funcion que inicia las variables de memoria en dinamica
 void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
-    lista_particiones_dinamicas = malloc(sizeof(t_particion_dinamica));
-    lista_particiones_dinamicas->pid = 0;                   // 0 indica que está libre
-    lista_particiones_dinamicas->inicio = 0;
-    lista_particiones_dinamicas->tamanio = tamanio_memoria;
-    lista_particiones_dinamicas->ocupado = false;
-    lista_particiones_dinamicas->siguiente = NULL;
+
+    lista_particiones_dinamicas = list_create();
+    t_particion_dinamica* particion_dinamica_inicial = malloc(sizeof(t_particion_dinamica));
+
+    particion_dinamica_inicial->pid = 0;                   // 0 indica que está libre
+    particion_dinamica_inicial->tid = 0;
+    particion_dinamica_inicial->inicio = 0;
+    particion_dinamica_inicial->tamanio = cfg_memoria->TAM_MEMORIA;
+    particion_dinamica_inicial->ocupado = false;
+    //lista_particiones_dinamicas->siguiente = NULL;
+
+    list_add(lista_particiones_dinamicas, particion_dinamica_inicial);
 }
 
 

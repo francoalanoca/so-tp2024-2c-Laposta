@@ -3,7 +3,7 @@
 //-------------------------Definicion de variables globales----------------------
 void* memoria_usuario;                          //espacio de usuario
 t_list* lista_particiones;              //lista de las particiones
-t_particion_dinamica* lista_particiones_dinamicas; //variable que guarda la lista de particiones
+t_list* lista_particiones_dinamicas; //variable que guarda la lista de particiones
 t_list* lista_miniPCBs;                 //lista de los procesos
 uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
 t_bitarray *bitmap_particiones;         //bitmap para controlar los bloques libres y ocupados
