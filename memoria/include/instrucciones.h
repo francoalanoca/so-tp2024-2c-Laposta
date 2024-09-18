@@ -8,6 +8,7 @@
 #include <commons/string.h>
 
 #include "../include/init_memoria.h"
+#include "../include/particion_dinamica.h"
 
 //----------------------------------Estructuras---------------------------------
 

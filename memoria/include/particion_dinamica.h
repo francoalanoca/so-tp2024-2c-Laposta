@@ -21,7 +21,7 @@
 
 //----------------------------------Prototipos---------------------------------
 
-//void crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
+//int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
 int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso);
 
 int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso);
@@ -36,7 +36,8 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
 
 int busco_indice_particion_dinamica_por_PID(uint32_t proceso_pid);
 t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid);
-t_miniPCB *busco_un_proceso_PID(uint32_t proceso_pid);
+t_miniPCB *busco_proceso_por_PID(uint32_t proceso_pid);
+t_hilo *busco_hilo_por_TID(uint32_t hilo_tid, t_miniPCB *proceso);
 
 void unificar_particiones_dinamicas(int indice_particion);
 void finalizar_proceso_dinamico(uint32_t proceso_pid);

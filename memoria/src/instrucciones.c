@@ -6,12 +6,8 @@
 //Funcion que crea la lista de instrucciones dado un puntero al archivo de un proceso
 void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hilo_tid) {
 
-	t_miniPCB *miniPCB = malloc(sizeof(t_miniPCB));
-    t_hilo *hilo_proceso = malloc(sizeof(t_hilo));
-
-    miniPCB->pid = proceso_pid;
-    hilo_proceso->tid = hilo_tid;
-    hilo_proceso->lista_de_instrucciones = list_create();
+	t_miniPCB *miniPCB = busco_proceso_por_PID(proceso_pid);
+    t_hilo *hilo_proceso = busco_hilo_por_TID(hilo_tid, miniPCB);
 
 	//Creamos una variable que gurada el path entero: path_instrucciones/nombre
 	char* path_total = string_new();
@@ -62,6 +58,7 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hil
             list_add(hilo_proceso->lista_de_instrucciones, linea2);
         }
 	}
+
     //Agregamos el proceso a la lista de procesos
 	list_add(miniPCB->hilos, hilo_proceso);
     list_add(lista_miniPCBs, miniPCB);

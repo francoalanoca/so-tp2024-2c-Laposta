@@ -1,15 +1,17 @@
 #include "../include/particion_dinamica.h"
 
 /*
-void crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
+int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
+
+    int respuesta;
 
     if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        crear_proceso_dinamico(proceso_pid, tamanio_proceso);
+        respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
     }else{
         if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            crear_proceso_fijo(proceso_pid, tamanio_proceso);
+            respuesta = crear_proceso_fijo(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
     }
-    
+    return respuesta;
 }
 */
 
@@ -31,7 +33,7 @@ int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
 int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
-    t_particion_dinamica *particion_resultante = malloc(sizeof(t_particion_dinamica));;
+    t_particion_dinamica *particion_resultante;
 
 
     // Selecciona la partición según el algoritmo
@@ -155,6 +157,9 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     
     //Si la partición tiene exactamente el tamaño necesario, no la dividimos
     if (particion->tamanio == tamanio_proceso){
+
+        particion->tamanio = tamanio_proceso;
+        particion->ocupado = true;
         list_add(lista_particiones_dinamicas, particion);
     }
 
@@ -167,11 +172,18 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     nueva_particion->tid = 0;                                           //No tiene hilo asignado (ver si va 0)
     //nueva_particion->siguiente = particion->siguiente;
 
+    t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
+    proceso->pid = particion->pid;
+    proceso->base = particion->inicio;
+    proceso->tamanio_proceso = tamanio_proceso + particion->inicio;
+    proceso->hilos = list_create();
+
     //La partición original se reduce al tamaño del proceso
     particion->tamanio = tamanio_proceso;
     particion->ocupado = true;
     //particion->siguiente = nueva_particion;
 
+    list_add(lista_miniPCBs, proceso);
     list_add(lista_particiones_dinamicas, particion);
     list_add(lista_particiones_dinamicas, nueva_particion);
 }
@@ -256,6 +268,21 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
 
 //Funciones para la finalizacion de un proceso
 
+/*
+int finalizar_proceso(uint32_t proceso_pid){
+
+    int respuesta;
+
+    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
+        respuesta = finalizar_proceso_dinamico(uint32_t proceso_pid);
+    }else{
+        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
+            respuesta = finalizar_proceso_fijo(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+    }
+    return respuesta;
+}
+*/
+
 
 int busco_indice_particion_dinamica_por_PID(uint32_t proceso_pid){
 
@@ -303,7 +330,7 @@ t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid){
 
 
 
-t_miniPCB *busco_un_proceso_PID(uint32_t proceso_pid){
+t_miniPCB *busco_proceso_por_PID(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Buscando el proceso por PID");
 
@@ -326,6 +353,27 @@ t_miniPCB *busco_un_proceso_PID(uint32_t proceso_pid){
 
 
 
+
+t_hilo *busco_hilo_por_TID(uint32_t hilo_tid, t_miniPCB* proceso){
+
+    log_trace(logger_memoria, "Buscando el hilo por TID");
+
+    t_hilo *hilo;
+
+    //Recorremos la lista que contiene la lista de hilo
+    for (int i = 0; i < list_size(proceso->hilos); i++){
+
+        //Sacamos un hilo de la lista
+        hilo = list_get(proceso->hilos, i);
+
+        //Si el id del hilo es el mismo que el hilo buscado, la retorna
+        if (hilo_tid == hilo->tid)
+            return hilo;
+    }
+
+    log_error(logger_memoria, "No se encontro el hilo TID - %d", hilo_tid);
+    abort();
+}
 
 
 
@@ -384,7 +432,7 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
 
     int indice_particion = busco_indice_particion_dinamica_por_PID(proceso_pid);
     t_particion_dinamica *particion = busco_particion_dinamica_por_PID(proceso_pid);
-    t_miniPCB *proceso = busco_un_proceso_PID(proceso_pid);
+    t_miniPCB *proceso = busco_proceso_por_PID(proceso_pid);
 
     //Recorremos la lista de hilos
     for (int j = 0; j < list_size(proceso->hilos); j++){
