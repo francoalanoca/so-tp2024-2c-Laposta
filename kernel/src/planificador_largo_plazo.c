@@ -48,13 +48,7 @@ void* planificar_procesos(){
                t_tcb* tcb=NULL;
                tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
-                 sem_wait(&(semaforos->mutex_lista_new));
-                    list_remove(lista_new,0);
-                 sem_post(&(semaforos->mutex_lista_new));
-                 //agrego thread a ready
-                 sem_wait(&(semaforos->mutex_lista_ready));
-                    list_add(lista_ready,tcb);
-                 sem_post(&(semaforos->mutex_lista_ready));
+                pasar_new_a_ready();
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{
@@ -74,29 +68,29 @@ void* planificar_procesos(){
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado) {
     if (!list_is_empty(lista_origen)) {
         sem_wait(sem_origen);
-        t_pcb* pcb = list_remove(lista_origen, 0); 
+        t_tcb* tcb = list_remove(lista_origen, 0); 
         sem_post(sem_origen);
         sem_wait(sem_destino);
-        pcb->estado = nuevo_estado;
-        list_add(lista_destino, pcb);
+        tcb->estado = nuevo_estado;
+        list_add(lista_destino, tcb);
         sem_post(sem_destino);
         if (nuevo_estado == NEW) {
-            log_trace(logger_kernel, "Proceso con PID %d movido a la lista NEW", pcb->pid);
+            log_trace(logger_kernel, "Hilo con TID %d movido a la lista NEW", tcb->tid);
         }
         else if(nuevo_estado == READY){
-            log_trace(logger_kernel, "Proceso con PID %d movido a la lista READY", pcb->pid);
+            log_trace(logger_kernel, "Hilo con TID %d movido a la lista READY", tcb->tid);
         }
         else if(nuevo_estado == EXEC){
-            log_trace(logger_kernel, "Proceso con PID %d movido a la lista EXEC", pcb->pid);
+            log_trace(logger_kernel, "Hilo con TID %d movido a la lista EXEC", tcb->tid);
         }
         else if(nuevo_estado == BLOCKED){
-            log_trace(logger_kernel, "Proceso con PID %d movido a la lista BLOCKED", pcb->pid);
+            log_trace(logger_kernel, "Hilo con TID %d movido a la lista BLOCKED", tcb->tid);
         }
         else if(nuevo_estado == EXIT){
-            log_trace(logger_kernel, "Proceso con PID %d movido a la lista EXIT", pcb->pid);
+            log_trace(logger_kernel, "Hilo con TID %d movido a la lista EXIT", tcb->tid);
         }
     }else 
-        log_info(logger_kernel, "No hay procesos en la lista origen");
+        log_info(logger_kernel, "No hay hilos en la lista origen");
 }
 
 
@@ -112,5 +106,10 @@ void pasar_ready_a_exit() { //se usara? ver finalizar proceso
 }
 void pasar_new_a_exit() { //se usara? ver finalizar proceso
     mover_procesos(lista_new, lista_exit, &(semaforos->mutex_lista_new), &(semaforos->mutex_lista_exit), EXIT);
+}
+void agregar_a_lista(t_tcb *tcb,t_list* lista,sem_t* sem){
+    sem_wait(sem);
+    list_add(lista,tcb);
+    sem_post(sem);
 }
 

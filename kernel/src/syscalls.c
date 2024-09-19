@@ -11,7 +11,9 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
     sem_wait(&(semaforos->mutex_lista_new));
          list_add(lista_new,pcb_nuevo);
     sem_post(&(semaforos->mutex_lista_new));
+
     sem_post(&(semaforos->sem_procesos_new));
+    
     log_info(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
 }
 
@@ -86,7 +88,6 @@ void mutex_lock(char* recurso){
 void thread_exit(t_tcb *tcb){
     bool se_logro_eliminar=quitar_tid_de_proceso(tcb);
     if(se_logro_eliminar){
-    
     pthread_t hilo_manejo_exit;
     pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
     pthread_detach(hilo_manejo_exit);
@@ -98,13 +99,26 @@ void thread_cancel(int tid_a_cancelar,int pid)
 {
     t_pcb* pcb=buscar_proceso_por(pid);
     int indice_de_tid=buscar_indice_de_tid_en_proceso(pcb,tid_a_cancelar);
+
     if(indice_de_tid!=-1){//el tcb aun no se elimino
-        //busco donde este el pcb
-      //TODO:
+        //busco donde este el pcb}
+
+        t_tcb* tcb_a_cancelar;
+        if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo
+            tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_exec,tid_a_cancelar,pid,&(semaforos->mutex_lista_exec));
+        }
+        if(tcb_a_cancelar==NULL){
+            tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_blocked,tid_a_cancelar,pid,&(semaforos->mutex_lista_blocked));
+        }
+           if(tcb_a_cancelar==NULL){
+            tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_ready,tid_a_cancelar,pid,&(semaforos->mutex_lista_ready));
+        }
+         if(tcb_a_cancelar!=NULL) {//muevo a exit
+            agregar_a_lista(tcb_a_cancelar,lista_exit,&(semaforos->mutex_lista_exit));
+            thread_exit(tcb_a_cancelar);
+            }
     }
-    //busco tcb a eliminar
-    //llamar a thread_exit.
-    //TODO:
+ //hace nada
 
    
 }

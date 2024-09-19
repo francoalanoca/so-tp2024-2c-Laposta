@@ -121,23 +121,12 @@ void* enviar_a_memoria_thread_saliente(void* t){
          log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
     close(fd_memoria); 
     eliminar_paquete(paquete);
-    destruir_tcb(tcb);
-
 }
 
 void destruir_tcb(t_tcb* tcb){
     if (tcb == NULL) {
         return; 
     }
-
-    // Si hay un thread asociado en thread_joined, lo agregamos a la cola de ready
-    if (tcb->thread_joined != NULL) {
-        sem_wait(&(semaforos->mutex_lista_ready));
-        list_add(lista_ready, tcb->thread_joined);// Agregar el TCB joineado a la lista de ready
-        sem_post(&(semaforos->mutex_lista_ready)); 
-        sem_post(&(semaforos->contador_threads_en_ready));
-    }
-
     // Liberar la memoria reservada por el TCB
     free(tcb);
 }
@@ -169,3 +158,16 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
     return exito_eliminando_de_pcb;
  }
 
+t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
+    sem_wait(sem);
+    for(int i=0;i<list_size(lista);i++){
+        t_tcb* tcb=(t_tcb*)list_get(lista,i);
+        if(tcb->tid==tid && tcb->pid==pid){
+            list_remove(lista,i);
+            sem_post(sem);
+            return tcb;
+        }
+    }
+    sem_post(sem);
+    return NULL;
+}

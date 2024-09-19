@@ -139,9 +139,10 @@ void procesar_conexion_dispatch(void *socket)
             log_info(logger_kernel, "se recibio instruccion FINALIZAR_HILO");
             // quito de exec
             sem_wait(&(semaforos->mutex_lista_exec));
-            t_tcb *thread_saliente = (t_tcb *)list_remove(lista_exec, 0);
+            t_tcb *thread_saliente = (t_tcb *)list_get(lista_exec, 0);
             sem_wait(&(semaforos->mutex_lista_exec));
             thread_exit(thread_saliente);
+            pasar_execute_a_exit();
             // marca la cpu como libre
             sem_post(&(semaforos->espacio_en_cpu));
           

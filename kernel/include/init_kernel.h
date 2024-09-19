@@ -174,5 +174,7 @@ void* enviar_a_memoria_thread_saliente(void* t);
 bool quitar_tid_de_proceso(t_tcb *t);
 void destruir_tcb(t_tcb* t);
 int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid);
+t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem);
+void agregar_a_lista(t_tcb *tcb,t_list* lista,sem_t* sem);
 
 #endif /* KERNEL_H_ */
