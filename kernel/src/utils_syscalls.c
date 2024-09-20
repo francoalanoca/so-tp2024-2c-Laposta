@@ -171,3 +171,49 @@ t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_post(sem);
     return NULL;
 }
+
+void interfaz_io(){
+    int io_en_ejecucion = 0;
+    while(1){
+        sen_wait (&(semaforos->sem_io_solicitud));
+
+        if (io_en_ejecucion == 0){
+            io_en_ejecucion = 1;
+            sem_wait(&(semaforos->sem_io_en_uso)); //IO EN USO
+
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb* tcb_usando_io = list_remove (lista_exec,0);
+            sem_post(&(semaforos->mutex_lista_exec));
+
+            sem_post(&(semaforos->sem_sleep_io));
+
+
+        }else if(io_en_ejecucion == 1){
+            sem_wait(&(semaforos->mutex_lista_espera_io));
+            t_tcb* tcb_espera = list_remove (lista_espera_io,0);
+            sem_post(&(semaforos->mutex_lista_espera_io));
+
+            agregar_a_lista(tcb_espera,lista_exec,&semaforos->mutex_lista_exec);
+
+            sem_post(&(semaforos->sem_io_solicitud));
+        }
+
+        sem_wait(&(semaforos->sem_io_en_uso));
+        t_tcb* tcb_espera = list_remove (lista_espera_io,0);
+
+    }
+}
+
+void verificacion_sleep_io(){
+    while(1){
+
+        }
+}l
+
+void* hilo_sleep_io(tiempo){
+    while(1){
+        sem_wait(&(semaforos->sem_sleep_io));
+        sleep(tiempo);
+        sem_post(&(semaforos->sem_sleep_io));
+    }
+}

@@ -5,7 +5,7 @@ t_log *logger_kernel;
 t_semaforos *semaforos;
 t_hilos *hilos;
 int pid_AI_global;
-t_io *interfaz_io;
+//t_io *interfaz_io;
 
 void iniciar_modulo(char *ruta_config)
 {
@@ -42,6 +42,7 @@ void inicializar_semaforos()
     sem_init(&(semaforos->mutex_lista_exit), 0, 1);
     sem_init(&(semaforos->mutex_lista_exec), 0, 1);
     sem_init(&(semaforos->mutex_lista_blocked), 0, 1);
+    sem_init(&(semaforos->mutex_lista_espera_io), 0, 1);
     sem_init(&(semaforos->inicializar_planificador), 0, 0);
     sem_init(&(semaforos->sem_procesos_new), 0, 0);
     sem_init(&(semaforos->mutex_lista_global_procesos), 0, 1);
@@ -49,6 +50,9 @@ void inicializar_semaforos()
     sem_init(&(semaforos->contador_threads_en_ready), 0, 0);
     sem_init(&(semaforos->mutex_interfaz_io), 0, 1);
     sem_init(&(semaforos->contador_tcb_en_io),0,0);
+    sem_init(&(semaforos->sem_io_en_uso),0,0); //revisar aca si empieza con 1 0 0
+    sem_init(&(semaforos->sem_io_solicitud),0,0);
+    sem_init(&(semaforos->sem_sleep_io),0,1);
 }
 
 int conectar_a_memoria()
@@ -75,13 +79,14 @@ void generar_conexiones_a_cpu()
     // pthread_create(&conexion_cpu_interrupt_hilo, NULL, (void*) procesar_conexion_interrupt, (void *)&(config_kernel->conexion_cpu_interrupt));
     // pthread_detach(conexion_cpu_interrupt_hilo);
 }
-void iniciar_interfaz_io()
-{
-    t_io *interfaz_io = malloc(sizeof(t_io));
-    interfaz_io->en_ejecucion = false;
-    interfaz_io->thread_en_io = NULL;
-    interfaz_io->threads_en_espera = list_create();
-}
+
+// void iniciar_interfaz_io()
+// {
+//     t_io *interfaz_io = malloc(sizeof(t_io));
+//     interfaz_io->en_ejecucion = false;
+//     interfaz_io->thread_en_io = NULL;
+//     interfaz_io->threads_en_espera = list_create();
+// }
 
 void procesar_conexion_dispatch(void *socket)
 {
