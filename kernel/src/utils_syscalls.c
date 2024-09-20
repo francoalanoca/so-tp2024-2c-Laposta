@@ -178,7 +178,8 @@ t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb){
     t_mutex *mutex=NULL;
     for(int i=0;i<list_size(tcb->mutex_asignados);i++){
          mutex=(t_mutex*)list_get(tcb->mutex_asignados,i);
-        if(strcmp(recurso,mutex->recurso)){
+        if(strcmp(recurso,mutex->recurso)==0){
+            list_remove(tcb->mutex_asignados,1);
             return mutex;
         }
     }
