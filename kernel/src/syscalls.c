@@ -33,7 +33,7 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
 void mutex_create(char* nombre_mutex,int pid_mutex){
     t_mutex* mutex_nuevo=malloc(sizeof(t_mutex));
     mutex_nuevo->recurso=nombre_mutex;
-    mutex_nuevo->tid_asignado=-1;
+    mutex_nuevo->thread_asignado=NULL;
     mutex_nuevo->estado=SIN_ASIGNAR;//sin ASIGNAR
     mutex_nuevo->lista_threads_bloquedos=list_create();
     sem_wait(&(semaforos->mutex_lista_global_procesos));
@@ -71,17 +71,38 @@ void mutex_lock(char* recurso){
             //continua ejecutando el mismo tcb-->vuelvo a  enviar el mismo tcb a ejecutar
             enviar_thread_a_cpu(tcb_ejecutando);
         }else{
-            //se bloquea--> quito el tcb de exec y marco la cpu como libre
-            sem_wait(&(semaforos->mutex_lista_exec));
-            list_remove(mutex->lista_threads_bloquedos,0);
-            sem_post(&(semaforos->mutex_lista_exec));
-            list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);  
+            //se bloquea--> quito el tcb de exec y lo mando a espera de mutex y bloq
+            // y marco la cpu como libre
+            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            
+            list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);
+            
+            agregar_a_lista(tcb_ejecutando,lista_blocked,&(semaforos->mutex_lista_blocked));
+            
             sem_post(&(semaforos->espacio_en_cpu));
 
         }   
     }else//si no existe el tcb-> hace nada, debe serguir el mismo thread
         enviar_thread_a_cpu(tcb_ejecutando);
 
+}
+//pasa el mutex al siguiente tcb en espera o no hace nada si el mutex no existe
+void mutex_unlock(char* recurso, t_tcb* tcb){
+    //controlo que el mutex exista y este asignado al tcb
+    t_mutex* mutex_a_desbloquear=NULL;
+    mutex_a_desbloquear=quitar_mutex_a_thread(recurso,tcb);
+            
+    if(mutex_a_desbloquear!=NULL){//si lo tenia asignado(y existe)
+        //asgino al primero que esperaba el mutex
+        t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
+        //desbloqueo tcb_con_mutex porque ya se le asigno el mutex 
+        buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
+        //envio el tcb con mutex a ready
+        agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+        sem_post(&(semaforos->contador_threads_en_ready));
+    }
+    //continua ejecutando el que hizo la syscall
+    enviar_thread_a_cpu(tcb);
 }
 
 // terminar thread: quitar TID de pcb, enviar mensaje a memoria, mandar a ready los tcb joineados al thread eliminado, destruir tcb

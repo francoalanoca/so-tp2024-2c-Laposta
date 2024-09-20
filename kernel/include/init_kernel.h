@@ -57,14 +57,15 @@ typedef struct{
     int pid;
     int tiempo_de_io;
     t_estado estado;
-    struct t_tcb *thread_joined;
+    struct t_tcb *thread_target;//hilo que se espera que termine
+    t_list *mutex_asignados;
 } t_tcb;
 
 typedef struct
 {
     char* recurso;//recurso, identificador del mutex
     t_list* lista_threads_bloquedos;
-    int tid_asignado;
+    t_tcb* thread_asignado;
     int estado;
 } t_mutex;
 
@@ -176,5 +177,7 @@ void destruir_tcb(t_tcb* t);
 int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid);
 t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem);
 void agregar_a_lista(t_tcb *tcb,t_list* lista,sem_t* sem);
+t_tcb* remover_de_lista(t_list* lista,int indice, sem_t* mutex);
+t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb);
 
 #endif /* KERNEL_H_ */

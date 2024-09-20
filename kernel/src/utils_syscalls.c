@@ -40,7 +40,9 @@ int asignar_tid(t_pcb* pcb){
 t_tcb* crear_tcb(int prioridad_th,int pid){
     t_tcb* nuevo_tcb=malloc(sizeof(t_tcb));
     nuevo_tcb->prioridad=prioridad_th;
-
+    nuevo_tcb->tiempo_de_io=0;
+    nuevo_tcb->mutex_asignados=list_create();
+    nuevo_tcb->thread_target=NULL;
     t_pcb* pcb=buscar_proceso_por(pid);
     nuevo_tcb->tid=asignar_tid(pcb);
     nuevo_tcb->pid=pid;
@@ -98,7 +100,8 @@ t_mutex* buscar_mutex(char* recurso,int pid){
 }
 void asignar_mutex(t_tcb * tcb, t_mutex* mutex){
         mutex->estado=ASIGNADO;
-        mutex->tid_asignado=tcb->tid;
+        mutex->thread_asignado=tcb;
+        list_add(tcb->mutex_asignados,tcb);
 }
 
 
@@ -157,7 +160,7 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
         
     return exito_eliminando_de_pcb;
  }
-
+//busca un tcb en una lista por su tid y pid y lo remueve
 t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_wait(sem);
     for(int i=0;i<list_size(lista);i++){
@@ -171,3 +174,25 @@ t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_post(sem);
     return NULL;
 }
+t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb){
+    t_mutex *mutex=NULL;
+    for(int i=0;i<list_size(tcb->mutex_asignados);i++){
+         mutex=(t_mutex*)list_get(tcb->mutex_asignados,i);
+        if(strcmp(recurso,mutex->recurso)){
+            return mutex;
+        }
+    }
+    return mutex;
+}
+t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex){
+    t_tcb* tcb=NULL;
+    if(list_size(mutex->lista_threads_bloquedos)){
+   
+    tcb=(t_tcb*)list_remove(mutex->lista_threads_bloquedos,0);
+    
+        list_add(tcb->mutex_asignados,mutex);
+        mutex->thread_asignado=tcb;
+    }
+    return tcb;
+}
+

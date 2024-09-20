@@ -112,4 +112,11 @@ void agregar_a_lista(t_tcb *tcb,t_list* lista,sem_t* sem){
     list_add(lista,tcb);
     sem_post(sem);
 }
+t_tcb* remover_de_lista(t_list* lista,int indice, sem_t* mutex){
+    t_tcb* tcb=NULL;
+    sem_wait(mutex);
+    tcb=(t_tcb*)list_remove(lista,indice);
+    sem_post(mutex);
+    return tcb;
+}
 
