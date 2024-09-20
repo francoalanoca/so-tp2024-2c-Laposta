@@ -93,6 +93,7 @@ typedef struct{
     sem_t mutex_lista_exit;
     sem_t mutex_lista_exec;
     sem_t mutex_lista_blocked;
+    sem_t mutex_lista_espera_io;
     sem_t inicializar_planificador;
     sem_t sem_procesos_new;//contado de procesos en new
     sem_t sem_procesos_ready;
@@ -102,15 +103,18 @@ typedef struct{
     sem_t espacio_en_cpu;
     sem_t mutex_interfaz_io;
     sem_t contador_tcb_en_io;
+    sem_t sem_io_en_uso;
+    sem_t sem_io_solicitud;
+    sem_t sem_sleep_io;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
-typedef struct{
-    t_list* threads_en_espera;
-    t_tcb* thread_en_io;
-    bool en_ejecucion;
-}t_io;
-extern t_io* interfaz_io;
+// typedef struct{
+//     t_list* threads_en_espera;
+//     t_tcb* thread_en_io;
+//     bool en_ejecucion;
+// }t_io;
+// extern t_io* interfaz_io;
 //------------------------------LISTAS-------------------------
 extern t_list* lista_ready; 
 extern t_list* lista_exec;
@@ -118,6 +122,7 @@ extern t_list* lista_blocked;
 extern t_list* lista_exit;
 extern t_list* lista_new;
 extern t_list* lista_procesos_global;
+extern t_list* lista_espera_io;
 
 
 int conectar_a_memoria();

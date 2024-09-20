@@ -45,18 +45,18 @@ void mutex_create(char* nombre_mutex,int pid_mutex){
 
 }
 //coloca el thread en la cola de espera de IO
-void ejecutar_io(int tiempo){
-    //quito de el thread de exec
-    sem_wait(&(semaforos->mutex_lista_exec));
-    t_tcb* tcb=list_remove(lista_exec,0);
-    sem_post(&(semaforos->mutex_lista_exec));
-    //agrego a io
-    sem_wait(&(semaforos->mutex_interfaz_io));
-    tcb->tiempo_de_io=tiempo;
-    list_add(interfaz_io->threads_en_espera,tcb);//lo maneja el hilo de bloqueados
-    log_info(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
-    sem_post(&(semaforos->mutex_interfaz_io));
-}
+// void ejecutar_io(int tiempo){
+//     //quito de el thread de exec
+//     sem_wait(&(semaforos->mutex_lista_exec));
+//     t_tcb* tcb=list_remove(lista_exec,0);
+//     sem_post(&(semaforos->mutex_lista_exec));
+//     //agrego a io
+//     sem_wait(&(semaforos->mutex_interfaz_io));
+//     tcb->tiempo_de_io=tiempo;
+//     list_add(interfaz_io->threads_en_espera,tcb);//lo maneja el hilo de bloqueados
+//     log_info(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
+//     sem_post(&(semaforos->mutex_interfaz_io));
+// }
 
 //TODO: revisar semaforos 
 void mutex_lock(char* recurso){
