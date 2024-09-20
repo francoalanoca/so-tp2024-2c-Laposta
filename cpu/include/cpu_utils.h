@@ -22,6 +22,8 @@ typedef enum
     FX,
     GX,
     HX,
+    base,
+    limite,
     REG_NO_ENC
 }registros;
 

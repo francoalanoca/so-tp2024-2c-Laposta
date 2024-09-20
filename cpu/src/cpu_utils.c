@@ -342,8 +342,14 @@ registros identificarRegistro(char* registro){
     else if(strcmp(registro,"GX") == 0){
         return GX;
     }
-    else if(strcmp(registro,"SI") == 0){
+    else if(strcmp(registro,"HX") == 0){
         return HX;
+    }
+    else if(strcmp(registro,"base") == 0){
+        return base;
+    }
+    else if(strcmp(registro,"limite") == 0){
+        return limite;
     }
     else{
         return REG_NO_ENC;
