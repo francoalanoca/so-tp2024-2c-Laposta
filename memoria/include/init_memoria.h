@@ -87,7 +87,7 @@ typedef struct{
 typedef struct{
     uint32_t pid;
     uint32_t direccion_fisica;
-    uint32_t tamanio;
+    uint32_t tamanio; //siempre son 4 bytes?
     char* valor;
 } t_escribir_leer;
 
@@ -181,8 +181,8 @@ bool actualizar_contexto(t_m_contexto* contexto);
 
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
 
-bool write_mem(uint32_t direccion_fisica, uint32_t valor);
+bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud);
 
-bool read_mem(uint32_t direccion_fisica, uint32_t* resultado);
+bool read_mem(uint32_t direccion_fisica, char* resultado);
 
 #endif /* MEMORIA_H */

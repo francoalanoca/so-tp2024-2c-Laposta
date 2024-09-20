@@ -177,22 +177,51 @@ int inicializar_memoria(){
     }
     
                  
-	
+	/*
 	    //PRUEBA
-        /*
+        
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
         crear_proceso(100,lista_particiones,1);
     
         printf("Acualizo bitmap:\n");
         print_bitarray(bitmap_particiones);
 
-        inicializar_proceso(1,64,"archivo");
+        inicializar_proceso(1,64);
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs); 
 
         inicializar_hilo(1,1, "archivo_pseudocodigo");
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
+
+        //PRUEBA ESCRIBIR Y LEER
+        printf("INICIO PRUEBA ESCRIBIR Y LEER\n");
+        t_escribir_leer* peticion_leer = malloc(sizeof(t_escribir_leer));
+        peticion_leer->pid = 1;
+        peticion_leer->direccion_fisica = 5;
+        peticion_leer->tamanio = 4;
+        peticion_leer->valor = "Hi!";
+
+        if(write_mem(peticion_leer->direccion_fisica, peticion_leer->valor, peticion_leer->tamanio)){
+				
+			 printf("Escritura exitosa: \"%s\" en la dirección %u\n", peticion_leer->valor, peticion_leer->direccion_fisica);
+         } 
+         else {
+             printf("Error al escribir en la dirección %u\n", peticion_leer->direccion_fisica);
+			}
+
+            //write_mem(6, "Hola", 5);
+
+        //LEER
+            char* respuesta_leer = malloc(4);
+            memset(respuesta_leer, 0, sizeof(respuesta_leer));
+			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
+			 printf("Lectura exitosa: \"%s\" desde la dirección %u\n", respuesta_leer, peticion_leer->direccion_fisica );
+            } 
+            else {
+              printf("Error al leer desde la dirección %u\n", peticion_leer->direccion_fisica );
+			}
+        //FIN ESCRIBIR Y LEER
 
         eliminar_hilo_de_lista(lista_miniPCBs,1,1);
         printf("Acualizo lista miniPCB:\n");
@@ -206,7 +235,7 @@ int inicializar_memoria(){
         printf("Acualizo lista miniPCB:\n");
         mostrar_lista_miniPCB(lista_miniPCBs);
         //FIN PRUEBA
-        */
+       */ 
     return true;   
 }
 
@@ -239,7 +268,7 @@ void cerrar_programa(){
 
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
-    t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+    //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
     nuevo_proceso->pid = pid;
     nuevo_proceso->hilos = list_create();
@@ -256,7 +285,7 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     // nuevo_hilo->registros.HX = 0;
     // nuevo_hilo->lista_de_instrucciones = list_create();
     // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
-    list_add(nuevo_proceso->hilos,nuevo_hilo);
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);
 
  
     uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
@@ -569,6 +598,7 @@ bool actualizar_contexto(t_m_contexto* contexto) {
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     for (int i = 0; i < list_size(lista_particiones); i++) {
         t_miniPCB* proceso = list_get(lista_particiones, i);
+        //printf("roceso->base:%d,proceso->tamanio:%d\n", proceso->base,proceso->tamanio_proceso);
         if (direccion_fisica >= proceso->base && 
             direccion_fisica < proceso->base + proceso->tamanio_proceso) {
             return proceso;
@@ -577,42 +607,44 @@ t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     return NULL; // Si no se encuentra un proceso que contenga la dirección
 }
 
-bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
-    // Obtenemos el proceso correspondiente a la dirección
+bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud) {
+   // Obtenemos el proceso correspondiente a la dirección
     t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
-
+    //printf("Escribire el bloque correspondiente a particion %d:\n", proceso->pid);
     if (proceso == NULL) {
         // No se encontró ningún proceso que contenga la dirección
         return false;
     }
 
-    // Verificamos que los 4 bytes no se pasen del espacio del proceso
-    if (direccion_fisica + sizeof(uint32_t) > proceso->base + proceso->tamanio_proceso) {
-        // No hay suficiente espacio para escribir los 4 bytes
+    // Verificamos que los bytes que queremos escribir no se pasen del espacio del proceso
+    if (direccion_fisica + longitud > proceso->base + proceso->tamanio_proceso) {
+        // No hay suficiente espacio para escribir la cadena completa
         return false;
     }
 
     // Calculamos la posición en la memoria a partir de la dirección física
     uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
 
-    // Escribimos el valor de 4 bytes en la posición calculada
-    memcpy(posicion_memoria, &valor, sizeof(uint32_t));
+    // Escribimos la cadena en la posición calculada
+    memcpy(posicion_memoria, valor, longitud);
 
     return true;  // La escritura fue exitosa
 }
 
 // Función para leer 4 bytes si la dirección está dentro del proceso
-bool read_mem(uint32_t direccion_fisica, uint32_t* resultado) {
+bool read_mem(uint32_t direccion_fisica, char* resultado) {
+    uint32_t longitud = 4;  // Siempre leemos 4 bytes
+
     // Obtenemos el proceso correspondiente a la dirección
     t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
-
+    //printf("Leere el bloque correspondiente a particion %d:\n", proceso->pid);
     if (proceso == NULL) {
         // No se encontró ningún proceso que contenga la dirección
         return false;
     }
 
     // Verificamos que los 4 bytes no se pasen del espacio del proceso
-    if (direccion_fisica + sizeof(uint32_t) > proceso->base + proceso->tamanio_proceso) {
+    if (direccion_fisica + longitud > proceso->base + proceso->tamanio_proceso) {
         // No hay suficiente espacio para leer los 4 bytes
         return false;
     }
@@ -621,7 +653,7 @@ bool read_mem(uint32_t direccion_fisica, uint32_t* resultado) {
     uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
 
     // Leemos los 4 bytes de la posición calculada
-    memcpy(resultado, posicion_memoria, sizeof(uint32_t));
+    memcpy(resultado, posicion_memoria, longitud);
 
     return true;  // La lectura fue exitosa
 }
