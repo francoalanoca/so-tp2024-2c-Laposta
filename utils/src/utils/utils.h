@@ -38,6 +38,7 @@ typedef  enum
     PROCESO_CREAR,
     PROCESO_SALIR,
     PROCESO_EJECUTAR,
+    SEGMENTATION_FAULT,
 
 
 //---------------CPU-MEMORIA-------------------

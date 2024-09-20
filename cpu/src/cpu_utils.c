@@ -408,19 +408,25 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, int conexion, int pid){
+uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kernel_dispatch){
     uint32_t direccion_resultado;
     uint32_t desplazamiento = direccion_logica;
     obtener_base_particion(conexion,pid);
  
     
     sem_wait(&sem_valor_base_particion);
-    direccion_resultado = base_particion+desplazamiento ;
+    //validacion de limites de particion
+    if (1==1){
+        direccion_resultado = base_particion+desplazamiento ;  
+        log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
+        return direccion_resultado;
+    }else{
+        //segmentation fault
+        enviar_contexto_a_memoria(proceso_actual, conexion);
+        enviar_segfault_a_kernel(proceso_actual,conexion_kernel_dispatch);
+    }            
 
-    log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
-            
 
-    return direccion_resultado;
 }
 
 
@@ -434,7 +440,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
     uint32_t dir_fisica_result;
-    dir_fisica_result = mmu(valor_registro_direccion,base,conexion);
+    dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
 
@@ -477,7 +483,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
     //TODO: Si el tamanio de valor_registro_datos(es un int de 32 siempre?) es mayor a tamanio_pagina hay
     //que dividir ambos y tomar el floor para obtener cant de paginas, con eso dividir datos a enviar en *cant de paginas*, y
     //por cada pedacito de intfo llamar a mmu y agregar dir fisca obtenida en lista 
@@ -518,8 +524,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t));     
         agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t)); 
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &tamanio,  sizeof(uint32_t));
-         
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &tamanio,  sizeof(uint32_t));        
             
         enviar_paquete(paquete_pedido_valor_memoria, conexion); 
         eliminar_paquete(paquete_pedido_valor_memoria);
@@ -677,8 +682,8 @@ void generar_interrupcion_a_kernel(int conexion){
     t_paquete* paquete_devolucion_contexto;
 
     paquete_devolucion_contexto = crear_paquete(DEVOLUCION_CONTEXTO); 
-    agregar_a_paquete(paquete_devolucion_contexto,  &proceso->pid,  sizeof(uint32_t));         
-    agregar_a_paquete(paquete_devolucion_contexto,  &proceso->tid,  sizeof(uint32_t));        
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->pid,  sizeof(uint32_t));         
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->tid,  sizeof(uint32_t));        
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.PC, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.AX, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.BX, sizeof(uint32_t)); 
@@ -692,7 +697,41 @@ void generar_interrupcion_a_kernel(int conexion){
     enviar_paquete(paquete_devolucion_contexto, conexion); 
     eliminar_paquete(paquete_devolucion_contexto);
 
-
  }
-    
-   
+ void solicitar_contexto_(t_proceso* proceso, int conexion){
+    printf("entro a paquete_solicitud_contexto\n");
+    t_paquete* paquete_solicitud_contexto;
+
+    paquete_solicitud_contexto = crear_paquete(SOLICITUD_CONTEXTO); 
+    agregar_a_paquete(paquete_solicitud_contexto, &proceso->pid,  sizeof(uint32_t));         
+    agregar_a_paquete(paquete_solicitud_contexto, &proceso->tid,  sizeof(uint32_t));
+    enviar_paquete(paquete_solicitud_contexto, conexion); 
+    eliminar_paquete(paquete_solicitud_contexto);
+ }
+
+  void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    
+   //0 pid
+   //1 tid
+    proceso->registros_cpu.PC = *(uint32_t*)list_get(lista_contexto, 2);
+    proceso->registros_cpu.AX = *(uint32_t*)list_get(lista_contexto, 3);
+    proceso->registros_cpu.BX = *(uint32_t*)list_get(lista_contexto, 4);
+    proceso->registros_cpu.CX = *(uint32_t*)list_get(lista_contexto, 5);
+    proceso->registros_cpu.DX = *(uint32_t*)list_get(lista_contexto, 6);
+    proceso->registros_cpu.EX = *(uint32_t*)list_get(lista_contexto, 7);
+    proceso->registros_cpu.FX = *(uint32_t*)list_get(lista_contexto, 8);
+    proceso->registros_cpu.GX = *(uint32_t*)list_get(lista_contexto, 9);
+    proceso->registros_cpu.HX = *(uint32_t*)list_get(lista_contexto, 10);
+    proceso->registros_cpu.base = *(uint32_t*)list_get(lista_contexto, 11);
+    proceso->registros_cpu.limite = *(uint32_t*)list_get(lista_contexto, 12);
+
+ }   
+ enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch){
+    printf("entro a paquete_solicitud_contexto\n");
+    t_paquete* paquete_segfault;
+
+    paquete_segfault = crear_paquete(SEGMENTATION_FAULT); 
+    agregar_a_paquete(paquete_segfault, &proceso->pid,  sizeof(uint32_t));         
+    agregar_a_paquete(paquete_segfault, &proceso->tid,  sizeof(uint32_t));
+    enviar_paquete(paquete_segfault, conexion_kernel_dispatch); 
+    eliminar_paquete(paquete_segfault);
+ }  
