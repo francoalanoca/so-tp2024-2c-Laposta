@@ -69,11 +69,13 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case DUMP_MEMORY:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: DUMP_MEMORY", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case IO:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: IO", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case PROCESS_CREATE:
@@ -81,38 +83,44 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
                 log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
                
                 enviar_process_create_a_kernel(inst->param1, inst->param2,inst->param3,socket_dispatch);
-                
+                enviar_contexto_a_memoria(proceso,conexion);
                 
                 break;
             }
             case THREAD_CREATE:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CREATE", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_JOIN:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_JOIN", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_CANCEL:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CANCEL", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_CREATE:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_CREATE", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_LOCK:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_LOCK", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_UNLOCK:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_UNLOCK", proceso->pid);
+                enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
 
@@ -664,6 +672,27 @@ void generar_interrupcion_a_kernel(int conexion){
 
   }
 
+ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
+    printf("entro a DEVOLUCION_CONTEXTO\n");
+    t_paquete* paquete_devolucion_contexto;
 
+    paquete_devolucion_contexto = crear_paquete(DEVOLUCION_CONTEXTO); 
+    agregar_a_paquete(paquete_devolucion_contexto,  &proceso->pid,  sizeof(uint32_t));         
+    agregar_a_paquete(paquete_devolucion_contexto,  &proceso->tid,  sizeof(uint32_t));        
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.PC, sizeof(uint32_t));
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.AX, sizeof(uint32_t)); 
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.BX, sizeof(uint32_t)); 
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.CX, sizeof(uint32_t)); 
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.DX, sizeof(uint32_t)); 
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.EX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.FX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.HX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.GX, sizeof(uint32_t));
+
+    enviar_paquete(paquete_devolucion_contexto, conexion); 
+    eliminar_paquete(paquete_devolucion_contexto);
+
+
+ }
     
    
