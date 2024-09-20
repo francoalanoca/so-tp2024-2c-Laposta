@@ -35,7 +35,7 @@ typedef enum estado{
     BLOCKED,
     EXIT
 } t_estado;
-typedef struct
+typedef struct 
 {
     //atrib minimos requeridos
     int pid;
@@ -50,14 +50,14 @@ typedef struct
     int prioridad_th_main;
 } t_pcb;
 
-typedef struct{
+typedef struct t_tcb{
     /* data */
     int tid;
     int prioridad;
     int pid;
     int tiempo_de_io;
     t_estado estado;
-    struct t_tcb *thread_target;//hilo que se espera que termine
+    void * thread_target;//hilo que se espera que termine
     t_list *mutex_asignados;
 } t_tcb;
 
@@ -169,6 +169,7 @@ void *manejar_bloqueados();
 void *interrupcion_quantum(void *t);
 t_mutex* buscar_mutex(char* recurso,int pid);
 void asignar_mutex(t_tcb * tcb, t_mutex* mutex);
+t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex);
 void mutex_lock(char* recurso);
 void mutex_create(char* nombre_mutex,int pid_mutex);
 void thread_exit(t_tcb* t);
@@ -181,8 +182,12 @@ bool quitar_tid_de_proceso(t_tcb *t);
 void destruir_tcb(t_tcb* t);
 int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid);
 t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem);
+t_tcb* buscar_en_lista_tcb(t_list* lista,int tid,int pid,sem_t* sem);
 void agregar_a_lista(t_tcb *tcb,t_list* lista,sem_t* sem);
 t_tcb* remover_de_lista(t_list* lista,int indice, sem_t* mutex);
 t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb);
+void mutex_unlock(char* recurso_unlok,t_tcb* th_unlock);
+void thread_join(t_tcb* th_en_exec,int tid_target);
+
 
 #endif /* KERNEL_H_ */

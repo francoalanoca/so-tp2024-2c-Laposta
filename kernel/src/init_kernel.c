@@ -130,7 +130,7 @@ void procesar_conexion_dispatch(void *socket)
             t_list *params_io = recibir_paquete(fd_conexion_cpu);
 
             int tiempo_io = *((int *)list_get(params_io, 1));
-            ejecutar_io(tiempo_io);
+            //ejecutar_io(tiempo_io);
 
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
@@ -140,6 +140,25 @@ void procesar_conexion_dispatch(void *socket)
             mutex_lock(recurso);
 
             break;
+        case MUTEX_DESBLOQUEAR://recurso. CPU me devuleve el control-> debo mandar algo a ejecutar
+            log_info(logger_kernel, "se recibio instruccion MUTEX_UNLOCK");
+            t_list *params_unlock = recibir_paquete(fd_conexion_cpu);
+            char *recurso_unlok = (char*)list_get(params_unlock, 0);
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *th_unlock = (t_tcb *)list_get(lista_exec, 0);
+            sem_wait(&(semaforos->mutex_lista_exec));
+            mutex_unlock(recurso_unlok,th_unlock);
+        break;
+        case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
+            log_info(logger_kernel, "se recibio instruccion HILO_JUNTAR");
+            t_list *params_juntar = recibir_paquete(fd_conexion_cpu);
+            int tid_target = *((int *)list_get(params_juntar, 0));
+             sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *th_en_exec = (t_tcb *)list_get(lista_exec, 0);
+            sem_wait(&(semaforos->mutex_lista_exec));
+            thread_join(th_en_exec,tid_target);
+        break;
+
         case HILO_SALIR:
             log_info(logger_kernel, "se recibio instruccion FINALIZAR_HILO");
             // quito de exec
@@ -150,7 +169,7 @@ void procesar_conexion_dispatch(void *socket)
             pasar_execute_a_exit();
             // marca la cpu como libre
             sem_post(&(semaforos->espacio_en_cpu));
-          
+            
             
             break;
         case HILO_CANCELAR:
@@ -165,6 +184,7 @@ void procesar_conexion_dispatch(void *socket)
             break;
 
         default:
+
          break;
         }
     }

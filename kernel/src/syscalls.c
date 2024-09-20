@@ -124,7 +124,7 @@ void thread_cancel(int tid_a_cancelar,int pid)
     if(indice_de_tid!=-1){//el tcb aun no se elimino
         //busco donde este el pcb}
 
-        t_tcb* tcb_a_cancelar;
+        t_tcb* tcb_a_cancelar=NULL;
         if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo
             tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_exec,tid_a_cancelar,pid,&(semaforos->mutex_lista_exec));
         }
@@ -137,9 +137,32 @@ void thread_cancel(int tid_a_cancelar,int pid)
          if(tcb_a_cancelar!=NULL) {//muevo a exit
             agregar_a_lista(tcb_a_cancelar,lista_exit,&(semaforos->mutex_lista_exit));
             thread_exit(tcb_a_cancelar);
+            
             }
     }
  //hace nada
-
-   
+}
+//pone a tcb en bloqueados y esperar
+void thread_join(t_tcb* tcb_en_exec, int tid_target){
+    t_pcb* pcb=buscar_proceso_por(tcb_en_exec->pid);
+    
+    int posicion_tid=buscar_indice_de_tid_en_proceso(pcb,tid_target);
+    
+    if(posicion_tid !=-1){//existe tid_target--> busco su tcb en colas
+            t_tcb* tcb_target=NULL;
+        if(tcb_target==NULL){
+            tcb_target=(t_tcb*)buscar_en_lista_tcb(lista_ready,tid_target,pcb->pid,&(semaforos->mutex_lista_ready));
+        }
+         if(tcb_target==NULL){
+            tcb_target=(t_tcb*)buscar_en_lista_tcb(lista_blocked,tid_target,pcb->pid,&(semaforos->mutex_lista_blocked));
+        }
+         if(tcb_target!=NULL) { 
+            tcb_en_exec->thread_target=tcb_target;
+            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            agregar_a_lista(tcb_en_exec,lista_blocked,&(semaforos->mutex_lista_blocked));
+            sem_post(&(semaforos->espacio_en_cpu));
+            
+            }
+    }else    //continua ejecutando el que hizo la syscall
+        enviar_thread_a_cpu(tcb_en_exec);
 }

@@ -89,8 +89,9 @@ t_mutex* buscar_mutex(char* recurso,int pid){
     sem_post(&(semaforos->mutex_lista_global_procesos));
     for (int i = 0; i < list_size(pcb->lista_mutex ); i++)
     {
-        if(strcmp(recurso,(char*)list_get(pcb->lista_mutex,i))==0){
-            mutex=list_get(pcb->lista_mutex,i);
+        t_mutex* mutex_aux=(t_mutex*)list_get(pcb->lista_mutex,i);
+        if(strcmp(recurso,mutex_aux->recurso)==0){
+            mutex=(t_mutex*)list_get(pcb->lista_mutex,i);
             break;
         }
         
@@ -135,7 +136,7 @@ void destruir_tcb(t_tcb* tcb){
 }
 //TODO: uso semaforos??
 
-//devuelve el indice del tid si existe
+//devuelve el indice del tid si existe o -1 si no
 int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
     int posicion=-1;
    for(int i=0;i<list_size(pcb->lista_tids);i++){
@@ -174,6 +175,18 @@ t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_post(sem);
     return NULL;
 }
+t_tcb* buscar_en_lista_tcb(t_list* lista,int tid,int pid,sem_t* sem){
+    sem_wait(sem);
+    for(int i=0;i<list_size(lista);i++){
+        t_tcb* tcb=(t_tcb*)list_get(lista,i);
+        if(tcb->tid==tid && tcb->pid==pid){
+            sem_post(sem);
+            return tcb;
+        }
+    }
+    sem_post(sem);
+    return NULL;
+}
 t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb){
     t_mutex *mutex=NULL;
     for(int i=0;i<list_size(tcb->mutex_asignados);i++){
@@ -201,7 +214,7 @@ t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex){
 void interfaz_io(){
     int io_en_ejecucion = 0;
     while(1){
-        sen_wait (&(semaforos->sem_io_solicitud));
+        sem_wait (&(semaforos->sem_io_solicitud));
 
         if (io_en_ejecucion == 0){
             io_en_ejecucion = 1;
@@ -234,9 +247,9 @@ void verificacion_sleep_io(){
     while(1){
 
         }
-}l
+}
 
-void* hilo_sleep_io(tiempo){
+void* hilo_sleep_io(int tiempo){
     while(1){
         sem_wait(&(semaforos->sem_sleep_io));
         sleep(tiempo);
