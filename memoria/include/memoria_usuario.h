@@ -35,7 +35,7 @@ typedef struct{
 //----------------------------------Variables Externs-------------------------
 extern void* memoria_usuario;                        
 extern t_list* lista_particiones;
-extern t_particion_dinamica* lista_particiones_dinamicas;             
+extern t_list* lista_particiones_dinamicas;             
 extern t_list* lista_miniPCBs;  
 extern uint32_t tamanio_total_memoria;  
 extern char * algoritmo_alocacion;     
