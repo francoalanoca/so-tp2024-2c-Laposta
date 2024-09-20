@@ -67,4 +67,5 @@ void obtener_base_particion(int conexion, int pid);
 void limpiarCadena(char* cadena);
 
 void generar_interrupcion_a_kernel(int conexion);
+void enviar_contexto_a_memoria(t_proceso* proceso, int conexion);
 #endif //CPU_UTILS_H
