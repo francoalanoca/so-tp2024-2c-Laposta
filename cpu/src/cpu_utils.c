@@ -433,8 +433,6 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
 
 
 
-
-
 uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kernel_dispatch){
     uint32_t direccion_resultado;
     uint32_t desplazamiento = direccion_logica;
@@ -528,9 +526,6 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
 
 
 
-
-
-
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion){
         printf("entro a pedir_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
@@ -546,35 +541,46 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 }
 
 
+void enviar_mutex_create_a_kernel(char* recurso, int conexion_kernel){
+    printf("entro a enviar mutex create a kernell\n");        
+    t_paquete* paquete_mutex_create_kernel;   
+    paquete_mutex_create_kernel = crear_paquete(MUTEX_CREAR); 
+    int tamanio_recurso = strlen(recurso)+1;
 
+    agregar_a_paquete(paquete_mutex_create_kernel,  &proceso_actual->pid,  sizeof(uint32_t));  
+    agregar_a_paquete(paquete_mutex_create_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
+    agregar_a_paquete(paquete_mutex_create_kernel,  recurso,  tamanio_recurso);            
+    enviar_paquete(paquete_mutex_create_kernel, conexion_kernel); 
+    eliminar_paquete(paquete_mutex_create_kernel);
 
+}
 
 
 void enviar_mutex_lock_a_kernel(char* recurso, int conexion_kernel){
-        printf("entro a solicitar_wait_kernel\n");        
-        t_paquete* paquete_lock_kernel;   
-        paquete_lock_kernel = crear_paquete(MUTEX_BLOQUEAR); 
-        int tamanio_recurso = strlen(recurso)+1;
+    printf("entro a enviar_mutex_lock_a_kernel\n");        
+    t_paquete* paquete_lock_kernel;   
+    paquete_lock_kernel = crear_paquete(MUTEX_BLOQUEAR); 
+    int tamanio_recurso = strlen(recurso)+1;
 
-        agregar_a_paquete(paquete_lock_kernel,  &proceso_actual->pid,  sizeof(uint32_t));  
-        agregar_a_paquete(paquete_lock_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
-        agregar_a_paquete(paquete_lock_kernel,  recurso,  tamanio_recurso);            
-        enviar_paquete(paquete_lock_kernel, conexion_kernel); 
-        eliminar_paquete(paquete_lock_kernel);
+    agregar_a_paquete(paquete_lock_kernel,  &proceso_actual->pid,  sizeof(uint32_t));  
+    agregar_a_paquete(paquete_lock_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
+    agregar_a_paquete(paquete_lock_kernel,  recurso,  tamanio_recurso);            
+    enviar_paquete(paquete_lock_kernel, conexion_kernel); 
+    eliminar_paquete(paquete_lock_kernel);
 
 }
 
 void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
-        printf("entro a solicitar_wait_kernel\n");
-        t_paquete* paquete_unlock_kernel;   
-        paquete_unlock_kernel = crear_paquete(MUTEX_DESBLOQUEAR); 
-         int tamanio_recurso = strlen(recurso)+1;
+    printf("entro a enviar_mutex_unlock_a_kernel\n");
+    t_paquete* paquete_unlock_kernel;   
+    paquete_unlock_kernel = crear_paquete(MUTEX_DESBLOQUEAR); 
+        int tamanio_recurso = strlen(recurso)+1;
 
-        agregar_a_paquete(paquete_unlock_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
-        agregar_a_paquete(paquete_unlock_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
-        agregar_a_paquete(paquete_unlock_kernel,  recurso,  tamanio_recurso);      
-        enviar_paquete(paquete_unlock_kernel, conexion_kernel); 
-        eliminar_paquete(paquete_unlock_kernel);
+    agregar_a_paquete(paquete_unlock_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
+    agregar_a_paquete(paquete_unlock_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
+    agregar_a_paquete(paquete_unlock_kernel,  recurso,  tamanio_recurso);      
+    enviar_paquete(paquete_unlock_kernel, conexion_kernel); 
+    eliminar_paquete(paquete_unlock_kernel);
 }
 
 
