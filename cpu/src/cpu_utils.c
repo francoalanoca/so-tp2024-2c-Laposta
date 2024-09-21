@@ -544,6 +544,22 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 //////////////////////////////////////// SYSCALLS //////////////////////////////////////////
 
 
+void enviar_dump_memory_a_kernel(int socket_dispatch){
+    printf("entro a enviar_dump_memory_a_kernel\n");
+    t_paquete* paquete_dump_memory;   
+    paquete_dump_memory = crear_paquete(DUMP_MEMORY);     
+    
+    agregar_a_paquete(paquete_dump_memory, &proceso_actual->pid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_dump_memory, &proceso_actual->tid,  sizeof(uint32_t));
+    enviar_paquete(paquete_dump_memory, socket_dispatch); 
+    eliminar_paquete(paquete_dump_memory);    
+}
+
+
+void enviar_io_a_kernel(char* tiempo ,int socket_dispatch){
+    
+}
+
 void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
     printf("entro a enviar_process_create_a_kernel\n");
     t_paquete* paquete_create_process;
