@@ -30,7 +30,6 @@ sem_t sem_interrupcion_kernel;
 sem_t sem_check_interrupcion_kernel;
 sem_t sem_conexion_interrupt_iniciado;
 sem_t sem_conexion_dispatch_iniciado;
-uint32_t base;
 pthread_mutex_t mutex_proceso_actual;
 pthread_mutex_t mutex_proceso_interrumpido_actual;
 pthread_mutex_t mutex_interrupcion_kernel;
