@@ -27,6 +27,8 @@ typedef enum
     REG_NO_ENC
 }registros;
 
+//ciclo de instrccciones 
+
 instr_t* fetch(int conexion, t_proceso* proceso);
 tipo_instruccion decode(instr_t* instr);
 void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion,  int socket_dispatch, int socket_interrupt);

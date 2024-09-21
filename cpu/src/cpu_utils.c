@@ -179,7 +179,7 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
     eliminar_paquete(paquete_pedido_instruccion);
 }
 
-
+//////////////////////////////////////// INSTRUCCIONES //////////////////////////////////////////
 void set(char* registro, uint32_t valor, t_proceso* proceso){
     //printf("El valor del set es : %d ", valor);
     registros registro_elegido = identificarRegistro(registro);
@@ -541,6 +541,28 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, 
 }
 
 
+//////////////////////////////////////// SYSCALLS //////////////////////////////////////////
+
+
+void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
+    printf("entro a enviar_process_create_a_kernel\n");
+    t_paquete* paquete_create_process;
+    char *endptr;
+    paquete_create_process = crear_paquete(PROCESO_CREAR); //AGREGAR LA OPERACION CORESPONDENTIE
+    int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
+  
+    agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
+    uint32_t tamanio_proceso_num = (uint32_t)strtoul(tamanio_proceso, &endptr, 10);// Convertir la cadena a uint32_t
+    agregar_a_paquete(paquete_create_process, &tamanio_proceso_num,  sizeof(uint32_t));
+    uint32_t prioridad_hilo_num = (uint32_t)strtoul(prioridad_hilo, &endptr, 10);// Convertir la cadena a uint32_t
+    agregar_a_paquete(paquete_create_process, &prioridad_hilo_num,  sizeof(uint32_t));
+    enviar_paquete(paquete_create_process, socket_dispatch); 
+    eliminar_paquete(paquete_create_process);
+
+}
+
+
 void enviar_mutex_create_a_kernel(char* recurso, int conexion_kernel){
     printf("entro a enviar mutex create a kernell\n");        
     t_paquete* paquete_mutex_create_kernel;   
@@ -574,7 +596,7 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
     printf("entro a enviar_mutex_unlock_a_kernel\n");
     t_paquete* paquete_unlock_kernel;   
     paquete_unlock_kernel = crear_paquete(MUTEX_DESBLOQUEAR); 
-        int tamanio_recurso = strlen(recurso)+1;
+    int tamanio_recurso = strlen(recurso)+1;
 
     agregar_a_paquete(paquete_unlock_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
     agregar_a_paquete(paquete_unlock_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
@@ -584,7 +606,28 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
 }
 
 
+void enviar_process_exit_a_kernel(int conexion_kernel){
+    t_paquete* paquete_process_exit_kernel;   
+    paquete_process_exit_kernel = crear_paquete(PROCESO_SALIR); 
 
+    agregar_a_paquete(paquete_process_exit_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
+    enviar_paquete(paquete_process_exit_kernel, conexion_kernel); 
+    eliminar_paquete(paquete_process_exit_kernel);    
+}
+
+
+void enviar_thread_exit_a_kernel(int conexion_kernel){
+    t_paquete* paquete_thread_exit_kernel;   
+    paquete_thread_exit_kernel = crear_paquete(HILO_SALIR); 
+
+    agregar_a_paquete(paquete_thread_exit_kernel,  &proceso_actual->pid,  sizeof(uint32_t)); 
+    agregar_a_paquete(paquete_thread_exit_kernel,  &proceso_actual->tid,  sizeof(uint32_t));     
+    enviar_paquete(paquete_thread_exit_kernel, conexion_kernel); 
+    eliminar_paquete(paquete_thread_exit_kernel);      
+}
+
+
+////////////////////////////////  UTILS //////////////////////////////////////////
 
 void imprimir_contenido_paquete(t_paquete* paquete);
 void imprimir_contenido_paquete(t_paquete* paquete) {
@@ -677,25 +720,9 @@ void generar_interrupcion_a_kernel(int conexion){
     log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
  }
 
-  void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
-    printf("entro a enviar_process_create_a_kernel\n");
-    t_paquete* paquete_create_process;
-    char *endptr;
-    paquete_create_process = crear_paquete(PROCESO_CREAR); //AGREGAR LA OPERACION CORESPONDENTIE
-    int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
-  
-    agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
-    agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
-    uint32_t tamanio_proceso_num = (uint32_t)strtoul(tamanio_proceso, &endptr, 10);// Convertir la cadena a uint32_t
-    agregar_a_paquete(paquete_create_process, &tamanio_proceso_num,  sizeof(uint32_t));
-    uint32_t prioridad_hilo_num = (uint32_t)strtoul(prioridad_hilo, &endptr, 10);// Convertir la cadena a uint32_t
-    agregar_a_paquete(paquete_create_process, &prioridad_hilo_num,  sizeof(uint32_t));
-    enviar_paquete(paquete_create_process, socket_dispatch); 
-    eliminar_paquete(paquete_create_process);
 
-  }
 
- void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
+void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     printf("entro a DEVOLUCION_CONTEXTO\n");
     t_paquete* paquete_devolucion_contexto;
 
@@ -716,6 +743,7 @@ void generar_interrupcion_a_kernel(int conexion){
     eliminar_paquete(paquete_devolucion_contexto);
 
  }
+
  void solicitar_contexto_(t_proceso* proceso, int conexion){
     printf("entro a paquete_solicitud_contexto\n");
     t_paquete* paquete_solicitud_contexto;
@@ -727,7 +755,7 @@ void generar_interrupcion_a_kernel(int conexion){
     eliminar_paquete(paquete_solicitud_contexto);
  }
 
-  void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    
+void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    
    //0 pid
    //1 tid
     proceso->registros_cpu.PC = *(uint32_t*)list_get(lista_contexto, 2);
@@ -742,8 +770,9 @@ void generar_interrupcion_a_kernel(int conexion){
     proceso->registros_cpu.base = *(uint32_t*)list_get(lista_contexto, 11);
     proceso->registros_cpu.limite = *(uint32_t*)list_get(lista_contexto, 12);
 
- }   
- void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch){
+}   
+
+void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch){
     printf("entro a paquete_solicitud_contexto\n");
     t_paquete* paquete_segfault;
 
@@ -752,4 +781,4 @@ void generar_interrupcion_a_kernel(int conexion){
     agregar_a_paquete(paquete_segfault, &proceso->tid,  sizeof(uint32_t));
     enviar_paquete(paquete_segfault, conexion_kernel_dispatch); 
     eliminar_paquete(paquete_segfault);
- }  
+}  
