@@ -562,6 +562,47 @@ void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_pro
 
 }
 
+void enviar_thread_create_a_kernel(char* nombre_pseudocodigo, char* prioridad_hilo, int socket_dispatch){
+    printf("entro a enviar_thread_create_a_kernel\n");
+    t_paquete* paquete_create_thread;
+    char *endptr;
+    paquete_create_thread = crear_paquete(HILO_CREAR); //AGREGAR LA OPERACION CORESPONDENTIE
+    int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
+  
+    agregar_a_paquete(paquete_create_thread, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_create_thread, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);     
+    uint32_t prioridad_hilo_num = (uint32_t)strtoul(prioridad_hilo, &endptr, 10);// Convertir la cadena a uint32_t
+    agregar_a_paquete(paquete_create_thread, &prioridad_hilo_num,  sizeof(uint32_t));
+    enviar_paquete(paquete_create_thread, socket_dispatch); 
+    eliminar_paquete(paquete_create_thread);
+}
+
+
+void enviar_thread_join_a_kernel(char* tid ,int socket_dispatch){
+    printf("entro a enviar_thread_join_a_kernel\n");
+    t_paquete* paquete_thread_join;
+    char *endptr;
+    paquete_thread_join = crear_paquete(HILO_CREAR); 
+    uint32_t tid_numero = (uint32_t)strtoul(tid, &endptr, 10);
+       
+    agregar_a_paquete(paquete_thread_join, &tid_numero,  sizeof(uint32_t));
+    enviar_paquete(paquete_thread_join, socket_dispatch); 
+    eliminar_paquete(paquete_thread_join);    
+}
+
+
+void enviar_thread_cancel_a_kernel(char* tid ,int socket_dispatch){
+    printf("entro a enviar_thread_cancel_a_kernel\n");
+    t_paquete* paquete_thread_cancel;
+    char *endptr;
+    paquete_thread_cancel = crear_paquete(HILO_CANCELAR); 
+    uint32_t tid_numero = (uint32_t)strtoul(tid, &endptr, 10);
+       
+    agregar_a_paquete(paquete_thread_cancel, &tid_numero,  sizeof(uint32_t));
+    enviar_paquete(paquete_thread_cancel, socket_dispatch); 
+    eliminar_paquete(paquete_thread_cancel);      
+}
+
 
 void enviar_mutex_create_a_kernel(char* recurso, int conexion_kernel){
     printf("entro a enviar mutex create a kernell\n");        
