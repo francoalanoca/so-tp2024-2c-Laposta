@@ -43,7 +43,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
 void sum(char* registro_destino, char* registro_origen, t_proceso* proceso);
 void sub(char* registro_destino, char* registro_origen, t_proceso* proceso);
 void jnz(char* registro, uint32_t inst, t_proceso* proceso);
-void log(char* registro);
+void loguear(char* registro);
 
 // syscalls
 

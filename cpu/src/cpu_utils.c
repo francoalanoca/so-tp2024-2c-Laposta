@@ -62,7 +62,7 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case LOG:
             {
                 log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
-                log(inst->param1);
+                loguear(inst->param1);
                 break;
             }
 
@@ -314,6 +314,9 @@ void jnz(char* registro, uint32_t inst, t_proceso* proceso){
     }
 }
 
+void loguear(char* registro){
+    log_info(logger_cpu, "logueando");
+}
 
 void limpiarCadena(char* cadena) {
     char* token;
