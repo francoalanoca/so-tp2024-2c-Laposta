@@ -32,35 +32,49 @@ tipo_instruccion decode(instr_t* instr);
 void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion,  int socket_dispatch, int socket_interrupt);
 void check_interrupt( int conexion_kernel);
 void pedir_instruccion(t_proceso* proceso,int conexion);
+
+//instrucciones
+
 void set(char* registro, uint32_t valor, t_proceso* proceso);
+void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, t_log* logger, int conexion);
+void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, t_log* logger,int conexion);
 void sum(char* registro_destino, char* registro_origen, t_proceso* proceso);
 void sub(char* registro_destino, char* registro_origen, t_proceso* proceso);
 void jnz(char* registro, uint32_t inst, t_proceso* proceso);
+void log(char* registro);
+
+// syscalls
+
+void enviar_dump_memory_a_kernel(int socket_dispatch);
+void enviar_io_a_kernel(char* tiempo ,int socket_dispatch);
 void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch);
+void enviar_thread_create_a_kernel(char* nombre_pseudocodigo, char* prioridad_hilo, int socket_dispatch);
+void enviar_thread_join_a_kernel(char* tid ,int socket_dispatch);
+void enviar_thread_cancel_a_kernel(char* tid ,int socket_dispatch);
+void enviar_mutex_create_a_kernel(char* recurso, int conexion_kernel);
+void enviar_mutex_lock_a_kernel(char* recurso, int conexion_kernel);
+void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel);
+void enviar_process_exit_a_kernel(int conexion_kernel);
+void enviar_thread_exit_a_kernel(int conexion_kernel);
+
 void generar_interrupcion_a_kernel(int conexion);
-//t_proceso_memoria* crear_proceso_memoria(t_proceso* proceso);
+
 void* crear_servidor_dispatch(char* ip_cpu);//
 void* crear_servidor_interrupt(char* ip_cpu);//
 registros identificarRegistro(char* registro);
 uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso);
-//t_interfaz* elegir_interfaz(char* interfaz, t_proceso* proceso);
+
 
 //devuelve la direccion fisica
 uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kernel_dispatch);
 
-//char* uint32_to_string(uint32_t number);
+char* uint32_to_string(uint32_t number);
 //char* concatenar_cadenas(const char* str1, const char* str2);
-//uint32_t string_a_uint32(const char* str);
-void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, t_log* logger, int conexion);
-void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, t_log* logger,int conexion);
-void mutex_lock_inst(char* recurso, int conexion_kernel);
-void mutex_unlock_inst(char* recurso, int conexion_kernel);
+uint32_t string_a_uint32(const char* str);
+
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion);
-void exit_inst( int conexion_kernel);
 
 
-void solicitar_mutex_lock_kernel(t_proceso* pcb,uint32_t recurso_tamanio ,char* recurso, int conexion_kernel);
-void solicitar_mutex_unlock_kernel(t_proceso* pcb,uint32_t recurso_tamanio,char* recurso, int conexion_kernel);
 
 
 
@@ -72,5 +86,5 @@ void generar_interrupcion_a_kernel(int conexion);
 void enviar_contexto_a_memoria(t_proceso* proceso, int conexion);
 void solicitar_contexto_(t_proceso* proceso, int conexion);
 void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto);
- enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch);
+void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch);
 #endif //CPU_UTILS_H
