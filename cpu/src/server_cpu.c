@@ -357,14 +357,6 @@ void armar_instr(instr_t *instr, const char *input) {
                 instr->param3 = strdup(token);
                 instr->param3Length = strlen(token);
                 break;
-            case 3:
-                instr->param4 = strdup(token);
-                instr->param4Length = strlen(token);
-                break;
-            case 4:
-                instr->param5 = strdup(token);
-                instr->param5Length = strlen(token);
-                break;
             default:
                 break;
         }
