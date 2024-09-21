@@ -148,8 +148,8 @@ void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
     agregar_a_paquete(paquete_cpu, &pcbproceso->registros.FX, sizeof(uint32_t));
     agregar_a_paquete(paquete_cpu, &pcbproceso->registros.GX, sizeof(uint32_t));
     agregar_a_paquete(paquete_cpu, &pcbproceso->registros.HX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->base, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->limite, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.base, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.limite, sizeof(uint32_t));
 
     // Enviar el paquete a la CPU
     enviar_paquete(paquete_cpu, socket_cpu); 
@@ -325,6 +325,12 @@ t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
 
     contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
     printf("Registro HX recibido: %d \n", contexto->registros.HX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 11);
+    printf("Registro base recibido: %d \n", contexto->registros.base);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 12);
+    printf("Registro limite recibido: %d \n", contexto->registros.limite);
 
     return contexto;
 }

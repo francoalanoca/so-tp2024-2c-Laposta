@@ -291,23 +291,25 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     // nuevo_hilo->registros.HX = 0;
     // nuevo_hilo->lista_de_instrucciones = list_create();
     // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
-    //list_add(nuevo_proceso->hilos,nuevo_hilo);
+    
 
  
-    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
+    //uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
 
-    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
+    //printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
 
-    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
+    //t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
 
-    nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
+    //nuevo_hilo->registros.base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
 
-    nuevo_proceso->tamanio_proceso = tamanio_proceso;
+    //nuevo_hilo->registros.limite = tamanio_proceso;
+
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);
 
     list_add(lista_miniPCBs,nuevo_proceso);
 }
 
-void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
+void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo, uint32_t tamanio_proceso){
     t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
     nuevo_hilo->tid = tid;
@@ -320,6 +322,17 @@ void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
     nuevo_hilo->registros.FX = 0;
     nuevo_hilo->registros.GX = 0;
     nuevo_hilo->registros.HX = 0;
+
+    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
+
+    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
+
+    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
+
+    nuevo_hilo->registros.base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
+
+    nuevo_hilo->registros.limite = tamanio_proceso;
+    
     nuevo_hilo->lista_de_instrucciones = list_create();
     leer_instrucciones_particiones_fijas(nombre_archivo,nuevo_hilo);
     asignar_hilo_a_proceso(nuevo_hilo,pid);
@@ -465,8 +478,8 @@ void mostrar_lista_miniPCB(t_list* lista_miniPCB) {
     for (int i = 0; i < list_size(lista_miniPCB); i++) {
         t_miniPCB *miniPCB = list_get(lista_miniPCB, i);
         printf("Proceso PID: %u\n", miniPCB->pid);
-        printf("  Tamaño del Proceso: %u\n", miniPCB->tamanio_proceso);
-        printf("  Base: %u\n", miniPCB->base);
+        printf("  Tamaño del Proceso: %u\n", miniPCB->registros.limite);
+        printf("  Base: %u\n", miniPCB->registros.base);
         
         // Llama a la función para mostrar los hilos de este miniPCB
         mostrar_hilos(miniPCB->hilos);
@@ -530,7 +543,7 @@ uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
         t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
 
         if (proceso_actual->pid == pid) {
-            return proceso_actual->tamanio_proceso;
+            return proceso_actual->registros.limite;
         }
     }
     return -1; 
@@ -553,8 +566,8 @@ t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid) {
                 if (hilo->tid == tid) {
                     t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
                     contexto->registros = hilo->registros;  
-                    contexto->base = miniPCB->base;        
-                    contexto->limite = miniPCB->tamanio_proceso; 
+                    //contexto->base = miniPCB->base;        
+                    //contexto->limite = miniPCB->tamanio_proceso; 
 
                     return contexto;  
                 }
@@ -605,8 +618,8 @@ t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     for (int i = 0; i < list_size(lista_particiones); i++) {
         t_miniPCB* proceso = list_get(lista_particiones, i);
         //printf("roceso->base:%d,proceso->tamanio:%d\n", proceso->base,proceso->tamanio_proceso);
-        if (direccion_fisica >= proceso->base && 
-            direccion_fisica < proceso->base + proceso->tamanio_proceso) {
+        if (direccion_fisica >= proceso->registros.base && 
+            direccion_fisica < proceso->registros.base + proceso->registros.limite) {
             return proceso;
         }
     }
@@ -623,7 +636,7 @@ bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud) {
     }
 
     // Verificamos que los bytes que queremos escribir no se pasen del espacio del proceso
-    if (direccion_fisica + longitud > proceso->base + proceso->tamanio_proceso) {
+    if (direccion_fisica + longitud > proceso->registros.base + proceso->registros.limite) {
         // No hay suficiente espacio para escribir la cadena completa
         return false;
     }
@@ -650,7 +663,7 @@ bool read_mem(uint32_t direccion_fisica, char* resultado) {
     }
 
     // Verificamos que los 4 bytes no se pasen del espacio del proceso
-    if (direccion_fisica + longitud > proceso->base + proceso->tamanio_proceso) {
+    if (direccion_fisica + longitud > proceso->registros.base + proceso->registros.limite) {
         // No hay suficiente espacio para leer los 4 bytes
         return false;
     }
