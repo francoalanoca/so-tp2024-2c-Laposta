@@ -557,7 +557,17 @@ void enviar_dump_memory_a_kernel(int socket_dispatch){
 
 
 void enviar_io_a_kernel(char* tiempo ,int socket_dispatch){
+    printf("entro a enviar_dump_memory_a_kernel\n");
+    t_paquete* paquete_io;
+    char *endptr;   
+    paquete_io = crear_paquete(DUMP_MEMORY);     
+    uint32_t tiempo_num = (uint32_t)strtoul(tiempo, &endptr, 10);// Convertir la cadena a uint32_t
     
+    agregar_a_paquete(paquete_io, &proceso_actual->pid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_io, &proceso_actual->tid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_io, &tiempo_num,  sizeof(uint32_t));
+    enviar_paquete(paquete_io, socket_dispatch); 
+    eliminar_paquete(paquete_io);       
 }
 
 void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
