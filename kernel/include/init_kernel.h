@@ -190,7 +190,7 @@ void mutex_unlock(char* recurso_unlok,t_tcb* th_unlock);
 void thread_join(t_tcb* th_en_exec,int tid_target);
 void inicializar_hilo_intefaz_io();
 void interfaz_io();
-void hilo_sleep_io(int tiempo);
+void hilo_sleep_io();
 
 
 #endif /* KERNEL_H_ */

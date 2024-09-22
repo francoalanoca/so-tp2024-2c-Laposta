@@ -50,6 +50,7 @@ void ejecutar_io(int tiempo){
     sem_wait(&(semaforos->mutex_lista_exec));
     t_tcb* tcb=list_get(lista_exec,0);
     sem_post(&(semaforos->mutex_lista_exec));
+    tcb ->tiempo_de_io=tiempo;
 
     pasar_execute_a_blocked();
     //agrego a io

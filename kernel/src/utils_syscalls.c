@@ -1,6 +1,5 @@
 #include <../include/init_kernel.h>
 
-int io_en_ejecucion = 0; //Para la interfaz de IO
 
 t_pcb* crear_pcb(int tam_proceso,char* archivo_instrucciones,int prioridad_th0) {
     t_pcb* pcb = malloc(sizeof(t_pcb));
@@ -227,19 +226,22 @@ void interfaz_io(){
         sem_wait (&(semaforos->sem_io_solicitud));
 
         sem_wait(&(semaforos->mutex_lista_espera_io));
-        t_tcb* tcb_usando_io = list_remove (lista_espera_io,0);
+        t_tcb* tcb_io = list_get (lista_espera_io,0);
         sem_post(&(semaforos->mutex_lista_espera_io));
         sem_post(&(semaforos->sem_sleep_io));
 
         sem_wait(&(semaforos->sem_io_sleep_en_uso)); 
+        t_tcb* tcb_usando_io = list_remove (lista_espera_io,0);
         agregar_a_lista(tcb_usando_io,lista_ready,&(semaforos->mutex_lista_ready));
         buscar_en_lista_y_cancelar(lista_blocked,tcb_usando_io->tid,tcb_usando_io->pid,&(semaforos->mutex_lista_blocked));
     }
 }
 
-void* hilo_sleep_io(int tiempo){
+void hilo_sleep_io(){
     while(1){
         sem_wait(&(semaforos->sem_sleep_io));
+        t_tcb* tcb_usando_io = list_get (lista_espera_io,0);
+        int tiempo = tcb_usando_io->tiempo_de_io;
         log_info(logger_kernel,"## IO en uso por %d milisegundos",tiempo);
         sleep(tiempo);
         sem_post(&(semaforos->sem_io_sleep_en_uso));
