@@ -429,6 +429,16 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
            return proceso->registros_cpu.HX;
             break;
         }
+        case base:
+        {
+           return proceso->registros_cpu.base;
+            break;
+        }
+        case limite:
+        {
+           return proceso->registros_cpu.limite;
+            break;
+        }
       
         default:
         log_info(logger_cpu, "El registro no existe");
