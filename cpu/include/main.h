@@ -20,7 +20,7 @@ typedef struct {
 
 
 void ejecutar_ciclo() ;
-void ciclo_de_instrucciones(int *conexion, t_proceso* proceso, t_list* tlb, int *socket_dispatch,int *socket_dispatch_interrupciones, int *socket_interrupt);
+
 
 
 

@@ -725,7 +725,7 @@ void obtener_base_particion(int conexion, int pid){
 
  
 
-void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, t_list *tlb, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
+void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
 {   log_info(logger_cpu, "Entro al ciclo");
     int conexion_mem = *conexion_mer;
     int dispatch = *socket_dispatch;
@@ -736,16 +736,16 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, t_list *tlb, 
     //free(socket_interrupt);
     
     log_info(logger_cpu, "Entro al ciclo");
-    log_info(logger_cpu, "TLB size ciclo: %d\n", list_size(tlb));
+
     instr_t *inst = malloc(sizeof(instr_t));
     log_info(logger_cpu, "Voy a entrar a fetch");
-    inst = fetch(conexion_mem,proceso);
+    inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
     tipo_inst = decode(inst);
     log_info(logger_cpu, "Voy a entrar a execute");
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
-    if (tipo_inst != HANDSHAKE) //TODO: Crear tipo de instruccion
+    if (tipo_inst != PROCESO_SALIR && tipo_inst != HILO_SALIR ) 
     {
         proceso_actual->registros_cpu.PC += 1;
     }

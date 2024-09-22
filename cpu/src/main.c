@@ -148,7 +148,7 @@ void ejecutar_ciclo(void* arg) {
        
         if (proceso_actual != NULL) {
             pthread_mutex_unlock(&mutex_proceso_actual);
-            ciclo_de_instrucciones( &socket_memoria, proceso_actual, tlb, dispatch,dispatch_interrup, &conexion_kernel_interrupt);
+            ciclo_de_instrucciones( &socket_memoria, proceso_actual, dispatch,dispatch_interrup, &conexion_kernel_interrupt);
         } else {
             pthread_mutex_unlock(&mutex_proceso_actual);
            
