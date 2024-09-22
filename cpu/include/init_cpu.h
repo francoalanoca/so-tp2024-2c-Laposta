@@ -31,7 +31,7 @@ extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
 extern int base_particion;
 
-extern  uint32_t base;
+
 typedef struct {
     t_log *log;
     int fd;
@@ -50,6 +50,8 @@ typedef struct
     uint32_t FX;
     uint32_t GX;
     uint32_t HX;
+    uint32_t base;
+    uint32_t limite;
 }t_registros_CPU;
 typedef struct {
     uint32_t pid; 

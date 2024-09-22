@@ -42,6 +42,8 @@ typedef  enum
     FIN_DE_QUANTUM,
     SOLICITUD_DE_MUTEX_BLOQUEADA,
     
+    SEGMENTATION_FAULT,
+
 
 //---------------CPU-MEMORIA-------------------
     SOLICITUD_CONTEXTO,
