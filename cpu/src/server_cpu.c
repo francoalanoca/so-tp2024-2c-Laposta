@@ -226,7 +226,15 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
    
     proceso_nuevo->pid = *(uint32_t*)list_get(lista_paquete_proceso, 0);
     proceso_nuevo->tid = *(uint32_t*)list_get(lista_paquete_proceso, 1);
-    
+    proceso_nuevo->registros_cpu.PC = 0;
+    proceso_nuevo->registros_cpu.AX = 0;
+    proceso_nuevo->registros_cpu.BX = 0;
+    proceso_nuevo->registros_cpu.CX = 0;
+    proceso_nuevo->registros_cpu.DX = 0;
+    proceso_nuevo->registros_cpu.EX = 0;
+    proceso_nuevo->registros_cpu.FX = 0;
+    proceso_nuevo->registros_cpu.GX = 0;
+    proceso_nuevo->registros_cpu.HX = 0;
 	return proceso_nuevo;
 }
 
