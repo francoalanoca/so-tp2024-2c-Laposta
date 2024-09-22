@@ -277,7 +277,7 @@ int finalizar_proceso(uint32_t proceso_pid){
         respuesta = finalizar_proceso_dinamico(uint32_t proceso_pid);
     }else{
         if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            respuesta = finalizar_proceso_fijo(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+            respuesta = finalizar_proceso_fijo(pid_proceso_a_finalizar);
     }
     return respuesta;
 }
