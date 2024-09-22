@@ -15,7 +15,6 @@ char *ip_cpu;
 
 bool interrupcion_kernel;
 instr_t *prox_inst;
-t_list *tlb;
 t_list* lista_sockets_global;
 int conexion_kernel_dispatch = -1;
 int conexion_kernel_interrupt = -1;
@@ -23,7 +22,7 @@ int conexion_kernel_interrupt = -1;
 sem_t sem_valor_instruccion;
 
 sem_t sem_valor_registro_recibido;
-sem_t sem_valor_resize_recibido;
+
 sem_t sem_valor_base_particion;
 sem_t sem_servidor_creado;
 sem_t sem_interrupcion_kernel;
@@ -115,10 +114,7 @@ int main(int argc, char *argv[])
    // pthread_detach(servidor_interrupt);
     log_info(logger_cpu, "cree los hilos servidor");
 
-    /*ANTERIOR
-        proceso_interrumpido_actual = malloc(sizeof(t_proceso_interrumpido));
-        proceso_interrumpido_actual->pcb = malloc(sizeof(t_proceso));
-        proceso_interrumpido_actual->pcb->pid = NULL;*/
+
     sem_wait(&sem_servidor_creado);
     sem_wait(&sem_conexion_dispatch_iniciado);
     sem_wait(&sem_conexion_interrupt_iniciado);

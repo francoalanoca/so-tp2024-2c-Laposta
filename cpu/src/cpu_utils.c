@@ -315,7 +315,7 @@ void jnz(char* registro, uint32_t inst, t_proceso* proceso){
 }
 
 void loguear(char* registro){
-    log_info(logger_cpu, "logueando");
+    log_info(logger_cpu, "valor registro:s%s",registro);
 }
 
 void limpiarCadena(char* cadena) {
