@@ -3,7 +3,7 @@
 //-------------------------Definicion de variables globales----------------------
 void* memoria_usuario;                          //espacio de usuario
 t_list* lista_particiones;              //lista de las particiones
-t_particion_dinamica* lista_particiones_dinamicas; //variable que guarda la lista de particiones
+t_list* lista_particiones_dinamicas; //variable que guarda la lista de particiones
 t_list* lista_miniPCBs;                 //lista de los procesos
 uint32_t cantidad_particiones_memoria;  //seria tam_memoria / tam_pagina
 t_bitarray *bitmap_particiones;         //bitmap para controlar los bloques libres y ocupados
@@ -253,7 +253,7 @@ void finalizar_proceso_fijas(uint32_t pid){
 }*/
 
 // Funcion para leer 4 bytes desde una direccion física en memoria de usuario
-uint32_t read_mem(uint32_t direccion_fisica) {
+/*uint32_t read_mem(uint32_t direccion_fisica) {
     // Verificar si la dirección está dentro del rango de memoria
     if (direccion_fisica + 4 > tamanio_total_memoria) {
         printf("Error: Dirección fuera del rango de memoria.\n");
@@ -265,8 +265,10 @@ uint32_t read_mem(uint32_t direccion_fisica) {
 
     printf("Valor leído desde la dirección %u: %u\n", direccion_fisica, value);
     return value;
-}
+}*/
 
+
+/*
 // Función para escribir 4 bytes en una dirección física en memoria de usuario
 void write_mem(uint32_t direccion_fisica, uint32_t valor) {
     // Verificar si la dirección está dentro del rango de memoria
@@ -277,7 +279,8 @@ void write_mem(uint32_t direccion_fisica, uint32_t valor) {
 
     memcpy((char*)memoria_usuario + direccion_fisica, &valor, sizeof(uint32_t));
     printf("Valor %u escrito en la dirección %u.\n", valor, direccion_fisica);
-}
+}*/
+
 
 
 //Funcion que en base a la cantidad de frames crea bitmap

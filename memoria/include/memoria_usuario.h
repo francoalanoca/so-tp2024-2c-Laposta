@@ -22,7 +22,7 @@ typedef struct{
     uint32_t inicio;                // Posición de inicio en el espacio de memoria
     uint32_t tamanio;               // Tamaño de la partición
     bool ocupado;                   // Estado de la partición: libre u ocupada
-    struct t_particion* siguiente;  // Puntero a la siguiente partición (lista enlazada)
+    //t_particion_dinamica* siguiente;  // Puntero a la siguiente partición (lista enlazada)
 } t_particion_dinamica;
 
 //struct para controlar los pids asociados a cada bloque en particiones fijas
@@ -35,7 +35,7 @@ typedef struct{
 //----------------------------------Variables Externs-------------------------
 extern void* memoria_usuario;                        
 extern t_list* lista_particiones;
-extern t_particion_dinamica* lista_particiones_dinamicas;             
+extern t_list* lista_particiones_dinamicas;             
 extern t_list* lista_miniPCBs;  
 extern uint32_t tamanio_total_memoria;  
 extern char * algoritmo_alocacion;     
@@ -59,9 +59,9 @@ t_bitarray *crear_bitmap(int entradas);
 
 void finalizar_proceso(void* direccion_proceso);
 
-uint32_t read_mem(uint32_t direccion_fisica);
+//uint32_t read_mem(uint32_t direccion_fisica);
 
-void write_mem(uint32_t direccion_fisica, uint32_t valor);
+//bool write_mem(uint32_t direccion_fisica, uint32_t valor);
 
 void uint32_to_string(uint32_t num, char *str, size_t size);
 

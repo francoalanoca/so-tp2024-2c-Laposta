@@ -30,9 +30,16 @@ void memoria_atender_cpu(){
 		
 		case SOLICITUD_CONTEXTO:
 			log_info(logger_memoria, "Recibí SOLICITUD_CONTEXTO \n");
-			//valores = recibir_paquete(socket_cpu);
+			valores = recibir_paquete(socket_cpu);
+			uint32_t pid = *(uint32_t*)list_get(valores, 0);
+			uint32_t tid = *(uint32_t*)list_get(valores, 1);
+			t_m_contexto* contexto_encontrado = buscar_contexto_en_lista(pid,tid);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			contexto_encontrado->pid = pid;
+			contexto_encontrado->tid = tid;
+			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_CONTEXTO_RTA \n");
+			free(contexto_encontrado);
 			break;
 
 		case SOLICITUD_INSTRUCCION:
@@ -47,27 +54,53 @@ void memoria_atender_cpu(){
 
 		case READ_MEMORIA:
 			log_info(logger_memoria, "Recibí READ_MEMORIA \n");
-			//valores = recibir_paquete(socket_cpu);
-			//t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
-            //char* respuesta_leer = leer_memoria(peticion_leer->pid, peticion_leer->direccion_fisica, peticion_leer->tamanio);
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			valores = recibir_paquete(socket_cpu);
+			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
+            char* respuesta_leer = malloc(4);
+			memset(respuesta_leer, 0, sizeof(respuesta_leer));
+
+			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
+			}
+			else{
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_ERROR);
+			}
+			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_read_memoria(respuesta_leer, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de READ_MEMORIA_RTA \n");
 			break;
 
 		case WRITE_MEMORIA:
 			log_info(logger_memoria, "Recibí WRITE_MEMORIA \n");
-			//valores = recibir_paquete(socket_cpu);
-			//t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);   
+			valores = recibir_paquete(socket_cpu);
+			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);   
+			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio)){
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
+			}
+			else{
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_ERROR);
+			}
             //char* respuesta_escribir = escribir_memoria(peticion_escribir->pid, peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio);
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_write_memoria(respuesta_escribir, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de WRITE_MEMORIA_RTA \n");
 			break;
 		
 		case DEVOLUCION_CONTEXTO:
 			log_info(logger_memoria, "Recibí DEVOLUCION_CONTEXTO \n");
-			//valores = recibir_paquete(socket_cpu);
+			valores = recibir_paquete(socket_cpu);
+			t_m_contexto* contexto_actualizado = deserializar_contexto(valores);
+			if(actualizar_contexto(contexto_actualizado)){
+				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_OK);
+			}
+			else{
+				printf("No se encontro el pid/tid\n");
+				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_ERROR);
+			}
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de DEVOLUCION_CONTEXTO_RTA \n");
 			break;
@@ -151,7 +184,7 @@ void memoria_atender_kernel(void* socket){
             //finalizar_proceso(pid_proceso_a_finalizar);
 			if(!existe_proceso_en_memoria(pid_proceso_a_finalizar)){
 				//Enviar rta ERROR:No existe
-				enviar_respuesta_iniciar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
+				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
 				if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
