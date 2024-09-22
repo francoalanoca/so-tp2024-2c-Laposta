@@ -94,8 +94,8 @@ void procesar_conexion_dispatch(void *v_args){
                 pthread_mutex_lock(&mutex_proceso_actual);
                 proceso_actual = proceso; //Agregar a lista de procesos?               
                 pthread_mutex_unlock(&mutex_proceso_actual);
-                list_destroy_and_destroy_elements(lista_paquete_proceso_ejecutar,free); //guarda con esto
-                free(proceso);
+                //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
+                //free(proceso);
                 printf("pase free proceso\n"); 
                 break;
             }
