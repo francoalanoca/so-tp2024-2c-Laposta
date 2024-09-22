@@ -1,4 +1,7 @@
 #include <../include/init_kernel.h>
+
+int io_en_ejecucion = 0; //Para la interfaz de IO
+
 t_pcb* crear_pcb(int tam_proceso,char* archivo_instrucciones,int prioridad_th0) {
     t_pcb* pcb = malloc(sizeof(t_pcb));
     pcb->contador_AI_tids=0;//inicializa el contador de tids del proceso
@@ -209,50 +212,36 @@ t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex){
     }
     return tcb;
 }
+void inicializar_hilo_intefaz_io(){
+    pthread_t interfaz_entrada_salida;
+    pthread_create(&interfaz_entrada_salida,NULL,(void*)interfaz_io,NULL);
+    pthread_detach(interfaz_entrada_salida);
 
+    pthread_t hilo_sleep_io;
+    pthread_create(&hilo_sleep_io,NULL,(void*)hilo_sleep_io,NULL);
+    pthread_detach(hilo_sleep_io);
+}
 
 void interfaz_io(){
-    int io_en_ejecucion = 0;
     while(1){
         sem_wait (&(semaforos->sem_io_solicitud));
 
-        if (io_en_ejecucion == 0){
-            io_en_ejecucion = 1;
-            sem_wait(&(semaforos->sem_io_en_uso)); //IO EN USO
+        sem_wait(&(semaforos->mutex_lista_espera_io));
+        t_tcb* tcb_usando_io = list_remove (lista_espera_io,0);
+        sem_post(&(semaforos->mutex_lista_espera_io));
+        sem_post(&(semaforos->sem_sleep_io));
 
-            sem_wait(&(semaforos->mutex_lista_exec));
-            t_tcb* tcb_usando_io = list_remove (lista_exec,0);
-            sem_post(&(semaforos->mutex_lista_exec));
-
-            sem_post(&(semaforos->sem_sleep_io));
-
-
-        }else if(io_en_ejecucion == 1){
-            sem_wait(&(semaforos->mutex_lista_espera_io));
-            t_tcb* tcb_espera = list_remove (lista_espera_io,0);
-            sem_post(&(semaforos->mutex_lista_espera_io));
-
-            agregar_a_lista(tcb_espera,lista_exec,&semaforos->mutex_lista_exec);
-
-            sem_post(&(semaforos->sem_io_solicitud));
-        }
-
-        sem_wait(&(semaforos->sem_io_en_uso));
-        t_tcb* tcb_espera = list_remove (lista_espera_io,0);
-
+        sem_wait(&(semaforos->sem_io_sleep_en_uso)); 
+        agregar_a_lista(tcb_usando_io,lista_ready,&(semaforos->mutex_lista_ready));
+        buscar_en_lista_y_cancelar(lista_blocked,tcb_usando_io->tid,tcb_usando_io->pid,&(semaforos->mutex_lista_blocked));
     }
-}
-
-void verificacion_sleep_io(){
-    while(1){
-
-        }
 }
 
 void* hilo_sleep_io(int tiempo){
     while(1){
         sem_wait(&(semaforos->sem_sleep_io));
+        log_info(logger_kernel,"## IO en uso por %d milisegundos",tiempo);
         sleep(tiempo);
-        sem_post(&(semaforos->sem_sleep_io));
+        sem_post(&(semaforos->sem_io_sleep_en_uso));
     }
 }

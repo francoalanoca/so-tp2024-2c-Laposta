@@ -101,9 +101,9 @@ typedef struct{
     sem_t mutex_lista_global_procesos;
     sem_t contador_threads_en_ready;
     sem_t espacio_en_cpu;
-    sem_t mutex_interfaz_io;
-    sem_t contador_tcb_en_io;
-    sem_t sem_io_en_uso;
+    //sem_t mutex_interfaz_io;
+    //sem_t contador_tcb_en_io;
+    sem_t sem_io_sleep_en_uso;
     sem_t sem_io_solicitud;
     sem_t sem_sleep_io;
 }t_semaforos;
@@ -188,6 +188,9 @@ t_tcb* remover_de_lista(t_list* lista,int indice, sem_t* mutex);
 t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb);
 void mutex_unlock(char* recurso_unlok,t_tcb* th_unlock);
 void thread_join(t_tcb* th_en_exec,int tid_target);
+void inicializar_hilo_intefaz_io();
+void interfaz_io();
+void hilo_sleep_io(int tiempo);
 
 
 #endif /* KERNEL_H_ */

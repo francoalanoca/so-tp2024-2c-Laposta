@@ -18,6 +18,7 @@ void iniciar_modulo(char *ruta_config)
     inicializar_semaforos();
     inicializar_hilos_planificador(); // corto_plazo
     inicializar_hilos_largo_plazo();
+    inicializar_hilo_intefaz_io();
 }
 void cargar_config_kernel(char *ruta_config)
 {
@@ -48,9 +49,9 @@ void inicializar_semaforos()
     sem_init(&(semaforos->mutex_lista_global_procesos), 0, 1);
     sem_init(&(semaforos->espacio_en_cpu), 0, 1);
     sem_init(&(semaforos->contador_threads_en_ready), 0, 0);
-    sem_init(&(semaforos->mutex_interfaz_io), 0, 1);
-    sem_init(&(semaforos->contador_tcb_en_io),0,0);
-    sem_init(&(semaforos->sem_io_en_uso),0,0); //revisar aca si empieza con 1 0 0
+    //sem_init(&(semaforos->mutex_interfaz_io), 0, 1);
+    //sem_init(&(semaforos->contador_tcb_en_io),0,0);
+    sem_init(&(semaforos->sem_io_sleep_en_uso),0,1); //revisar aca si empieza con 1 0 0
     sem_init(&(semaforos->sem_io_solicitud),0,0);
     sem_init(&(semaforos->sem_sleep_io),0,1);
 }
