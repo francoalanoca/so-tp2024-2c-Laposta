@@ -148,8 +148,8 @@ void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
     agregar_a_paquete(paquete_cpu, &pcbproceso->registros.FX, sizeof(uint32_t));
     agregar_a_paquete(paquete_cpu, &pcbproceso->registros.GX, sizeof(uint32_t));
     agregar_a_paquete(paquete_cpu, &pcbproceso->registros.HX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->base, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->limite, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.base, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.limite, sizeof(uint32_t));
 
     // Enviar el paquete a la CPU
     enviar_paquete(paquete_cpu, socket_cpu); 
@@ -203,7 +203,7 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete ){
 }
 
 
-void enviar_respuesta_read_memoria(void* respuesta_leer, int socket_cpu) {
+void enviar_respuesta_read_memoria(uint32_t pid, void* respuesta_leer, int socket_cpu, op_code cod_ope) {
     t_paquete* paquete_valor;
 
     // Verificar que respuesta_leer no sea NULL
@@ -221,10 +221,11 @@ void enviar_respuesta_read_memoria(void* respuesta_leer, int socket_cpu) {
     }
 
 
-    paquete_valor = crear_paquete(READ_MEMORIA_RTA);
+    paquete_valor = crear_paquete(cod_ope);
 
     uint32_t tamanio_respuesta_leer = (longitud * sizeof(char)) + 1;
 
+    agregar_a_paquete(paquete_valor, &pid, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_valor, &tamanio_respuesta_leer, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_valor, respuesta_leer, tamanio_respuesta_leer);          
 
@@ -263,12 +264,12 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
 
 
 
-void enviar_respuesta_write_memoria(char* respuesta_escribir, int socket_cliente){
+void enviar_respuesta_write_memoria(uint32_t pid, int socket_cliente, op_code cod_ope){
     t_paquete* paquete_valor;
 
-    paquete_valor = crear_paquete(WRITE_MEMORIA_RTA);
+    paquete_valor = crear_paquete(cod_ope);
 
-    //agregar_a_paquete(paquete_valor, &respuesta_escribir,  sizeof(void*));
+    agregar_a_paquete(paquete_valor, &pid,  sizeof(uint32_t));
 
     enviar_paquete(paquete_valor, socket_cliente);
     printf("Se envio respuesta de guardado \n"); 
@@ -324,6 +325,12 @@ t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
 
     contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
     printf("Registro HX recibido: %d \n", contexto->registros.HX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 11);
+    printf("Registro base recibido: %d \n", contexto->registros.base);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 12);
+    printf("Registro limite recibido: %d \n", contexto->registros.limite);
 
     return contexto;
 }

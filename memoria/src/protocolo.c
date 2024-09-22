@@ -54,20 +54,38 @@ void memoria_atender_cpu(){
 
 		case READ_MEMORIA:
 			log_info(logger_memoria, "Recibí READ_MEMORIA \n");
-			//valores = recibir_paquete(socket_cpu);
-			//t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
-            //char* respuesta_leer = leer_memoria(peticion_leer->pid, peticion_leer->direccion_fisica, peticion_leer->tamanio);
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			valores = recibir_paquete(socket_cpu);
+			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
+            char* respuesta_leer = malloc(4);
+			memset(respuesta_leer, 0, sizeof(respuesta_leer));
+
+			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
+			}
+			else{
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_ERROR);
+			}
+			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_read_memoria(respuesta_leer, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de READ_MEMORIA_RTA \n");
 			break;
 
 		case WRITE_MEMORIA:
 			log_info(logger_memoria, "Recibí WRITE_MEMORIA \n");
-			//valores = recibir_paquete(socket_cpu);
-			//t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);   
+			valores = recibir_paquete(socket_cpu);
+			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);   
+			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio)){
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
+			}
+			else{
+				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_ERROR);
+			}
             //char* respuesta_escribir = escribir_memoria(peticion_escribir->pid, peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio);
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_write_memoria(respuesta_escribir, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de WRITE_MEMORIA_RTA \n");
 			break;
@@ -166,7 +184,7 @@ void memoria_atender_kernel(void* socket){
             //finalizar_proceso(pid_proceso_a_finalizar);
 			if(!existe_proceso_en_memoria(pid_proceso_a_finalizar)){
 				//Enviar rta ERROR:No existe
-				enviar_respuesta_iniciar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
+				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
 				if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
