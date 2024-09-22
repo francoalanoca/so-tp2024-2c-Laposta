@@ -39,6 +39,12 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
                 sum(inst->param1, inst->param2,proceso);
                 break;
             }
+            case SUB:
+            {
+                log_info(logger_cpu, "PID: %u - Ejecutando: SUB - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                sub(inst->param1, inst->param2,proceso);
+                break;
+            }            
 
             case JNZ:
             {
@@ -300,7 +306,67 @@ void sum(char* registro_destino, char* registro_origen, t_proceso* proceso){
     pthread_mutex_unlock(&mutex_proceso_actual);
 
 
-    //registro_destino = registro_destino + registro_origen;
+    
+}
+
+void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
+    registros id_registro_destino = identificarRegistro(registro_destino);
+    registros id_registro_origen = identificarRegistro(registro_origen);
+
+    uint32_t valor_reg_destino = obtenerValorActualRegistro(id_registro_destino,proceso);
+    uint32_t valor_reg_origen = obtenerValorActualRegistro(id_registro_origen,proceso);
+    pthread_mutex_lock(&mutex_proceso_actual);
+    switch(id_registro_destino){
+        case PC:
+        {
+           proceso->registros_cpu.PC = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case AX:
+        {
+           proceso->registros_cpu.AX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case BX:
+        {
+           proceso->registros_cpu.BX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case CX:
+        {
+           proceso->registros_cpu.CX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case DX:
+        {
+           proceso->registros_cpu.DX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case EX:
+        {
+           proceso->registros_cpu.EX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case FX:
+        {
+           proceso->registros_cpu.FX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case HX:
+        {
+           proceso->registros_cpu.HX = valor_reg_destino - valor_reg_origen;
+            break;
+        }
+        case GX:
+        {
+           proceso->registros_cpu.GX = valor_reg_destino - valor_reg_origen;
+            break;
+        }        
+        default:
+        log_info(logger_cpu, "El registro no existe");
+    }
+    pthread_mutex_unlock(&mutex_proceso_actual);
+  
 }
 
 
