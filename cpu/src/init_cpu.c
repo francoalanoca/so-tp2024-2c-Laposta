@@ -50,7 +50,7 @@ int cargar_configuracion(char *path) {
     log_info(logger_cpu, "PUERTO_ESCUCHA_INTERRUPT cargado correctamente: %s", cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
 
     cfg_cpu-> LOG_LEVEL = strdup(config_get_string_value(file_cfg_cpu, "LOG_LEVEL"));
-    log_info(logger_cpu, "LOG LEVEL cargado correctamente: %d", cfg_cpu->LOG_LEVEL);
+    log_info(logger_cpu, "LOG LEVEL cargado correctamente: %s", cfg_cpu->LOG_LEVEL);
 
 
     log_info(logger_cpu, "Archivo de configuracion cargado correctamente");
@@ -63,15 +63,17 @@ int cargar_configuracion(char *path) {
 int init(char *path_config) {
     //inicializo estructura de configuracion
     cfg_cpu = cfg_cpu_start();
+    t_config *config_previo = config_create(path_config);
 
-    logger_cpu = log_create("cpu.log", "CPU", true, LOG_LEVEL_INFO);
+    //logger_cpu = log_create("cpu.log", "CPU", true, LOG_LEVEL_INFO);
+    logger_cpu = log_create("cpu.log", "CPU", true, log_level_from_string(config_get_string_value(config_previo, "LOG_LEVEL")));
     if (logger_cpu == NULL) {
         printf("No pude crear el logger");
         return false;
     }
-    //inicializo el archivo de configuracion
-    file_cfg_cpu = iniciar_config(path_config,logger_cpu);
 
+ 
+    config_destroy(config_previo);
     return checkProperties(path_config);
 }
 
