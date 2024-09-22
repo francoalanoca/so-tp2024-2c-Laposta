@@ -19,7 +19,7 @@ typedef struct {
 } ciclo_params_t;
 
 
-void ejecutar_ciclo() ;
+void ejecutar_ciclo(void* arg) ;
 
 
 
