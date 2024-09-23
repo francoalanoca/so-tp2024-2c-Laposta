@@ -141,7 +141,8 @@ void ejecutar_ciclo(void* arg) {
     ciclo_params_t* params = (ciclo_params_t*)arg;
    
     int dispatch = list_get(lista_sockets_global,0);
-    int dispatch_interrup = list_get(lista_sockets_global,1);
+   // list_add_in_index(lista_sockets_global,1,(int*)1);
+   int *dispatch_interrup =(int *)list_get(lista_sockets_global,1);
     while (1) {
       
         pthread_mutex_lock(&mutex_proceso_actual);
