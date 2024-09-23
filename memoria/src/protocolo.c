@@ -38,7 +38,7 @@ void memoria_atender_cpu(){
 			contexto_encontrado->pid = pid;
 			contexto_encontrado->tid = tid;
 			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
-			log_info(logger_memoria, "enviada respuesta de SOLICITUD_CONTEXTO_RTA \n");
+			log_info(logger_memoria, "## Contexto Solicitado - (PID:TID) - (%d:%d)\n",pid,tid);
 			free(contexto_encontrado);
 			break;
 
@@ -62,6 +62,8 @@ void memoria_atender_cpu(){
 			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
+				log_info(logger_memoria, "“## <Escritura> - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d” \n",peticion_leer->pid,peticion_leer->tid,peticion_leer->direccion_fisica,peticion_leer->tamanio); 
+				
 			}
 			else{
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -79,6 +81,7 @@ void memoria_atender_cpu(){
 			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
+				log_info(logger_memoria, "“## <Escritura> - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d” \n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,peticion_escribir->tamanio);
 			}
 			else{
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -96,6 +99,7 @@ void memoria_atender_cpu(){
 			t_m_contexto* contexto_actualizado = deserializar_contexto(valores);
 			if(actualizar_contexto(contexto_actualizado)){
 				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_OK);
+				log_info(logger_memoria, "## Contexto Actualizado - (PID:TID) - (%d:%d)\n",contexto_actualizado->pid,contexto_actualizado->tid);
 			}
 			else{
 				printf("No se encontro el pid/tid\n");

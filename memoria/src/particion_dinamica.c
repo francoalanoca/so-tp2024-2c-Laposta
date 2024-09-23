@@ -174,8 +174,8 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
 
     t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
     proceso->pid = particion->pid;
-    proceso->registros.base = particion->inicio;
-    proceso->registros.limite = tamanio_proceso + particion->inicio;
+    proceso->base = particion->inicio;
+    proceso->limite = tamanio_proceso + particion->inicio;
     proceso->hilos = list_create();
 
     //La partición original se reduce al tamaño del proceso
