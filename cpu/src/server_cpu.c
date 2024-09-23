@@ -235,6 +235,8 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
     proceso_nuevo->registros_cpu.FX = 0;
     proceso_nuevo->registros_cpu.GX = 0;
     proceso_nuevo->registros_cpu.HX = 0;
+    proceso_nuevo->registros_cpu.base = 0;
+    proceso_nuevo->registros_cpu.limite = 0;
 	return proceso_nuevo;
 }
 
@@ -297,13 +299,6 @@ instr_t* instruccion_deserializar(t_list* lista_paquete_inst){
 	return instruccion_nueva;
 }
 
- uint32_t deserealizar_marco(t_list*  lista_paquete ){
-    uint32_t marco_rec = malloc(sizeof(uint32_t));
-    marco_rec = *(uint32_t*)list_get(lista_paquete, 0);
-
-	return marco_rec;
-}
-
 char* deserealizar_valor_memoria(t_list*  lista_paquete ){
     //uint32_t tamanio_valor_recibido = *(uint32_t*)list_get(lista_paquete, 0);
     //char* valor_recibido = malloc(tamanio_valor_recibido);
@@ -318,12 +313,6 @@ char* deserealizar_valor_memoria(t_list*  lista_paquete ){
 }
 
 
-uint32_t deserealizar_tamanio_pag(t_list*  lista_paquete ){
-   
-   uint32_t valor_tam_pag = *(uint32_t*)list_get(lista_paquete, 0);
-
-	return valor_tam_pag;
-}
 
 void armar_instr(instr_t *instr, const char *input) {
     // Copia la cadena de entrada para no modificar el original
