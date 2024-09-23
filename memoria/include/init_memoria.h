@@ -34,28 +34,29 @@ typedef struct{
 typedef struct {
     uint32_t PC;
     uint32_t AX, BX, CX, DX, EX, FX, GX, HX;
-    uint32_t base;
-    uint32_t limite;
-} t_registro_cpu;
+} t_registro_hilos;
 
 typedef struct{
     uint32_t pid;
     t_list* hilos;
-    t_registro_cpu registros;
+    uint32_t base;
+    uint32_t limite;
 } t_miniPCB;
 
 
 
 typedef struct{
     uint32_t tid;
-    t_registro_cpu registros;
+    t_registro_hilos registros;
     t_list *lista_de_instrucciones;
 }t_hilo;
 
 typedef struct{
     uint32_t pid;
     uint32_t tid;
-    t_registro_cpu registros;
+    t_registro_hilos registros;
+    uint32_t base;
+    uint32_t limite;
 } t_m_contexto;
 
 
@@ -86,6 +87,7 @@ typedef struct{
 //struct para deserializar/serializar al leer o escribir
 typedef struct{
     uint32_t pid;
+    uint32_t tid;
     uint32_t direccion_fisica;
     uint32_t tamanio; //siempre son 4 bytes?
     char* valor;
@@ -143,7 +145,7 @@ void cerrar_programa();
 
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso);
 
-void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo, uint32_t tamanio_proceso);
+void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
 
 void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
 
@@ -173,7 +175,7 @@ bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
 
 uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
 
-void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
+void eliminar_proceso_de_lista(uint32_t pid);
 
 t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid);
 
@@ -181,8 +183,12 @@ bool actualizar_contexto(t_m_contexto* contexto);
 
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
 
-bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud);
+bool write_mem(uint32_t direccion_fisica, char* valor);
 
 bool read_mem(uint32_t direccion_fisica, char* resultado);
+
+int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
+
+void finalizar_proceso(uint32_t proceso_pid);
 
 #endif /* MEMORIA_H */

@@ -1,18 +1,8 @@
 #include "../include/particion_dinamica.h"
 
 /*
-int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
-    int respuesta;
 
-    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
-    }else{
-        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            respuesta = crear_proceso_fijo(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
-    }
-    return respuesta;
-}
 */
 
 
@@ -174,8 +164,8 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
 
     t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
     proceso->pid = particion->pid;
-    proceso->registros.base = particion->inicio;
-    proceso->registros.limite = tamanio_proceso + particion->inicio;
+    proceso->base = particion->inicio;
+    proceso->limite = tamanio_proceso + particion->inicio;
     proceso->hilos = list_create();
 
     //La partición original se reduce al tamaño del proceso
@@ -268,20 +258,7 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
 
 //Funciones para la finalizacion de un proceso
 
-/*
-int finalizar_proceso(uint32_t proceso_pid){
 
-    int respuesta;
-
-    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        respuesta = finalizar_proceso_dinamico(uint32_t proceso_pid);
-    }else{
-        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            respuesta = finalizar_proceso_fijo(pid_proceso_a_finalizar);
-    }
-    return respuesta;
-}
-*/
 
 
 int busco_indice_particion_dinamica_por_PID(uint32_t proceso_pid){

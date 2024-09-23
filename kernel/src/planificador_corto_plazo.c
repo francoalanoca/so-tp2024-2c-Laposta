@@ -48,6 +48,7 @@ void *planificar_fifo()
     // mueve procesos de ready a exec
     while (1)
     {
+
         sem_wait(&(semaforos->contador_threads_en_ready));
         sem_wait(&(semaforos->espacio_en_cpu));
         // saco de ready
@@ -59,6 +60,8 @@ void *planificar_fifo()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
+         log_info(logger_kernel, "thread enviado a cpu");
+        
         enviar_thread_a_cpu(tcb);
     }
 }

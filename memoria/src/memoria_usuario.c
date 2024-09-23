@@ -70,7 +70,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 }*/
 
 //Crear un Proceso
-int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
+int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
     printf("Entro crear proceso\n");
     printf("Tamanio lista de particiones:%d\n", list_size(lista_de_particiones));
     //encontrar hueco libre y marcar bitmap, si no encuentra tira error
@@ -101,6 +101,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
 
                 if (tam_proceso < tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
                     bitarray_set_bit(bitmap_particiones, i);
@@ -148,6 +149,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 return -1;
             }
             else {
+                inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
                  t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
@@ -194,6 +196,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 return -1;
             }
             else {
+                inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
                 t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
@@ -223,6 +226,8 @@ void finalizar_proceso_fijas(uint32_t pid){
     printf("bloque_x_pid: %d\n",bloque_x_pid->bloque);
     bitarray_clean_bit(bitmap_particiones,bloque_x_pid->bloque);
    list_remove_and_destroy_element(pids_por_bloque,indice_bloque_a_liberar,free);
+
+   eliminar_proceso_de_lista(pid);
     
 }
 

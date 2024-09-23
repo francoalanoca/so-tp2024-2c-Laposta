@@ -213,12 +213,12 @@ t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex){
 }
 void inicializar_hilo_intefaz_io(){
     pthread_t interfaz_entrada_salida;
-    pthread_create(&interfaz_entrada_salida,NULL,(void*)interfaz_io,NULL);
+    pthread_create(&interfaz_entrada_salida,NULL,interfaz_io,NULL);
     pthread_detach(interfaz_entrada_salida);
 
-    pthread_t hilo_sleep_io;
-    pthread_create(&hilo_sleep_io,NULL,(void*)hilo_sleep_io,NULL);
-    pthread_detach(hilo_sleep_io);
+    pthread_t h_hilo_sleep_io;
+    pthread_create(&h_hilo_sleep_io,NULL,hilo_sleep_io,NULL);
+    pthread_detach(h_hilo_sleep_io);
 }
 
 void interfaz_io(){

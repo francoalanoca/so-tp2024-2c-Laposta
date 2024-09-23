@@ -38,7 +38,7 @@ void memoria_atender_cpu(){
 			contexto_encontrado->pid = pid;
 			contexto_encontrado->tid = tid;
 			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
-			log_info(logger_memoria, "enviada respuesta de SOLICITUD_CONTEXTO_RTA \n");
+			log_info(logger_memoria, "## Contexto Solicitado - (PID:TID) - (%d:%d)\n",pid,tid);
 			free(contexto_encontrado);
 			break;
 
@@ -58,15 +58,18 @@ void memoria_atender_cpu(){
 			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
             char* respuesta_leer = malloc(4);
 			memset(respuesta_leer, 0, sizeof(respuesta_leer));
-
+			//INICIO MUTEX
 			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
+				log_info(logger_memoria, "“## <Escritura> - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d” \n",peticion_leer->pid,peticion_leer->tid,peticion_leer->direccion_fisica,peticion_leer->tamanio); 
+				
 			}
 			else{
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_ERROR);
 			}
+			//FIN MUTEX
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_read_memoria(respuesta_leer, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de READ_MEMORIA_RTA \n");
@@ -75,15 +78,18 @@ void memoria_atender_cpu(){
 		case WRITE_MEMORIA:
 			log_info(logger_memoria, "Recibí WRITE_MEMORIA \n");
 			valores = recibir_paquete(socket_cpu);
-			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);   
-			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio)){
+			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);  
+			//INICIO MUTEX 
+			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
+				log_info(logger_memoria, "“## <Escritura> - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d” \n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,peticion_escribir->tamanio);
 			}
 			else{
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_ERROR);
 			}
+			//FIN MUTEX
             //char* respuesta_escribir = escribir_memoria(peticion_escribir->pid, peticion_escribir->direccion_fisica, peticion_escribir->valor, peticion_escribir->tamanio);
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_write_memoria(respuesta_escribir, socket_cpu);
@@ -96,6 +102,7 @@ void memoria_atender_cpu(){
 			t_m_contexto* contexto_actualizado = deserializar_contexto(valores);
 			if(actualizar_contexto(contexto_actualizado)){
 				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_OK);
+				log_info(logger_memoria, "## Contexto Actualizado - (PID:TID) - (%d:%d)\n",contexto_actualizado->pid,contexto_actualizado->tid);
 			}
 			else{
 				printf("No se encontro el pid/tid\n");
@@ -154,9 +161,11 @@ void memoria_atender_kernel(void* socket){
 				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_ERROR_YA_EXISTE);
 			}
 			else{
-				int rta_crear_proceso = crear_proceso(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+				//INICIO MUTEX
+				int rta_crear_proceso = crear_proceso(iniciar_proceso->pid,iniciar_proceso->tamanio_proceso);
+				//FIN MUTEX
 				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
-				inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso);
+				//inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso);
 				//enviar rta OK
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_OK);
@@ -187,20 +196,15 @@ void memoria_atender_kernel(void* socket){
 				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
-				if(strcmp(cfg_memoria->ESQUEMA,"FIJAS") == 0){
-				finalizar_proceso_fijas(pid_proceso_a_finalizar);
+				//INICIO MUTEX
+				finalizar_proceso(pid_proceso_a_finalizar);
+				//FIN MUTEX
 				//Elimino de lista miniPBCs
-				eliminar_proceso_de_lista(lista_miniPCBs,pid_proceso_a_finalizar);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_OK);
 				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
 				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
-				}
-				else{
-					//crear funcion de finalizar para particiones dinamicas
-					usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-					//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel);
-				}
+				
 			}
 			
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -218,7 +222,9 @@ void memoria_atender_kernel(void* socket){
 			}
 			else{
 				//leer_instrucciones(iniciar_hilo->archivo_pseudocodigo, iniciar_hilo->pid, iniciar_hilo->tid);
+				//INICIO MUTEX
 				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
+				//FIN MUTEX
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Creado- (PID:TID)- (%d:%d)\n",iniciar_hilo->pid,iniciar_hilo->tid);
@@ -238,7 +244,9 @@ void memoria_atender_kernel(void* socket){
 				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, fd_kernel,FINALIZAR_HILO_RTA_ERROR_NO_EXISTE);
 			}
 			else{
+				//INICIO MUTEX
 				eliminar_hilo_de_lista(lista_miniPCBs,pid_hilo,tid_hilo);
+				//FIN MUTEX
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, fd_kernel,FINALIZAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Destruido- (PID:TID)- (%d:%d)\n",pid_hilo,tid_hilo);
