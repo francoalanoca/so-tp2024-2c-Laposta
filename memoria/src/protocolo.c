@@ -218,7 +218,7 @@ void memoria_atender_kernel(void* socket){
 			}
 			else{
 				//leer_instrucciones(iniciar_hilo->archivo_pseudocodigo, iniciar_hilo->pid, iniciar_hilo->tid);
-				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
+				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, 256,iniciar_hilo->archivo_pseudocodigo);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Creado- (PID:TID)- (%d:%d)\n",iniciar_hilo->pid,iniciar_hilo->tid);
