@@ -176,7 +176,7 @@ void check_interrupt(int conexion_kernel){
 void pedir_instruccion(t_proceso* proceso,int conexion){  
     
     t_paquete* paquete_pedido_instruccion;
-    paquete_pedido_instruccion = crear_paquete(SOLICITUD_INSTRUCCION); // TODO: Crear codigo de operacion
+    paquete_pedido_instruccion = crear_paquete(SOLICITUD_INSTRUCCION);
         
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->pid,  sizeof(uint32_t));  
     agregar_a_paquete(paquete_pedido_instruccion,  &proceso->registros_cpu.PC,  sizeof(uint32_t));  
