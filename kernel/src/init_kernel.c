@@ -6,7 +6,7 @@ t_semaforos *semaforos;
 t_hilos *hilos;
 int pid_AI_global;
 //t_io *interfaz_io;
-
+int socket_cpu;
 void iniciar_modulo(char *ruta_config)
 {
     logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
@@ -53,7 +53,7 @@ void inicializar_semaforos()
     //sem_init(&(semaforos->contador_tcb_en_io),0,0);
     sem_init(&(semaforos->sem_io_sleep_en_uso),0,1); //revisar aca si empieza con 1 0 0
     sem_init(&(semaforos->sem_io_solicitud),0,0);
-    sem_init(&(semaforos->sem_sleep_io),0,1);
+    sem_init(&(semaforos->sem_sleep_io),0,0);
 }
 
 int conectar_a_memoria()
@@ -64,19 +64,26 @@ int conectar_a_memoria()
 }
 void generar_conexiones_a_cpu()
 {
-
     pthread_t conexion_cpu_dispatch_hilo;
     pthread_t conexion_cpu_interrupt_hilo;
+    log_info(logger_kernel, "ip cpu:%s",config_kernel->ip_cpu);
+
+    log_info(logger_kernel, "ip cpu:%s",config_kernel->puerto_dispatch);
     // conecta a por dispatch a cpu
     config_kernel->conexion_cpu_dispatch = crear_conexion(
         logger_kernel, "CPU", config_kernel->ip_cpu, config_kernel->puerto_dispatch);
+        if(config_kernel->conexion_cpu_dispatch>0)
+            log_info(logger_kernel, "conectado a cpu");
 
+    socket_cpu=crear_conexion(logger_kernel,"CPU",config_kernel->ip_cpu,config_kernel->puerto_dispatch);
+        if(config_kernel->conexion_cpu_dispatch>0)
+            log_info(logger_kernel, "conectado a cpu2");
     pthread_create(&conexion_cpu_dispatch_hilo, NULL, (void *)procesar_conexion_dispatch, (void *)&(config_kernel->conexion_cpu_dispatch));
     pthread_detach(conexion_cpu_dispatch_hilo);
+    
 
     // conecta a por interrupt a cpu
-    config_kernel->conexion_cpu_interrupt = crear_conexion(
-        logger_kernel, "CPU", config_kernel->ip_cpu, config_kernel->puerto_interrupt);
+    config_kernel->conexion_cpu_interrupt = crear_conexion(logger_kernel, "CPU", config_kernel->ip_cpu, config_kernel->puerto_interrupt);
     // pthread_create(&conexion_cpu_interrupt_hilo, NULL, (void*) procesar_conexion_interrupt, (void *)&(config_kernel->conexion_cpu_interrupt));
     // pthread_detach(conexion_cpu_interrupt_hilo);
 }
