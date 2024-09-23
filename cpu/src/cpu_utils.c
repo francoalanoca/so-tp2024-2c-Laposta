@@ -803,12 +803,12 @@ void obtener_base_particion(int conexion, int pid){
 
  
 
-void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int*socket_dispatch_interrupciones ,int *socket_interrupt)
+void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
 {   log_info(logger_cpu, "Entro al ciclo");
     int conexion_mem = *conexion_mer;
     int dispatch = *socket_dispatch;
     int interrupt = *socket_interrupt;
-    int dispatch_interrupt = *socket_dispatch_interrupciones;
+   
     //free(conexion_mer);
     //free(socket_dispatch);
     //free(socket_interrupt);
@@ -828,7 +828,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         proceso_actual->registros_cpu.PC += 1;
     }
     log_info(logger_cpu, "Voy a entrar a check_interrupt");
-    check_interrupt(dispatch_interrupt);
+    check_interrupt(socket_dispatch);
     log_info(logger_cpu, "Sale de check_interrupt");
     log_info(logger_cpu, "Termino ciclo de instrucciones");
 

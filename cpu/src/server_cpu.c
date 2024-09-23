@@ -38,7 +38,7 @@ int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket
     log_info(logger_cpu, "entra a server escuchar");
     int cliente_socket = esperar_cliente(logger, server_name, server_socket);
     log_info(logger_cpu, "cliente conectado socket %d", cliente_socket);
-    *global_socket = cliente_socket; // la segunda conexion, que sea la del escuchar interrupciones desde kernel va a pisar esta variable y vamos a poder enviar.
+    *global_socket = cliente_socket; 
     
     sem_post(&sem_conexion_dispatch_iniciado);
     if (cliente_socket != -1) {
@@ -47,11 +47,11 @@ int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket
         args->log = logger;
         args->fd = cliente_socket;
         args->server_name = server_name;
-            // Agregar el socket a la lista global
-        int* socket_ptr = malloc(sizeof(int));
-        *socket_ptr = cliente_socket;
-        list_add(lista_sockets_global, socket_ptr);
-        //pthread_create(&atenderProcesoNuevo, NULL,procesar_conexion,cliente_socket);//TODO:Redefinir procesar_conexion para que reciba un PCB
+        // Agregar el socket a la lista global
+       // int* socket_ptr = malloc(sizeof(int));
+      //  *socket_ptr = cliente_socket;
+      //  list_add(lista_sockets_global, socket_ptr);
+    
         pthread_create(&atenderProcesoNuevo, NULL,(void*)procesar_conexion_dispatch,(void*)args);
         pthread_detach(atenderProcesoNuevo);
         return 1;
