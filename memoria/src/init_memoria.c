@@ -181,7 +181,7 @@ int inicializar_memoria(){
 	    //PRUEBA
         
         printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
-        crear_proceso(100,lista_particiones,1);
+        crear_proceso_fijas(100,lista_particiones,1);
     
         printf("Acualizo bitmap:\n");
         print_bitarray(bitmap_particiones);
@@ -359,11 +359,11 @@ t_list* char_array_to_list(char** array) {
     return list;
 }
 
-void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid){
-    uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_procesos,pid);
+void eliminar_proceso_de_lista(uint32_t pid){
+    uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_miniPCBs,pid);
 	//t_miniPCB* proceso_a_eliminar = malloc(sizeof(t_miniPCB));
     //proceso_a_eliminar = list_get(lista_procesos,indice_a_eliminar);
-	list_remove_and_destroy_element(lista_procesos,indice_a_eliminar,(void*)liberar_miniPCB);
+	list_remove_and_destroy_element(lista_miniPCBs,indice_a_eliminar,(void*)liberar_miniPCB);
     printf("Se elimina pid %d\n",pid);
 }
 
@@ -616,7 +616,7 @@ t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     return NULL; // Si no se encuentra un proceso que contenga la dirección
 }
 
-bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud) {
+bool write_mem(uint32_t direccion_fisica, char* valor) {
    // Obtenemos el proceso correspondiente a la dirección
     t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
     //printf("Escribire el bloque correspondiente a particion %d:\n", proceso->pid);
@@ -626,7 +626,7 @@ bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud) {
     }
 
     // Verificamos que los bytes que queremos escribir no se pasen del espacio del proceso
-    if (direccion_fisica + longitud > proceso->base + proceso->limite) {
+    if (direccion_fisica + 4 > proceso->base + proceso->limite) {
         // No hay suficiente espacio para escribir la cadena completa
         return false;
     }
@@ -635,7 +635,7 @@ bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud) {
     uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
 
     // Escribimos la cadena en la posición calculada
-    memcpy(posicion_memoria, valor, longitud);
+    memcpy(posicion_memoria, valor, 4);
 
     return true;  // La escritura fue exitosa
 }
@@ -665,6 +665,31 @@ bool read_mem(uint32_t direccion_fisica, char* resultado) {
     memcpy(resultado, posicion_memoria, longitud);
 
     return true;  // La lectura fue exitosa
+}
+
+int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
+
+    int respuesta;
+
+    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
+        respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
+    }else{
+        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
+            respuesta = crear_proceso_fijas(tamanio_proceso,lista_particiones,proceso_pid);
+    }
+    return respuesta;
+}
+
+void finalizar_proceso(uint32_t proceso_pid){
+
+
+    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
+        finalizar_proceso_dinamico(proceso_pid);
+    }else{
+        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
+            finalizar_proceso_fijas(proceso_pid);
+    }
+
 }
 
 

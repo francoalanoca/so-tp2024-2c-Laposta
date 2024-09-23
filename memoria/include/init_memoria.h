@@ -175,7 +175,7 @@ bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
 
 uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
 
-void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
+void eliminar_proceso_de_lista(uint32_t pid);
 
 t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid);
 
@@ -183,8 +183,12 @@ bool actualizar_contexto(t_m_contexto* contexto);
 
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
 
-bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud);
+bool write_mem(uint32_t direccion_fisica, char* valor);
 
 bool read_mem(uint32_t direccion_fisica, char* resultado);
+
+int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
+
+void finalizar_proceso(uint32_t proceso_pid);
 
 #endif /* MEMORIA_H */

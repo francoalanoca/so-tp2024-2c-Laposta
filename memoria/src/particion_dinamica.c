@@ -9,7 +9,7 @@ int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
         respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
     }else{
         if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            respuesta = crear_proceso_fijo(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+            respuesta = crear_proceso_fijas(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
     }
     return respuesta;
 }
@@ -269,17 +269,16 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
 //Funciones para la finalizacion de un proceso
 
 /*
-int finalizar_proceso(uint32_t proceso_pid){
+void finalizar_proceso(uint32_t proceso_pid){
 
-    int respuesta;
 
     if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        respuesta = finalizar_proceso_dinamico(uint32_t proceso_pid);
+        finalizar_proceso_dinamico(proceso_pid);
     }else{
         if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            respuesta = finalizar_proceso_fijo(iniciar_proceso->tamanio_proceso,lista_particiones,iniciar_proceso->pid);
+            finalizar_proceso_fijas(proceso_pid);
     }
-    return respuesta;
+
 }
 */
 
