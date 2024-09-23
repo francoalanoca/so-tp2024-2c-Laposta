@@ -85,7 +85,20 @@ void procesar_conexion_dispatch(void *v_args){
 
         switch (cop){
     
-            
+            case PROCESO_EJECUTAR:
+            {
+                printf("Ejecutando procesoo\n");
+                t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
+                t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
+              
+                pthread_mutex_lock(&mutex_proceso_actual);
+                proceso_actual = proceso; //Agregar a lista de procesos?               
+                pthread_mutex_unlock(&mutex_proceso_actual);
+                //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
+                //free(proceso);
+                printf("pase free proceso\n"); 
+                break;
+            }
             default:
             {
                 printf("Codigo de operacion no identifcado\n");
@@ -212,7 +225,16 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
     t_proceso *proceso_nuevo = malloc(sizeof(t_proceso));
    
     proceso_nuevo->pid = *(uint32_t*)list_get(lista_paquete_proceso, 0);
-    
+    proceso_nuevo->tid = *(uint32_t*)list_get(lista_paquete_proceso, 1);
+    proceso_nuevo->registros_cpu.PC = 0;
+    proceso_nuevo->registros_cpu.AX = 0;
+    proceso_nuevo->registros_cpu.BX = 0;
+    proceso_nuevo->registros_cpu.CX = 0;
+    proceso_nuevo->registros_cpu.DX = 0;
+    proceso_nuevo->registros_cpu.EX = 0;
+    proceso_nuevo->registros_cpu.FX = 0;
+    proceso_nuevo->registros_cpu.GX = 0;
+    proceso_nuevo->registros_cpu.HX = 0;
 	return proceso_nuevo;
 }
 
@@ -342,14 +364,6 @@ void armar_instr(instr_t *instr, const char *input) {
             case 2:
                 instr->param3 = strdup(token);
                 instr->param3Length = strlen(token);
-                break;
-            case 3:
-                instr->param4 = strdup(token);
-                instr->param4Length = strlen(token);
-                break;
-            case 4:
-                instr->param5 = strdup(token);
-                instr->param5Length = strlen(token);
                 break;
             default:
                 break;

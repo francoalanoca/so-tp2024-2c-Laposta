@@ -5,7 +5,9 @@
 #include "semaphore.h"
 #include <commons/collections/list.h>
 #define HILO_MAIN 0
-#define SIN_ASIGNAR 1
+#define SIN_ASIGNAR -1
+#define ASIGNADO 1
+
 typedef struct
 {
     /* data */
@@ -25,7 +27,7 @@ typedef struct
 extern t_config_kernel *config_kernel;
 extern t_log *logger_kernel;
 extern int pid_AI_global;//contador de pids de procesos
-
+extern int socket_cpu;
 typedef enum estado{
     NEW,
     READY,
@@ -33,7 +35,7 @@ typedef enum estado{
     BLOCKED,
     EXIT
 } t_estado;
-typedef struct
+typedef struct 
 {
     //atrib minimos requeridos
     int pid;
@@ -48,21 +50,22 @@ typedef struct
     int prioridad_th_main;
 } t_pcb;
 
-typedef struct
-{
+typedef struct t_tcb{
     /* data */
     int tid;
     int prioridad;
     int pid;
-    int quantum_th;
+    int tiempo_de_io;
     t_estado estado;
+    void * thread_target;//hilo que se espera que termine
+    t_list *mutex_asignados;
 } t_tcb;
 
 typedef struct
 {
     char* recurso;//recurso, identificador del mutex
     t_list* lista_threads_bloquedos;
-    int tid_asignado;
+    t_tcb* thread_asignado;
     int estado;
 } t_mutex;
 
@@ -73,6 +76,8 @@ typedef struct{
     pthread_t hilo_fifo;
     pthread_t hilo_prioridades;
     pthread_t hilo_colas_multinivel;
+    pthread_t hilo_bloqueados;//maneja io,mutex, join
+    
 }t_hilos;
 
 extern t_hilos *hilos;
@@ -88,6 +93,7 @@ typedef struct{
     sem_t mutex_lista_exit;
     sem_t mutex_lista_exec;
     sem_t mutex_lista_blocked;
+    sem_t mutex_lista_espera_io;
     sem_t inicializar_planificador;
     sem_t sem_procesos_new;//contado de procesos en new
     sem_t sem_procesos_ready;
@@ -95,9 +101,20 @@ typedef struct{
     sem_t mutex_lista_global_procesos;
     sem_t contador_threads_en_ready;
     sem_t espacio_en_cpu;
+    //sem_t mutex_interfaz_io;
+    //sem_t contador_tcb_en_io;
+    sem_t sem_io_sleep_en_uso;
+    sem_t sem_io_solicitud;
+    sem_t sem_sleep_io;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
+// typedef struct{
+//     t_list* threads_en_espera;
+//     t_tcb* thread_en_io;
+//     bool en_ejecucion;
+// }t_io;
+// extern t_io* interfaz_io;
 //------------------------------LISTAS-------------------------
 extern t_list* lista_ready; 
 extern t_list* lista_exec;
@@ -105,6 +122,8 @@ extern t_list* lista_blocked;
 extern t_list* lista_exit;
 extern t_list* lista_new;
 extern t_list* lista_procesos_global;
+extern t_list* lista_espera_io;
+
 
 int conectar_a_memoria();
 void generar_conexiones_a_cpu();
@@ -114,6 +133,7 @@ void iniciar_modulo(char *ruta_config);
 void cargar_config_kernel(char *ruta_config);
 void process_create(char* ruta_instrucciones,int tamanio_proceso,int prioridad_hilo_main);
 t_pcb* crear_pcb(int tam_proceso,char*archivo_instrucciones,int prioridad) ;
+t_tcb* crear_tcb(int prio,int pid);
 void añadir_tid_a_proceso(t_pcb* pcb);
 void enviar_solicitud_espacio_a_memoria(t_pcb* pcb_solicitante,int socket);
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria);
@@ -142,5 +162,35 @@ void inicializar_listas();
 t_pcb* buscar_proceso_por(int pid_buscado);
 void mostrar_pcb(t_pcb* pcb, t_log* logger);
 t_tcb* thread_create(char* pseudocodigo,int prio,int pid);
+void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar);
+void ejecutar_io(int tiempo);
+void *manejar_bloqueados();
+
+void *interrupcion_quantum(void *t);
+t_mutex* buscar_mutex(char* recurso,int pid);
+void asignar_mutex(t_tcb * tcb, t_mutex* mutex);
+t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex);
+void mutex_lock(char* recurso);
+void mutex_create(char* nombre_mutex,int pid_mutex);
+void thread_exit(t_tcb* t);
+void thread_cancel(int tid,int pid);
+
+void enviar_interrumpir_cpu(t_tcb* tcb, int motivo_interrrupt);
+void enviar_a_memoria_creacion_thread(t_tcb* tcb_nuevo,char* pseudo,int socket);
+void* enviar_a_memoria_thread_saliente(void* t);
+bool quitar_tid_de_proceso(t_tcb *t);
+void destruir_tcb(t_tcb* t);
+int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid);
+t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem);
+t_tcb* buscar_en_lista_tcb(t_list* lista,int tid,int pid,sem_t* sem);
+void agregar_a_lista(t_tcb *tcb,t_list* lista,sem_t* sem);
+t_tcb* remover_de_lista(t_list* lista,int indice, sem_t* mutex);
+t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb);
+void mutex_unlock(char* recurso_unlok,t_tcb* th_unlock);
+void thread_join(t_tcb* th_en_exec,int tid_target);
+void inicializar_hilo_intefaz_io();
+void interfaz_io();
+void hilo_sleep_io();
+
 
 #endif /* KERNEL_H_ */

@@ -1,74 +1,4 @@
 #include <../include/init_kernel.h>
-t_pcb* crear_pcb(int tam_proceso,char* archivo_instrucciones,int prioridad_th0) {
-    t_pcb* pcb = malloc(sizeof(t_pcb));
-    pcb->contador_AI_tids=0;//inicializa el contador de tids del proceso
-    pcb->lista_mutex=list_create();
-    pcb->lista_tids=list_create();
-    pcb->tamanio_proceso=tam_proceso;
-    pcb->pid=pid_AI_global;
-    pid_AI_global++;
-    pcb->prioridad_th_main=prioridad_th0;
-    pcb->ruta_pseudocodigo=strdup(archivo_instrucciones);
- 
-    return pcb;
-}
-void añadir_tid_a_proceso(t_pcb* pcb){
-    list_add(pcb->lista_tids,&(pcb->contador_AI_tids));
-    pcb->contador_AI_tids++;
-}
-
-void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
-    //memoria solo necesita tamanio de proceso y el pid 
-    t_paquete* paquete_a_enviar=crear_paquete(INICIAR_PROCESO);
-    agregar_a_paquete(paquete_a_enviar,&(pcb->pid),sizeof(uint32_t));
-    log_info(logger_kernel,"valor de pid:%d",pcb->pid);
-    agregar_a_paquete(paquete_a_enviar,&(pcb->tamanio_proceso),sizeof(uint32_t));
-    log_info(logger_kernel,"valor de tamanio:%d",pcb->tamanio_proceso);
-    enviar_paquete(paquete_a_enviar,socket);
-}
-int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
-    return recibir_operacion(socket_memoria);
-
-}
-
-int asignar_tid(t_pcb* pcb){
-    int tid_a_asignar=pcb->contador_AI_tids;
-    list_add(pcb->lista_tids,&(tid_a_asignar));
-    pcb->contador_AI_tids++;
-    return tid_a_asignar;
-}
-t_tcb* crear_tcb(int prioridad_th,int pid){
-    t_tcb* nuevo_tcb=malloc(sizeof(t_tcb));
-    nuevo_tcb->prioridad=prioridad_th;
-    nuevo_tcb->quantum_th=config_kernel->quantum;
-    t_pcb* pcb=buscar_proceso_por(pid);
-    nuevo_tcb->tid=asignar_tid(pcb);
-    nuevo_tcb->pid=pid;
-    return nuevo_tcb;
-}
-void enviar_a_memoria_creacion_thread(t_tcb* tcb_nuevo,char* pseudo,int socket){
-    t_paquete* paquete_a_enviar=crear_paquete(INICIAR_HILO);
-    int longitud=strlen(pseudo)+1;
-    agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->pid),sizeof(int));
-    log_info(logger_kernel,"valor de pid:%d",tcb_nuevo->pid);
-    agregar_a_paquete(paquete_a_enviar,&(tcb_nuevo->tid),sizeof(int));
-    log_info(logger_kernel,"valor de tid:%d",tcb_nuevo->tid);
-    agregar_a_paquete(paquete_a_enviar,pseudo,longitud);
-    log_info(logger_kernel,"ruta pseudocodigo:%s",pseudo);
-    enviar_paquete(paquete_a_enviar,socket);  
-}
-t_pcb* buscar_proceso_por(int pid_buscado){
-    t_pcb* un_pcb=NULL;
-    
-    for(int i=0;i<list_size(lista_procesos_global);i++){
-        un_pcb=list_get(lista_procesos_global,i);
-        if(un_pcb->pid==pid_buscado){
-            return un_pcb;
-        }
-    }
-   
-    return un_pcb;
-}
 //******************      SYSCALLS         *******************************
 void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_main){
     t_pcb* pcb_nuevo=NULL;
@@ -81,7 +11,9 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
     sem_wait(&(semaforos->mutex_lista_new));
          list_add(lista_new,pcb_nuevo);
     sem_post(&(semaforos->mutex_lista_new));
+
     sem_post(&(semaforos->sem_procesos_new));
+    
     log_info(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
 }
 
@@ -101,7 +33,7 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
 void mutex_create(char* nombre_mutex,int pid_mutex){
     t_mutex* mutex_nuevo=malloc(sizeof(t_mutex));
     mutex_nuevo->recurso=nombre_mutex;
-    mutex_nuevo->tid_asignado=-1;
+    mutex_nuevo->thread_asignado=NULL;
     mutex_nuevo->estado=SIN_ASIGNAR;//sin ASIGNAR
     mutex_nuevo->lista_threads_bloquedos=list_create();
     sem_wait(&(semaforos->mutex_lista_global_procesos));
@@ -112,4 +44,127 @@ void mutex_create(char* nombre_mutex,int pid_mutex){
     list_add(pcb->lista_mutex,mutex_nuevo);
 
 }
+//coloca el thread en la cola de espera de IO
+void ejecutar_io(int tiempo){
+    //quito de el thread de exec
+    sem_wait(&(semaforos->mutex_lista_exec));
+    t_tcb* tcb=list_get(lista_exec,0);
+    sem_post(&(semaforos->mutex_lista_exec));
+    tcb ->tiempo_de_io=tiempo;
 
+    pasar_execute_a_blocked();
+    //agrego a io
+    agregar_a_lista(tcb,lista_espera_io,&(semaforos->mutex_lista_espera_io));
+    log_info(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
+    sem_post(&(semaforos->sem_io_solicitud));
+    
+}
+
+//TODO: revisar semaforos 
+void mutex_lock(char* recurso){
+    t_mutex* mutex=NULL;
+    sem_wait(&(semaforos->mutex_lista_exec));
+    t_tcb* tcb_ejecutando=(t_tcb*)list_get(lista_exec,0);
+    sem_wait(&(semaforos->mutex_lista_exec));
+        mutex=buscar_mutex(recurso,tcb_ejecutando->pid);
+    if(mutex!=NULL){
+        if(mutex->estado==SIN_ASIGNAR){
+            asignar_mutex(tcb_ejecutando,mutex);
+            //continua ejecutando el mismo tcb-->vuelvo a  enviar el mismo tcb a ejecutar
+            enviar_thread_a_cpu(tcb_ejecutando);
+        }else{
+            //se bloquea--> quito el tcb de exec y lo mando a espera de mutex y bloq
+            // y marco la cpu como libre
+            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            
+            list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);
+            
+            agregar_a_lista(tcb_ejecutando,lista_blocked,&(semaforos->mutex_lista_blocked));
+            
+            sem_post(&(semaforos->espacio_en_cpu));
+
+        }   
+    }else//si no existe el tcb-> hace nada, debe serguir el mismo thread
+        enviar_thread_a_cpu(tcb_ejecutando);
+
+}
+//pasa el mutex al siguiente tcb en espera o no hace nada si el mutex no existe
+void mutex_unlock(char* recurso, t_tcb* tcb){
+    //controlo que el mutex exista y este asignado al tcb
+    t_mutex* mutex_a_desbloquear=NULL;
+    mutex_a_desbloquear=quitar_mutex_a_thread(recurso,tcb);
+            
+    if(mutex_a_desbloquear!=NULL){//si lo tenia asignado(y existe)
+        //asgino al primero que esperaba el mutex
+        t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
+        //desbloqueo tcb_con_mutex porque ya se le asigno el mutex 
+        buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
+        //envio el tcb con mutex a ready
+        agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+        sem_post(&(semaforos->contador_threads_en_ready));
+    }
+    //continua ejecutando el que hizo la syscall
+    enviar_thread_a_cpu(tcb);
+}
+
+// terminar thread: quitar TID de pcb, enviar mensaje a memoria, mandar a ready los tcb joineados al thread eliminado, destruir tcb
+void thread_exit(t_tcb *tcb){
+    bool se_logro_eliminar=quitar_tid_de_proceso(tcb);
+    if(se_logro_eliminar){
+    pthread_t hilo_manejo_exit;
+    pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
+    pthread_detach(hilo_manejo_exit);
+    
+    }else
+        log_info(logger_kernel, " EL hilo no existe o ya fue eliminado del proceso");
+}
+void thread_cancel(int tid_a_cancelar,int pid)
+{
+    t_pcb* pcb=buscar_proceso_por(pid);
+    int indice_de_tid=buscar_indice_de_tid_en_proceso(pcb,tid_a_cancelar);
+
+    if(indice_de_tid!=-1){//el tcb aun no se elimino
+        //busco donde este el pcb}
+
+        t_tcb* tcb_a_cancelar=NULL;
+        if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo
+            tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_exec,tid_a_cancelar,pid,&(semaforos->mutex_lista_exec));
+        }
+        if(tcb_a_cancelar==NULL){
+            tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_blocked,tid_a_cancelar,pid,&(semaforos->mutex_lista_blocked));
+        }
+           if(tcb_a_cancelar==NULL){
+            tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_ready,tid_a_cancelar,pid,&(semaforos->mutex_lista_ready));
+        }
+         if(tcb_a_cancelar!=NULL) {//muevo a exit
+            agregar_a_lista(tcb_a_cancelar,lista_exit,&(semaforos->mutex_lista_exit));
+            thread_exit(tcb_a_cancelar);
+            
+            }
+    }
+ //hace nada
+}
+//pone a tcb en bloqueados y esperar
+void thread_join(t_tcb* tcb_en_exec, int tid_target){
+    t_pcb* pcb=buscar_proceso_por(tcb_en_exec->pid);
+    
+    int posicion_tid=buscar_indice_de_tid_en_proceso(pcb,tid_target);
+    
+    if(posicion_tid !=-1){//existe tid_target--> busco su tcb en colas
+            t_tcb* tcb_target=NULL;
+        if(tcb_target==NULL){
+            tcb_target=(t_tcb*)buscar_en_lista_tcb(lista_ready,tid_target,pcb->pid,&(semaforos->mutex_lista_ready));
+        }
+         if(tcb_target==NULL){
+            tcb_target=(t_tcb*)buscar_en_lista_tcb(lista_blocked,tid_target,pcb->pid,&(semaforos->mutex_lista_blocked));
+        }
+         if(tcb_target!=NULL) { 
+            tcb_en_exec->thread_target=tcb_target;
+            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            agregar_a_lista(tcb_en_exec,lista_blocked,&(semaforos->mutex_lista_blocked));
+            sem_post(&(semaforos->espacio_en_cpu));
+            
+            }
+    }else    //continua ejecutando el que hizo la syscall
+        enviar_thread_a_cpu(tcb_en_exec);
+}

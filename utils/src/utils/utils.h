@@ -37,6 +37,12 @@ typedef  enum
     HILO_CREAR,
     PROCESO_CREAR,
     PROCESO_SALIR,
+    PROCESO_EJECUTAR,
+    IO_EJECUTAR,
+    FIN_DE_QUANTUM,
+    SOLICITUD_DE_MUTEX_BLOQUEADA,
+    
+    SEGMENTATION_FAULT,
 
 
 //---------------CPU-MEMORIA-------------------
