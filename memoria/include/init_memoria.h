@@ -7,6 +7,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <utils/utils.h>
+#include "semaphore.h"
 
 #include <commons/bitarray.h>
 #include <commons/collections/list.h>
@@ -32,18 +33,20 @@ typedef struct{
     char* LOG_LEVEL;
 } t_config_memoria;
 
+typedef struct {
+    uint32_t PC;
+    uint32_t AX, BX, CX, DX, EX, FX, GX, HX;
+    uint32_t base;
+    uint32_t limite;
+} t_registro_cpu;
 
 typedef struct{
     uint32_t pid;
     t_list* hilos;
-    uint32_t tamanio_proceso;
-    uint32_t base;
+    t_registro_cpu registros;
 } t_miniPCB;
 
-typedef struct {
-    uint32_t PC;
-    uint32_t AX, BX, CX, DX, EX, FX, GX, HX;
-} t_registro_cpu;
+
 
 typedef struct{
     uint32_t tid;
@@ -52,8 +55,9 @@ typedef struct{
 }t_hilo;
 
 typedef struct{
+    uint32_t pid;
+    uint32_t tid;
     t_registro_cpu registros;
-    //base y limite
 } t_m_contexto;
 
 
@@ -85,7 +89,7 @@ typedef struct{
 typedef struct{
     uint32_t pid;
     uint32_t direccion_fisica;
-    uint32_t tamanio;
+    uint32_t tamanio; //siempre son 4 bytes?
     char* valor;
 } t_escribir_leer;
 
@@ -141,7 +145,7 @@ void cerrar_programa();
 
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso);
 
-void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
+void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo, uint32_t tamanio_proceso);
 
 void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
 
@@ -172,6 +176,16 @@ bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
 uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
 
 void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
+
+t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid);
+
+bool actualizar_contexto(t_m_contexto* contexto);
+
+t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
+
+bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud);
+
+bool read_mem(uint32_t direccion_fisica, char* resultado);
 
 
 #endif /* MEMORIA_H */

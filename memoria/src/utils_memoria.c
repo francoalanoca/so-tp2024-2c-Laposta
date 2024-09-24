@@ -130,32 +130,34 @@ void enviar_respuesta_finalizar_hilo(uint32_t pid_proceso_a_finalizar ,uint32_t 
 
 
 
-/*
+
 void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
     t_paquete* paquete_cpu = crear_paquete(SOLICITUD_CONTEXTO_RTA); // Tipo de paquete que indica envío a CPU
 
     // Agregar información del PCB al paquete
-    agregar_a_paquete(paquete_cpu, &pcbproceso->pid, sizeof(int));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->pid, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->tid, sizeof(uint32_t));
 
     // Agregar los registros de la CPU al paquete individualmente
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->PC, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->AX, sizeof(uint8_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->BX, sizeof(uint8_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->CX, sizeof(uint8_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->DX, sizeof(uint8_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->EX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->FX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->GX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_cpu, &pcbproceso->registros->HX, sizeof(uint32_t));
-    //falta base y limite
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.PC, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.AX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.BX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.CX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.DX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.EX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.FX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.GX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.HX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.base, sizeof(uint32_t));
+    agregar_a_paquete(paquete_cpu, &pcbproceso->registros.limite, sizeof(uint32_t));
 
     // Enviar el paquete a la CPU
     enviar_paquete(paquete_cpu, socket_cpu); 
-    printf("Contexto enviado %s\n", pcbproceso); 
+    printf("Contexto enviado para pid %d tid %d\n", pcbproceso->pid,pcbproceso->tid); 
     // Liberar recursos del paquete
     eliminar_paquete(paquete_cpu);
 }
-*/
+
 
 t_proceso_memoria* deserializar_solicitud_instruccion(t_list*  lista_paquete ){
 
@@ -202,7 +204,7 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete ){
 }
 
 
-void enviar_respuesta_read_memoria(void* respuesta_leer, int socket_cpu) {
+void enviar_respuesta_read_memoria(uint32_t pid, void* respuesta_leer, int socket_cpu, op_code cod_ope) {
     t_paquete* paquete_valor;
 
     // Verificar que respuesta_leer no sea NULL
@@ -220,10 +222,11 @@ void enviar_respuesta_read_memoria(void* respuesta_leer, int socket_cpu) {
     }
 
 
-    paquete_valor = crear_paquete(READ_MEMORIA_RTA);
+    paquete_valor = crear_paquete(cod_ope);
 
     uint32_t tamanio_respuesta_leer = (longitud * sizeof(char)) + 1;
 
+    agregar_a_paquete(paquete_valor, &pid, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_valor, &tamanio_respuesta_leer, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_valor, respuesta_leer, tamanio_respuesta_leer);          
 
@@ -262,14 +265,73 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
 
 
 
-void enviar_respuesta_write_memoria(char* respuesta_escribir, int socket_cliente){
+void enviar_respuesta_write_memoria(uint32_t pid, int socket_cliente, op_code cod_ope){
     t_paquete* paquete_valor;
 
-    paquete_valor = crear_paquete(WRITE_MEMORIA_RTA);
+    paquete_valor = crear_paquete(cod_ope);
 
-    //agregar_a_paquete(paquete_valor, &respuesta_escribir,  sizeof(void*));
+    agregar_a_paquete(paquete_valor, &pid,  sizeof(uint32_t));
 
     enviar_paquete(paquete_valor, socket_cliente);
     printf("Se envio respuesta de guardado \n"); 
    eliminar_paquete(paquete_valor);
+}
+
+void enviar_respuesta_actualizar_contexto(t_m_contexto* contexto ,int socket_cpu, op_code cod_ope) {
+    t_paquete* paquete_contexto;
+ 
+    paquete_contexto = crear_paquete(cod_ope);
+ 
+    agregar_a_paquete(paquete_contexto, &contexto->pid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_contexto, &contexto->tid,  sizeof(uint32_t));
+     
+    enviar_paquete(paquete_contexto, socket_cpu);   
+    eliminar_paquete(paquete_contexto);
+    printf("PAQUETE ELIMINADO\n"); 
+}
+
+t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
+
+    t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
+    
+    contexto->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Pid recibido: %d \n", contexto->pid);
+    
+    contexto->tid = *(uint32_t*)list_get(lista_paquete, 1);
+    printf("Tid recibido: %d \n", contexto->tid);
+
+    contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
+    printf("Registro PC recibido: %d \n", contexto->registros.PC);
+
+    contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
+    printf("Registro AX recibido: %d \n", contexto->registros.AX);
+
+    contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
+    printf("Registro BX recibido: %d \n", contexto->registros.BX);
+
+    contexto->registros.CX = *(uint32_t*)list_get(lista_paquete, 5);
+    printf("Registro CX recibido: %d \n", contexto->registros.CX);
+
+    contexto->registros.DX = *(uint32_t*)list_get(lista_paquete, 6);
+    printf("Registro DX recibido: %d \n", contexto->registros.DX);
+
+    contexto->registros.EX = *(uint32_t*)list_get(lista_paquete, 7);
+    printf("Registro EX recibido: %d \n", contexto->registros.EX);
+
+    contexto->registros.FX = *(uint32_t*)list_get(lista_paquete, 8);
+    printf("Registro FX recibido: %d \n", contexto->registros.FX);
+
+    contexto->registros.GX = *(uint32_t*)list_get(lista_paquete, 9);
+    printf("Registro GX recibido: %d \n", contexto->registros.GX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
+    printf("Registro HX recibido: %d \n", contexto->registros.HX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 11);
+    printf("Registro base recibido: %d \n", contexto->registros.base);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 12);
+    printf("Registro limite recibido: %d \n", contexto->registros.limite);
+
+    return contexto;
 }
