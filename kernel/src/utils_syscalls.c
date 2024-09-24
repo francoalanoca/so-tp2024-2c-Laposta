@@ -76,9 +76,14 @@ t_pcb* buscar_proceso_por(int pid_buscado){
 }
 void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar){
     t_paquete * paquete=crear_paquete(PROCESO_EJECUTAR);
+    log_info(logger_kernel,"valor a cpu de pid:%d",tcb_a_ejetucar->tid);
     agregar_a_paquete(paquete,&(tcb_a_ejetucar->pid),sizeof(int));
+
+    log_info(logger_kernel,"valor a cpu de tid:%d",tcb_a_ejetucar->tid);
     agregar_a_paquete(paquete,&(tcb_a_ejetucar->tid),sizeof(int));
+    
     enviar_paquete(paquete,config_kernel->conexion_cpu_dispatch);
+
 }
 
 

@@ -256,7 +256,7 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     // nuevo_hilo->registros.HX = 0;
     // nuevo_hilo->lista_de_instrucciones = list_create();
     // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
-    list_add(nuevo_proceso->hilos,nuevo_hilo);
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);TODO: FIXME: se me creaba el primer sin instrucciones
 
  
     uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
@@ -298,7 +298,8 @@ void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
 
         if (miniPCB->pid == pid){
 			list_add(miniPCB->hilos,hilo);
-            printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
+            log_warning(logger_memoria,"Se agrega tid %d a proceso : %d",hilo->tid,pid);
+           // printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
             encontrado = true;
         }
     }

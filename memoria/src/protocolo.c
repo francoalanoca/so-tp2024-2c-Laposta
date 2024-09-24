@@ -7,6 +7,7 @@
 
 void memoria_atender_cpu(){
     
+	log_info(logger_memoria, "EMPIEZO A ATENDER CPU(%d)",socket_cpu);
 
 
 	while (1) {
@@ -19,7 +20,7 @@ void memoria_atender_cpu(){
 
 		switch (cod_op) {
 		case HANDSHAKE:
-			log_info(logger_memoria, "Handshake realizado con cliente(%d)",socket_cpu);
+			log_info(logger_memoria, "Handshake realizado con cliente cpu(%d)",socket_cpu);
             response = HANDSHAKE_OK;
             if (send(socket_cpu, &response, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
                 log_error(logger_memoria, "Error al enviar respuesta de handshake a cliente");
@@ -36,6 +37,7 @@ void memoria_atender_cpu(){
 			break;
 
 		case SOLICITUD_INSTRUCCION:
+			sleep(8);
 			log_info(logger_memoria, "Recibí SOLICITUD_INSTRUCCION \n");
 			valores = recibir_paquete(socket_cpu);
 			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
@@ -179,17 +181,17 @@ void memoria_atender_kernel(void* socket){
 			log_info(logger_memoria, "Recibí INICIAR_HILO \n");
 			valores = recibir_paquete(fd_kernel);
 			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores);
-			if(existe_hilo_en_memoria(iniciar_hilo->pid,iniciar_hilo->tid)){
-				//Enviar rta ERROR:Ya existe
-				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_ERROR_YA_EXISTE);
-			}
-			else{
+			// if(existe_hilo_en_memoria(iniciar_hilo->pid,iniciar_hilo->tid)){
+			// 	//Enviar rta ERROR:Ya existe
+			// 	enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_ERROR_YA_EXISTE);
+			// }
+			// else{
 				//leer_instrucciones(iniciar_hilo->archivo_pseudocodigo, iniciar_hilo->pid, iniciar_hilo->tid);
 				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Creado- (PID:TID)- (%d:%d)\n",iniciar_hilo->pid,iniciar_hilo->tid);
-			}
+			// }
 			
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
 			break;

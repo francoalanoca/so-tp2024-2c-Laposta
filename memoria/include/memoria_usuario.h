@@ -36,7 +36,7 @@ typedef struct{
 extern void* memoria_usuario;                        
 extern t_list* lista_particiones;
 extern t_particion_dinamica* lista_particiones_dinamicas;             
-extern t_list* lista_miniPCBs;  
+// extern t_list* lista_miniPCBs;  TODO: FIXME: aaaaaaaaaaaaaaaaaa poruqe esta definido en init_memoria.h tambien??
 extern uint32_t tamanio_total_memoria;  
 extern char * algoritmo_alocacion;     
 extern t_list* pids_por_bloque;     

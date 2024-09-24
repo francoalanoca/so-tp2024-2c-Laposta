@@ -122,13 +122,14 @@ int main(int argc, char *argv[])
     ciclo_params_t *params = malloc(sizeof(ciclo_params_t));
     params->socket_memoria = socket_memoria;
     params->proceso_actual = proceso_actual;
-   log_info(logger_cpu,"cargo parametros ");
+    log_info(logger_cpu,"cargo parametros ");
     params->lista_conexion_kernel_dispatch = lista_sockets_global;
     params->conexion_kernel_interrupt = conexion_kernel_interrupt;
 
     pthread_t hilo_ejecutar_ciclo;
     log_info(logger_cpu,"conexion memoria %d",socket_memoria);
     log_info(logger_cpu,"voy a crear hilo");
+    // sleep(5);
     int result = pthread_create(&hilo_ejecutar_ciclo, NULL, ejecutar_ciclo,(void*)params);
     //pthread_join(hilo_ejecutar_ciclo,NULL);
     pthread_join(servidor_dispatch, NULL);
@@ -138,9 +139,10 @@ int main(int argc, char *argv[])
 }
 
 void ejecutar_ciclo(void* arg) {
+    log_info(logger_cpu,"cantidad sockets %d",list_size(lista_sockets_global));
     ciclo_params_t* params = (ciclo_params_t*)arg;
    
-    int dispatch = list_get(lista_sockets_global,0);
+    int *dispatch = (int*)list_get(lista_sockets_global,0);
    // list_add_in_index(lista_sockets_global,1,(int*)1);
    int *dispatch_interrup =(int *)list_get(lista_sockets_global,1);
     while (1) {

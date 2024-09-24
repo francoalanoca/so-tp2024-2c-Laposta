@@ -12,6 +12,8 @@
 #include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
+
+
 //#include "../include/instrucciones.h"
 
 
@@ -170,5 +172,6 @@ bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
 uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
 
 void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
+
 
 #endif /* MEMORIA_H */

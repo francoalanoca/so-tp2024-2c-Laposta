@@ -21,7 +21,6 @@ int main(int argc, char* argv[]) {
         printf("No se pudo inicializar Memoria\n");
         return EXIT_FAILURE;
     }
-    
     log_info(logger_memoria, "Se inicio correctamente la Memoria");
 
     //-------------------Servidores------------------------
