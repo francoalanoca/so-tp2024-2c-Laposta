@@ -692,5 +692,27 @@ void finalizar_proceso(uint32_t proceso_pid){
 
 }
 
+char* generar_nombre_archivo(uint32_t pid, uint32_t tid) {
+    // Obtener el timestamp actual en segundos desde Epoch
+    time_t current_time = time(NULL);
+    if (current_time == ((time_t)-1)) {
+        return NULL; // Error al obtener el tiempo
+    }
+
+    // Reservar memoria para la cadena del nombre de archivo
+    // Longitud máxima para el formato: PID-TID-TIMESTAMP.dmp
+    // PID máximo: 10 dígitos, TID máximo: 10 dígitos, TIMESTAMP: 10 dígitos
+    // Formato fijo y la extensión ".dmp" = 15 caracteres adicionales
+    char* nombre_archivo = malloc(35 * sizeof(char));
+    if (nombre_archivo == NULL) {
+        return NULL; // Error al asignar memoria
+    }
+
+    // Formatear la cadena con PID, TID y TIMESTAMP
+    snprintf(nombre_archivo, 35, "%u-%u-%ld.dmp", pid, tid, current_time);
+
+    return nombre_archivo;
+}
+
 
 

@@ -122,6 +122,20 @@ void enviar_respuesta_finalizar_hilo(uint32_t pid_proceso_a_finalizar ,uint32_t 
     eliminar_paquete(paquete_finalizar_hilo); 
 }
 
+void enviar_creacion_memory_dump(uint32_t tamanio_nombre_archivo, char* nombre_archivo ,uint32_t tamanio_contenido,char* contenido, int socket_fs){
+    t_paquete* paquete_creacion_memory_dump;
+ 
+    paquete_creacion_memory_dump = crear_paquete(CREACION_DUMP);
+ 
+    agregar_a_paquete(paquete_creacion_memory_dump, nombre_archivo,  tamanio_nombre_archivo);
+    agregar_a_paquete(paquete_creacion_memory_dump, &tamanio_contenido,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_creacion_memory_dump, contenido,  tamanio_contenido);
+    
+    enviar_paquete(paquete_creacion_memory_dump, socket_fs);   
+    printf("Peticion creacion memory dump enviada \n"); 
+    eliminar_paquete(paquete_creacion_memory_dump); 
+}
+
 
 /*---------------------------- CPU-------------------------*/
 

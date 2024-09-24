@@ -258,8 +258,14 @@ void memoria_atender_kernel(void* socket){
 
 		case PEDIDO_MEMORY_DUMP:
 			log_info(logger_memoria, "Recibí PEDIDO_MEMORY_DUMP \n");
-			//valores = recibir_paquete(fd_kernel);
+			valores = recibir_paquete(fd_kernel);
+			uint32_t pid = *(uint32_t*)list_get(valores, 0);
+			uint32_t tid = *(uint32_t*)list_get(valores, 1);
+			char* nombre_archivo = generar_nombre_archivo(pid, tid);
+			uint32_t tamanio_nombre_archivo = (strlen(nombre_archivo)+1) * sizeof(char);
+
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			//enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,/*tamanio_contenido, contenido,socket_fs*/);
 			log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;
 
