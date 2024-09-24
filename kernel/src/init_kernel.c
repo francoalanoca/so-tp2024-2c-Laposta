@@ -138,7 +138,7 @@ void procesar_conexion_dispatch(void *socket)
             t_list *params_io = recibir_paquete(fd_conexion_cpu);
 
             int tiempo_io = *((int *)list_get(params_io, 1));
-            //ejecutar_io(tiempo_io);
+            ejecutar_io(tiempo_io);
 
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
