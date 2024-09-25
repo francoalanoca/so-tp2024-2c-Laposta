@@ -24,22 +24,20 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
         switch(tipo_inst){
             case SET:
             {      
-                log_info(logger_cpu, "TID: %u - Ejecutando: SET - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                char *endptr;
-                uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
-                set(inst->param1, param2_num, proceso);
+                log_info(logger_cpu, "TID: %u - Ejecutando: SET - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO           
+                set(inst->param1, inst->param2, proceso);
                 break;
             }
             case SUM:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: SUM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                sum(inst->param1, inst->param2,proceso);
+                sum(inst->param1, inst->param2, proceso);
                 break;
             }
             case SUB:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: SUB - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                sub(inst->param1, inst->param2,proceso);
+                sub(inst->param1, inst->param2, proceso);
                 break;
             }            
 
@@ -186,9 +184,10 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
 }
 
 //////////////////////////////////////// INSTRUCCIONES //////////////////////////////////////////
-void set(char* registro, uint32_t valor, t_proceso* proceso){
-
+void set(char* registro, char* valor_char, t_proceso* proceso){
+    char *endptr;     
     registros registro_elegido = identificarRegistro(registro);
+    uint32_t valor = (uint32_t)strtoul(valor_char, &endptr, 10);// Convertir la cadena a uint32_t
     //pthread_mutex_lock(&mutex_proceso_actual);
     switch(registro_elegido){
         case PC:
@@ -234,6 +233,16 @@ void set(char* registro, uint32_t valor, t_proceso* proceso){
         case HX:
         {
           proceso->registros_cpu.HX = valor;
+            break;
+        }
+        case base:
+        {
+          proceso->registros_cpu.base = valor;
+            break;
+        }
+        case limite:
+        {
+          proceso->registros_cpu.limite = valor;
             break;
         }
         

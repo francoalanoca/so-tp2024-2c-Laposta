@@ -39,7 +39,7 @@ void check_interrupt( int conexion_kernel);
 
 //instrucciones
 
-void set(char* registro, uint32_t valor, t_proceso* proceso);
+void set(char* registro, char* valor, t_proceso* proceso);
 void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, int conexion);
 void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, int conexion);
 void sum(char* registro_destino, char* registro_origen, t_proceso* proceso);
