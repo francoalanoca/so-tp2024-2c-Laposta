@@ -37,7 +37,7 @@ int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
     // Selecciona la partición según el algoritmo
     if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "FIRST_FIT") == 0) {
         particion_resultante = buscar_first_fit(tamanio_proceso);
-        log_info(logger_memoria, "Se eligio la primer particion posible \n"):
+        log_info(logger_memoria, "Se eligio la primer particion posible \n");
 
     } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "BEST_FIT") == 0) {
         particion_resultante = buscar_best_fit(tamanio_proceso);
