@@ -191,6 +191,9 @@ void thread_join(t_tcb* th_en_exec,int tid_target);
 void inicializar_hilo_intefaz_io();
 void interfaz_io();
 void hilo_sleep_io();
+int buscar_indice_de_mayor_prioridad();
+void iniciar_quantum(t_tcb* tcb);
+void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado);
 
 
 #endif /* KERNEL_H_ */

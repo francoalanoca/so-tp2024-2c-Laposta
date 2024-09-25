@@ -21,8 +21,16 @@ void iniciar_conexiones(){
 
     
     //Esperar al cliente Cpu
-    //log_info(logger_memoria, "Conexion con Cpu exitosa");
-   // socket_cpu = esperar_cliente(logger_memoria, "Cpu", socket_memoria);
+    
+    socket_cpu = esperar_cliente(logger_memoria, "Cpu", socket_memoria);
+    //Atender a Cpu
+    pthread_t hilo_cpu;
+    //se crea un nuevo hilo que atiende al cliente
+    pthread_create(&hilo_cpu, NULL, (void*) memoria_atender_cpu, NULL);
+    log_info(logger_memoria, "Conexion con Cpu exitosa");
+    //se desacopla del hilo principal para no interferir
+    pthread_detach(hilo_cpu);
+
     while (1)
     {   
         int socket_aux;
