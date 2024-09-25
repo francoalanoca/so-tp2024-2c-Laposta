@@ -163,10 +163,11 @@ t_proceso_memoria* deserializar_solicitud_instruccion(t_list*  lista_paquete ){
 
     t_proceso_memoria* proxima_instruccion = malloc(sizeof(t_proceso_memoria));
     
-    proxima_instruccion->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    proxima_instruccion->pid = *((uint32_t*)list_get(lista_paquete, 0));
     printf("Pid recibido: %d \n", proxima_instruccion->pid);
-    
-    proxima_instruccion->program_counter = *(uint32_t*)list_get(lista_paquete, 1);
+    proxima_instruccion->tid = *((uint32_t*)list_get(lista_paquete, 1));
+    printf("Tid recibido: %d \n", proxima_instruccion->tid);
+    proxima_instruccion->program_counter = *((uint32_t*)list_get(lista_paquete, 2));
     printf("Program counter: %d \n", proxima_instruccion->program_counter);
 
     return proxima_instruccion;

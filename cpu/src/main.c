@@ -119,7 +119,6 @@ int main(int argc, char *argv[])
     sem_wait(&sem_conexion_dispatch_iniciado);
     sem_wait(&sem_conexion_interrupt_iniciado);
 
-
     pthread_t hilo_ejecutar_ciclo;
     log_info(logger_cpu,"conexion memoria %d",socket_memoria);
     log_info(logger_cpu,"voy a crear hilo");

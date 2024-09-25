@@ -13,6 +13,8 @@
 #include <commons/collections/list.h>
 
 #include "../include/memoria_usuario.h"
+
+
 //#include "../include/instrucciones.h"
 
 
@@ -184,5 +186,6 @@ t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
 bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud);
 
 bool read_mem(uint32_t direccion_fisica, char* resultado);
+
 
 #endif /* MEMORIA_H */

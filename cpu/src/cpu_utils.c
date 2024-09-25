@@ -6,7 +6,7 @@ t_proceso* proceso_actual;
 
 instr_t* fetch(int conexion, t_proceso* proceso){
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
-    log_info(logger_cpu, "PID: %u- FETCH- Program Counter: %u", proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO
+    log_info(logger_cpu, "PID: %u- TID:%u -FETCH- Program Counter: %u", proceso->pid,proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO
     log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
     pedir_instruccion(proceso, conexion); 
     //TODO:WAIT semaforo
@@ -658,7 +658,7 @@ void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_pro
     paquete_create_process = crear_paquete(PROCESO_CREAR); //AGREGAR LA OPERACION CORESPONDENTIE
     int tamanio_nombre_pseudocodigo = string_length(nombre_pseudocodigo)+1;
   
-    agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
+    //agregar_a_paquete(paquete_create_process, &tamanio_nombre_pseudocodigo,  sizeof(uint32_t));
     agregar_a_paquete(paquete_create_process, nombre_pseudocodigo, tamanio_nombre_pseudocodigo);
     uint32_t tamanio_proceso_num = (uint32_t)strtoul(tamanio_proceso, &endptr, 10);// Convertir la cadena a uint32_t
     agregar_a_paquete(paquete_create_process, &tamanio_proceso_num,  sizeof(uint32_t));
@@ -850,6 +850,7 @@ tipo_instruccion str_to_tipo_instruccion(const char *str) {
     else if (strcmp(str, "SUM") == 0) instruccion_a_devolver = SUM;
     else if (strcmp(str, "SUB") == 0) instruccion_a_devolver = SUB;
     else if (strcmp(str, "JNZ") == 0) instruccion_a_devolver = JNZ;
+    else if (strcmp(str, "PROCESS_CREATE") == 0) instruccion_a_devolver = PROCESS_CREATE;
     // agregar instrucciones faltantese
     else printf("Entro en el default de str_to_tipo_instruccion \n");
 
