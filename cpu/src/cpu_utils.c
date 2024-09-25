@@ -53,12 +53,14 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case READ_MEM:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: READ_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                read_mem(inst->param1,inst->param2,proceso_actual,conexion);
                 break;
             }   
 
             case WRITE_MEM:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: WRITE_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                write_mem(inst->param1,inst->param2,proceso_actual,conexion);
                 break;
             }   
 
@@ -185,7 +187,7 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
 
 //////////////////////////////////////// INSTRUCCIONES //////////////////////////////////////////
 void set(char* registro, uint32_t valor, t_proceso* proceso){
-    //printf("El valor del set es : %d ", valor);
+
     registros registro_elegido = identificarRegistro(registro);
     //pthread_mutex_lock(&mutex_proceso_actual);
     switch(registro_elegido){
@@ -535,7 +537,7 @@ uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kern
 
 
 
-void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, t_log* logger, int conexion){
+void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, int conexion){
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el 
     //Registro Dirección y lo almacena en el Registro Datos
     registros id_registro_direccion = identificarRegistro(registro_direccion);
@@ -548,7 +550,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
 
     registros id_registro_datos = identificarRegistro(registro_datos);
 
-    uint32_t tamanio_a_leer = 4;
+    uint32_t tamanio_a_leer = 4; // es el tamanio del uint32_t
 
     pedir_valor_a_memoria(dir_fisica_result,proceso->pid,tamanio_a_leer,conexion);
     int valor_sem;
@@ -557,7 +559,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     sem_wait(&sem_valor_registro_recibido);
     printf("paso sem_valor_registro_recibido\n");
 
-    log_info(logger, "PID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->pid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
+    log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
     
     char *endptr;
     printf("paso endptr\n");
@@ -576,7 +578,7 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
 
 }
 
-void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, t_log* logger, int conexion){
+void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
     printf("registro: %s\n",registro_datos);
@@ -588,18 +590,13 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
     uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
-    //TODO: Si el tamanio de valor_registro_datos(es un int de 32 siempre?) es mayor a tamanio_pagina hay
-    //que dividir ambos y tomar el floor para obtener cant de paginas, con eso dividir datos a enviar en *cant de paginas*, y
-    //por cada pedacito de intfo llamar a mmu y agregar dir fisca obtenida en lista 
-
 
 // Calcular el tamaño necesario para el valor_str
     int len = snprintf(NULL, 0, "%u", valor_registro_datos);
     char* valor_str = malloc(len + 1);
     snprintf(valor_str, len + 1, "%u", valor_registro_datos);
-
     
-    log_info(logger, "PID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->pid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
+    log_info(logger_cpu, "TID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->tid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
 
 }
 
