@@ -758,21 +758,23 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
 void enviar_process_exit_a_kernel(int conexion_kernel){
     t_paquete* paquete_process_exit_kernel;   
     paquete_process_exit_kernel = crear_paquete(PROCESO_SALIR); 
-
+    
     agregar_a_paquete(paquete_process_exit_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
     enviar_paquete(paquete_process_exit_kernel, conexion_kernel); 
     eliminar_paquete(paquete_process_exit_kernel);    
+    proceso_actual = NULL;
 }
 
 
 void enviar_thread_exit_a_kernel(int conexion_kernel){
     t_paquete* paquete_thread_exit_kernel;   
     paquete_thread_exit_kernel = crear_paquete(HILO_SALIR); 
-
+    
     agregar_a_paquete(paquete_thread_exit_kernel,  &proceso_actual->pid,  sizeof(uint32_t)); 
     agregar_a_paquete(paquete_thread_exit_kernel,  &proceso_actual->tid,  sizeof(uint32_t));     
     enviar_paquete(paquete_thread_exit_kernel, conexion_kernel); 
-    eliminar_paquete(paquete_thread_exit_kernel);      
+    eliminar_paquete(paquete_thread_exit_kernel);  
+    proceso_actual = NULL;    
 }
 
 
