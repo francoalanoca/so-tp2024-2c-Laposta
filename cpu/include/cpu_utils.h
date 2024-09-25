@@ -32,7 +32,7 @@ typedef enum
 void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch,int *socket_interrupt);
 instr_t* fetch(int conexion, t_proceso* proceso);
 void pedir_instruccion(t_proceso* proceso,int conexion);
-tipo_instruccion decode(instr_t* instr);
+tipo_instruccion decode(instr_t* instr, int conexion_memo);
 void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int conexion,  int socket_dispatch, int socket_interrupt);
 void check_interrupt( int conexion_kernel);
 

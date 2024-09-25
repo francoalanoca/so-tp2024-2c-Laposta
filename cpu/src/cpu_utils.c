@@ -833,7 +833,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
-    tipo_inst = decode(inst);
+    tipo_inst = decode(inst, conexion_mem);
     log_info(logger_cpu, "Voy a entrar a execute");
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT ) 
