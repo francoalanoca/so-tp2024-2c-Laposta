@@ -207,10 +207,10 @@ void atender_memoria (int *socket_mr) {
                 break;
                 }
             case SOLICITUD_CONTEXTO_RTA: 
-                t_list* lista_paquete_base = recibir_paquete(socket_memoria_server);
-                base_particion = list_get(lista_paquete_base,0);
+                t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
+                deserializar_contexto_(proceso_actual, lista_paquete_contexto); // ojo con semarofo de proceso actual
                 sem_post(&sem_valor_base_particion);
-                list_destroy(lista_paquete_base);
+                list_destroy(lista_paquete_contexto);
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
