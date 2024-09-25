@@ -5,11 +5,9 @@ int tamanioInterfaces;
 t_proceso* proceso_actual;
 
 instr_t* fetch(int conexion, t_proceso* proceso){
-    log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
-    log_info(logger_cpu, "PID: %u- TID:%u -FETCH- Program Counter: %u", proceso->pid,proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO
-    log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
+    
+    log_info(logger_cpu, "TID:%d -FETCH- Program Counter: %d", proceso->pid,proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO   
     pedir_instruccion(proceso, conexion); 
-    //TODO:WAIT semaforo
     sem_wait(&sem_valor_instruccion);
     return prox_inst;
 }
@@ -25,9 +23,8 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
     
         switch(tipo_inst){
             case SET:
-            {   
-                log_info(logger_cpu, "ENTRO EN SET ");
-                log_info(logger_cpu, "PID: %u - Ejecutando: SET - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+            {      
+                log_info(logger_cpu, "TID: %u - Ejecutando: SET - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 char *endptr;
                 uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
                 set(inst->param1, param2_num, proceso);
@@ -35,39 +32,39 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             }
             case SUM:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: SUM - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: SUM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 sum(inst->param1, inst->param2,proceso);
                 break;
             }
             case SUB:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: SUB - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: SUB - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 sub(inst->param1, inst->param2,proceso);
                 break;
             }            
 
             case JNZ:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: JNZ - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: JNZ - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 jnz(inst->param1, inst->param2,proceso);
                 break;
             }        
 
             case READ_MEM:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: READ_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 break;
             }   
 
             case WRITE_MEM:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: WRITE_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 break;
             }   
 
             case LOG:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: LOG - %s", proceso->tid,inst->param1); //LOG OBLIGATORIO
                 loguear(inst->param1);
                 break;
             }
@@ -75,21 +72,21 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             // SYSCALLS:
             case DUMP_MEMORY:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: DUMP_MEMORY", proceso->pid);                
+                log_info(logger_cpu, "TID: %u - Ejecutando: DUMP_MEMORY", proceso->tid);                
                 enviar_contexto_a_memoria(proceso,conexion);
                 enviar_dump_memory_a_kernel(socket_dispatch);
                 break;
             }
             case IO:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: IO", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: IO - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_io_a_kernel(inst->param1,socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case PROCESS_CREATE:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_CREATE - %s %s %s", proceso->tid,inst->param1, inst->param2, inst->param3); //LOG OBLIGATORIO
                
                 enviar_process_create_a_kernel(inst->param1, inst->param2, inst->param3, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
@@ -98,56 +95,56 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             }
             case THREAD_CREATE:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CREATE", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CREATE - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 enviar_thread_create_a_kernel(inst->param1, inst->param2, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_JOIN:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_JOIN", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_JOIN - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_thread_cancel_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_CANCEL:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CANCEL", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CANCEL - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_thread_join_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_CREATE:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_CREATE", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_CREATE - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_create_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_LOCK:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_LOCK", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_LOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_lock_a_kernel(inst->param1, socket_dispatch); 
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_UNLOCK:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_UNLOCK", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_UNLOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_unlock_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_EXIT:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_EXIT", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_EXIT", proceso->tid);
                 enviar_thread_exit_a_kernel(socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }                
             case PROCESS_EXIT:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_EXIT", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_EXIT", proceso->tid);
                 enviar_process_exit_a_kernel(socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
@@ -634,7 +631,8 @@ void enviar_dump_memory_a_kernel(int socket_dispatch){
     agregar_a_paquete(paquete_dump_memory, &proceso_actual->pid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_dump_memory, &proceso_actual->tid,  sizeof(uint32_t));
     enviar_paquete(paquete_dump_memory, socket_dispatch); 
-    eliminar_paquete(paquete_dump_memory);    
+    eliminar_paquete(paquete_dump_memory); 
+    proceso_actual = NULL;   
 }
 
 
@@ -649,7 +647,8 @@ void enviar_io_a_kernel(char* tiempo ,int socket_dispatch){
     agregar_a_paquete(paquete_io, &proceso_actual->tid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_io, &tiempo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_io, socket_dispatch); 
-    eliminar_paquete(paquete_io);       
+    eliminar_paquete(paquete_io);  
+    proceso_actual = NULL;     
 }
 
 void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
@@ -667,6 +666,7 @@ void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_pro
     agregar_a_paquete(paquete_create_process, &prioridad_hilo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_create_process, socket_dispatch); 
     eliminar_paquete(paquete_create_process);
+    proceso_actual = NULL;
 
 }
 
@@ -683,6 +683,7 @@ void enviar_thread_create_a_kernel(char* nombre_pseudocodigo, char* prioridad_hi
     agregar_a_paquete(paquete_create_thread, &prioridad_hilo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_create_thread, socket_dispatch); 
     eliminar_paquete(paquete_create_thread);
+    proceso_actual = NULL;
 }
 
 
@@ -695,7 +696,8 @@ void enviar_thread_join_a_kernel(char* tid ,int socket_dispatch){
        
     agregar_a_paquete(paquete_thread_join, &tid_numero,  sizeof(uint32_t));
     enviar_paquete(paquete_thread_join, socket_dispatch); 
-    eliminar_paquete(paquete_thread_join);    
+    eliminar_paquete(paquete_thread_join); 
+    proceso_actual = NULL;   
 }
 
 
@@ -708,7 +710,8 @@ void enviar_thread_cancel_a_kernel(char* tid ,int socket_dispatch){
        
     agregar_a_paquete(paquete_thread_cancel, &tid_numero,  sizeof(uint32_t));
     enviar_paquete(paquete_thread_cancel, socket_dispatch); 
-    eliminar_paquete(paquete_thread_cancel);      
+    eliminar_paquete(paquete_thread_cancel);  
+    proceso_actual = NULL;    
 }
 
 
@@ -723,6 +726,7 @@ void enviar_mutex_create_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_mutex_create_kernel,  recurso,  tamanio_recurso);            
     enviar_paquete(paquete_mutex_create_kernel, conexion_kernel); 
     eliminar_paquete(paquete_mutex_create_kernel);
+    proceso_actual = NULL;
 
 }
 
@@ -738,6 +742,7 @@ void enviar_mutex_lock_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_lock_kernel,  recurso,  tamanio_recurso);            
     enviar_paquete(paquete_lock_kernel, conexion_kernel); 
     eliminar_paquete(paquete_lock_kernel);
+    proceso_actual = NULL;
 
 }
 
@@ -752,6 +757,7 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_unlock_kernel,  recurso,  tamanio_recurso);      
     enviar_paquete(paquete_unlock_kernel, conexion_kernel); 
     eliminar_paquete(paquete_unlock_kernel);
+    proceso_actual = NULL;
 }
 
 
@@ -873,20 +879,9 @@ tipo_instruccion str_to_tipo_instruccion(const char *str) {
     return instruccion_a_devolver;
 }
 
-void generar_interrupcion_a_kernel(int conexion){
-    log_info(logger_cpu,"entro a generar_interrupcion_a_kernel\n");
-    t_paquete* paquete_interrupcion_kernel;    
-   
-    paquete_interrupcion_kernel = crear_paquete(HANDSHAKE); //TODO: crear codigo de operacion
-    enviar_paquete(paquete_interrupcion_kernel, conexion);   
-    eliminar_paquete(paquete_interrupcion_kernel);
-    log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
- }
-
-
 
 void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
-    printf("entro a DEVOLUCION_CONTEXTO\n");
+  
     t_paquete* paquete_devolucion_contexto;
 
     paquete_devolucion_contexto = crear_paquete(DEVOLUCION_CONTEXTO); 
@@ -905,7 +900,7 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.limite, sizeof(uint32_t));
     enviar_paquete(paquete_devolucion_contexto, conexion); 
     eliminar_paquete(paquete_devolucion_contexto);
-
+    log_info(logger_cpu,"## TID: %d- Actualizo Contexto Ejecución", proceso->tid); // LOG OBLIGATORIO
  }
 
  void solicitar_contexto_(t_proceso* proceso, int conexion){
