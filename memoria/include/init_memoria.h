@@ -191,4 +191,6 @@ int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
 
 void finalizar_proceso(uint32_t proceso_pid);
 
+char* generar_nombre_archivo(uint32_t pid, uint32_t tid);
+
 #endif /* MEMORIA_H */
