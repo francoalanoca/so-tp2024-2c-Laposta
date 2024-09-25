@@ -204,12 +204,19 @@ void atender_memoria (int *socket_mr) {
                 }
                 break;
                 }
-            case BASE_PARTICION_RTA:
+            case BASE_PARTICION_RTA: 
                 t_list* lista_paquete_base = recibir_paquete(socket_memoria_server);
                 base_particion = list_get(lista_paquete_base,0);
                 sem_post(&sem_valor_base_particion);
                 list_destroy(lista_paquete_base);
             break;
+            case DEVOLUCION_CONTEXTO_RTA_OK: 
+                t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
+                int pid_v= *(uint32_t*)list_get(lista_paquete_ctx_rta,0);
+                int tid_v = *(uint32_t*)list_get(lista_paquete_ctx_rta,1);
+                
+                list_destroy(lista_paquete_ctx_rta);
+            break;            
             default:
                 {
                     log_error(logger_cpu, "Operacion invalida enviada desde Memoria:%d",cop);
