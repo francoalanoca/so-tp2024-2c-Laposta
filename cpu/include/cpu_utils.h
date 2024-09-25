@@ -61,7 +61,6 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel);
 void enviar_process_exit_a_kernel(int conexion_kernel);
 void enviar_thread_exit_a_kernel(int conexion_kernel);
 
-void generar_interrupcion_a_kernel(int conexion);
 
 void* crear_servidor_dispatch(char* ip_cpu);//
 void* crear_servidor_interrupt(char* ip_cpu);//
@@ -76,19 +75,19 @@ char* uint32_to_string(uint32_t number);
 //char* concatenar_cadenas(const char* str1, const char* str2);
 uint32_t string_a_uint32(const char* str);
 
-void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion);
+void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int conexion);
 
 
 
 
 
-void obtener_base_particion(int conexion, int pid);
+void pedir_contexto_a_memoria(int conexion, int pid);
 
 void limpiarCadena(char* cadena);
 
 void generar_interrupcion_a_kernel(int conexion);
 void enviar_contexto_a_memoria(t_proceso* proceso, int conexion);
-void solicitar_contexto_(t_proceso* proceso, int conexion);
+void solicitar_contexto_a_memoria(t_proceso* proceso, int conexion);
 void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto);
 void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch);
 #endif //CPU_UTILS_H

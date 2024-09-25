@@ -206,7 +206,7 @@ void atender_memoria (int *socket_mr) {
                 }
                 break;
                 }
-            case BASE_PARTICION_RTA: 
+            case SOLICITUD_CONTEXTO_RTA: 
                 t_list* lista_paquete_base = recibir_paquete(socket_memoria_server);
                 base_particion = list_get(lista_paquete_base,0);
                 sem_post(&sem_valor_base_particion);

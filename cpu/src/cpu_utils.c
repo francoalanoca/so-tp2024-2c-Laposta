@@ -12,10 +12,28 @@ instr_t* fetch(int conexion, t_proceso* proceso){
     return prox_inst;
 }
 
-tipo_instruccion decode(instr_t* instr){
+tipo_instruccion decode(instr_t* instr, int conexion_memo){
     log_info(logger_cpu, "EL codigo de instrucción es %d ",instr->id);
-    return instr->id;//TODO: VER IMPLEMENTACION
-   // return SET;
+    
+     switch(instr->id){
+            case READ_MEM:
+            {                       
+                solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
+                sem_wait(&sem_valor_base_particion);
+                return instr->id;
+                break;
+            }
+            case WRITE_MEM:
+            {              
+                solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
+                sem_wait(&sem_valor_base_particion);
+                return instr->id;
+                break;
+            } 
+            default:
+                return instr->id;
+        }    
+  
 }
 
 
@@ -523,22 +541,19 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kernel_dispatch){
-    uint32_t direccion_resultado;
+uint32_t mmu(uint32_t direccion_logica, t_proceso*  proceso, int conexion, int conexion_kernel_dispatch){
+    uint32_t direccion_fisica_resultado;
     uint32_t desplazamiento = direccion_logica;
-    obtener_base_particion(conexion,pid);
- 
+   
     
-    sem_wait(&sem_valor_base_particion);
     //validacion de limites de particion
-    if (1==1){
-        direccion_resultado = base_particion+desplazamiento ;  
-        log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
-        return direccion_resultado;
+    if (proceso->registros_cpu.base + desplazamiento < proceso->registros_cpu.limite ){
+        direccion_fisica_resultado = proceso->registros_cpu.base +desplazamiento ;         
+        return direccion_fisica_resultado;
     }else{
         //segmentation fault
-        enviar_contexto_a_memoria(proceso_actual, conexion);
-        enviar_segfault_a_kernel(proceso_actual,conexion_kernel_dispatch);
+        enviar_contexto_a_memoria(proceso, conexion);
+        enviar_segfault_a_kernel(proceso,conexion_kernel_dispatch);
     }            
 
 
@@ -558,10 +573,9 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
+    
 
-    uint32_t tamanio_a_leer = 4; // es el tamanio del uint32_t
-
-    pedir_valor_a_memoria(dir_fisica_result,proceso->pid,tamanio_a_leer,conexion);
+    pedir_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,conexion);
     int valor_sem;
     sem_getvalue(&sem_valor_registro_recibido, &valor_sem);
     printf("valor sem_valor_registro_recibido:%d\n", valor_sem);
@@ -569,19 +583,8 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     printf("paso sem_valor_registro_recibido\n");
 
     log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
-    
-    char *endptr;
-    printf("paso endptr\n");
-    uint32_t valor_dir_fisica_uint32;
-    uint8_t valor_dir_fisica_uint8t;
-    if(tamanio_a_leer == sizeof(uint32_t)){
-         valor_dir_fisica_uint32 = (uint32_t)strtoul(valor_registro_obtenido, &endptr, 10);// Convertir la cadena a uint32_t
-        set(registro_datos,valor_dir_fisica_uint32,proceso);
-    }
-    else{
-         valor_dir_fisica_uint8t = (uint8_t)strtoul(valor_registro_obtenido, &endptr, 10);// Convertir la cadena a uint8_t
-        set(registro_datos,valor_dir_fisica_uint8t,proceso);
-    }
+    set(registro_datos,valor_registro_obtenido,proceso);
+ 
     
     
 
@@ -598,12 +601,9 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso->registros_cpu.base,conexion, conexion_kernel_dispatch);
 
-// Calcular el tamaño necesario para el valor_str
-    int len = snprintf(NULL, 0, "%u", valor_registro_datos);
-    char* valor_str = malloc(len + 1);
-    snprintf(valor_str, len + 1, "%u", valor_registro_datos);
+    enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
     
     log_info(logger_cpu, "TID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->tid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
 
@@ -611,20 +611,30 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
 
 
 
-void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion){
+void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int conexion){
         printf("entro a pedir_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
-        paquete_pedido_valor_memoria = (HANDSHAKE); // TODO: Crear codigo de operacion
-
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t));     
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t)); 
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &tamanio,  sizeof(uint32_t));        
-            
+        paquete_pedido_valor_memoria = (READ_MEMORIA); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));            
         enviar_paquete(paquete_pedido_valor_memoria, conexion); 
         eliminar_paquete(paquete_pedido_valor_memoria);
 
 }
 
+void enviar_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, uint32_t valor, int conexion){
+        printf("entro a enviar_valor_a_memoria\n");
+        t_paquete* paquete_pedido_valor_memoria;
+        paquete_pedido_valor_memoria = (WRITE_MEMORIA); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &valor,  sizeof(uint32_t));    
+        enviar_paquete(paquete_pedido_valor_memoria, conexion); 
+        eliminar_paquete(paquete_pedido_valor_memoria);
+
+}
 
 //////////////////////////////////////// SYSCALLS //////////////////////////////////////////
 
@@ -805,18 +815,6 @@ void imprimir_contenido_paquete(t_paquete* paquete) {
     printf("\n");
 }
 
-void obtener_base_particion(int conexion, int pid){ 
-    printf("entro a obtener base particion\n");
-    t_paquete* paquete_pedido_tamanio_base;
-    paquete_pedido_tamanio_base = crear_paquete(BASE_PARTICION); 
-    agregar_a_paquete(paquete_pedido_tamanio_base, pid,  sizeof(uint32_t));
-    enviar_paquete(paquete_pedido_tamanio_base, conexion); 
-    eliminar_paquete(paquete_pedido_tamanio_base);
-
-}
-
-
- 
 
 void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
 {   log_info(logger_cpu, "Entro al ciclo");
@@ -909,7 +907,7 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     log_info(logger_cpu,"## TID: %d- Actualizo Contexto Ejecución", proceso->tid); // LOG OBLIGATORIO
  }
 
- void solicitar_contexto_(t_proceso* proceso, int conexion){
+ void solicitar_contexto_a_memoria(t_proceso* proceso, int conexion){
     printf("entro a paquete_solicitud_contexto\n");
     t_paquete* paquete_solicitud_contexto;
 
