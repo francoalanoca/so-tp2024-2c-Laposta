@@ -6,20 +6,24 @@
 
 int socket_memoria;
 int socket_cpu;
-int socket_kernel;
+//int socket_kernel;
 int socket_filesystem;
 
 t_log *logger_memoria; 
 t_config *file_cfg_memoria;
 t_config_memoria *cfg_memoria;
 
-//void* memoria;                          //espacio de usuario
-//t_list* lista_particiones;              //lista de las particiones
-//t_list* lista_miniPCBs;                 //lista de los procesos
-//pthread_mutex_t mutex_memoria;
-//uint32_t cantidad_particiones_memoria;  //seria la cantidad de particiones pasadas por config 
-//t_bitarray *bitmap_particiones;
+void* memoria_usuario;                          //espacio de usuario
+t_list* lista_particiones;                      //lista de las particiones
+t_list* lista_particiones_dinamicas;            //variable que guarda la lista de particiones
+t_list* lista_miniPCBs;                         //lista de los procesos
+uint32_t cantidad_particiones_memoria;          //seria tam_memoria / tam_pagina
+t_bitarray *bitmap_particiones;                 //bitmap para controlar los bloques libres y ocupados
+t_list* pids_por_bloque;
 
+uint32_t tamanio_total_memoria;
+char * algoritmo_alocacion;
+pthread_mutex_t mutex_memoria;
 
 
 
@@ -261,6 +265,60 @@ void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
 }
 
 
+
+//Inicializa memoria con particiones fijas
+void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo) {
+    
+    tamanio_total_memoria = mem_size;
+    memoria_usuario = malloc(tamanio_total_memoria);  // Espacio de memoria contiguo
+    algoritmo_alocacion = malloc(strlen(algoritmo)*sizeof(char) + 1);
+    strcpy(algoritmo_alocacion,algoritmo);
+    cantidad_particiones_memoria = num_particiones;
+    //bitmap_particiones = malloc(sizeof(t_bitarray));
+    lista_miniPCBs = list_create();
+    bitmap_particiones = crear_bitmap(cantidad_particiones_memoria);
+    pids_por_bloque = list_create();
+}
+
+
+//Funcion que en base a la cantidad de frames crea bitmap
+t_bitarray *crear_bitmap(int entradas){
+    int ent = entradas;
+
+    // Redondea a múltiplo de 8
+    if (ent % 8 != 0){
+        ent = redondear_a_multiplo_mas_cercano_de(8, ent); 
+        //log_trace(logger_memoria, "tamanio inusual de memoria/pagina causo conflicto, redondeando al multiplo de 8 mas cercano: %i", ent);
+    }
+
+    // Calcula la cantidad de bytes necesarios para almacenar los bits
+    int bytes_necesarios = ent / 8;
+
+    // Asigna memoria para el bitarray
+    void *puntero = malloc(bytes_necesarios);
+    if (puntero == NULL) {
+        fprintf(stderr, "Error: No se pudo asignar memoria para el bitarray.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Crea el bitarray
+    t_bitarray *bitmap = bitarray_create_with_mode(puntero, bytes_necesarios, LSB_FIRST);
+
+    // Inicializa todos los bits a 0
+    for (int i = 0; i < bitarray_get_max_bit(bitmap); i++) {
+        bitarray_clean_bit(bitmap, i);
+    }
+printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap, 2) ? 1 : 0);
+    return bitmap;
+}
+
+
+//Funcion que redondea el valor al multiplo cercano de base y retorna
+int redondear_a_multiplo_mas_cercano_de(int base, int valor){
+    int v = valor == 0 ? 1 : valor;
+    return (int) ceil((float) v / (float) base) * base;
+}
+
 void cerrar_programa(){
 
 
@@ -272,6 +330,7 @@ void cerrar_programa(){
     log_destroy(logger_memoria);
 }
 
+/*
 void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
     //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
@@ -309,7 +368,9 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
 
     list_add(lista_miniPCBs,nuevo_proceso);
 }
+*/
 
+/*
 void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
     t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
@@ -348,6 +409,7 @@ void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
 
     
 }
+*/
 
 // Función para convertir un char** en un t_list
 t_list* char_array_to_list(char** array) {
@@ -668,7 +730,7 @@ bool read_mem(uint32_t direccion_fisica, char* resultado) {
 
     return true;  // La lectura fue exitosa
 }
-
+/*
 int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
     int respuesta;
@@ -693,6 +755,7 @@ void finalizar_proceso(uint32_t proceso_pid){
     }
 
 }
+*/
 
 char* generar_nombre_archivo(uint32_t pid, uint32_t tid) {
     // Obtener el timestamp actual en segundos desde Epoch
