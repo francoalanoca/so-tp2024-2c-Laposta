@@ -69,7 +69,7 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso);
 
 
 //devuelve la direccion fisica
-uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kernel_dispatch);
+uint32_t mmu(uint32_t direccion_logica, t_proceso*  proceso, int conexion, int conexion_kernel_dispatch);
 
 char* uint32_to_string(uint32_t number);
 //char* concatenar_cadenas(const char* str1, const char* str2);

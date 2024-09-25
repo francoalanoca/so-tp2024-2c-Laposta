@@ -181,7 +181,7 @@ void check_interrupt(int conexion_kernel){
     if(interrupcion_kernel){
         proceso_actual= NULL;   
         printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
-        generar_interrupcion_a_kernel(conexion_kernel); 
+       
         interrupcion_kernel = false;
     }
     pthread_mutex_unlock(&mutex_interrupcion_kernel);
