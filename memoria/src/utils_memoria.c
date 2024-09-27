@@ -177,10 +177,11 @@ t_proceso_memoria* deserializar_solicitud_instruccion(t_list*  lista_paquete ){
 
     t_proceso_memoria* proxima_instruccion = malloc(sizeof(t_proceso_memoria));
     
-    proxima_instruccion->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    proxima_instruccion->pid = *((uint32_t*)list_get(lista_paquete, 0));
     printf("Pid recibido: %d \n", proxima_instruccion->pid);
-    
-    proxima_instruccion->program_counter = *(uint32_t*)list_get(lista_paquete, 1);
+    proxima_instruccion->tid = *((uint32_t*)list_get(lista_paquete, 1));
+    printf("Tid recibido: %d \n", proxima_instruccion->tid);
+    proxima_instruccion->program_counter = *((uint32_t*)list_get(lista_paquete, 2));
     printf("Program counter: %d \n", proxima_instruccion->program_counter);
 
     return proxima_instruccion;
@@ -303,9 +304,9 @@ void enviar_respuesta_actualizar_contexto(t_m_contexto* contexto ,int socket_cpu
     printf("PAQUETE ELIMINADO\n"); 
 }
 
-t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
+void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete ){
 
-    t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
+    //t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
     
     contexto->pid = *(uint32_t*)list_get(lista_paquete, 0);
     printf("Pid recibido: %d \n", contexto->pid);
@@ -340,11 +341,11 @@ t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
     contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
     printf("Registro HX recibido: %d \n", contexto->registros.HX);
 
-    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 11);
+    contexto->base = *(uint32_t*)list_get(lista_paquete, 11);
     printf("Registro base recibido: %d \n", contexto->base);
 
-    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 12);
+    contexto->limite = *(uint32_t*)list_get(lista_paquete, 12);
     printf("Registro limite recibido: %d \n", contexto->limite);
 
-    return contexto;
+   // return contexto;
 }

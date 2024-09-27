@@ -38,7 +38,7 @@ int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket
     log_info(logger_cpu, "entra a server escuchar");
     int cliente_socket = esperar_cliente(logger, server_name, server_socket);
     log_info(logger_cpu, "cliente conectado socket %d", cliente_socket);
-    *global_socket = cliente_socket; // la segunda conexion, que sea la del escuchar interrupciones desde kernel va a pisar esta variable y vamos a poder enviar.
+    *global_socket = cliente_socket; 
     
     sem_post(&sem_conexion_dispatch_iniciado);
     if (cliente_socket != -1) {
@@ -47,11 +47,11 @@ int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket
         args->log = logger;
         args->fd = cliente_socket;
         args->server_name = server_name;
-            // Agregar el socket a la lista global
-        int* socket_ptr = malloc(sizeof(int));
-        *socket_ptr = cliente_socket;
-        list_add(lista_sockets_global, socket_ptr);
-        //pthread_create(&atenderProcesoNuevo, NULL,procesar_conexion,cliente_socket);//TODO:Redefinir procesar_conexion para que reciba un PCB
+        // Agregar el socket a la lista global
+       // int* socket_ptr = malloc(sizeof(int));
+      //  *socket_ptr = cliente_socket;
+      //  list_add(lista_sockets_global, socket_ptr);
+    
         pthread_create(&atenderProcesoNuevo, NULL,(void*)procesar_conexion_dispatch,(void*)args);
         pthread_detach(atenderProcesoNuevo);
         return 1;
@@ -89,8 +89,13 @@ void procesar_conexion_dispatch(void *v_args){
             {
                 printf("Ejecutando procesoo\n");
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
+                int pid=*((int*)list_get(lista_paquete_proceso_ejecutar,0));
+                int tid=*((int*)list_get(lista_paquete_proceso_ejecutar,1));
+
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
-              
+                //TODO: harcodeo tid y pid
+                proceso->pid=0;
+                proceso->tid=0;
                 pthread_mutex_lock(&mutex_proceso_actual);
                 proceso_actual = proceso; //Agregar a lista de procesos?               
                 pthread_mutex_unlock(&mutex_proceso_actual);
@@ -165,6 +170,7 @@ void atender_memoria (int *socket_mr) {
         switch (cop) {
 
             case SOLICITUD_INSTRUCCION_RTA:
+                
                 {
                 log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
                     
@@ -198,12 +204,19 @@ void atender_memoria (int *socket_mr) {
                 }
                 break;
                 }
-            case BASE_PARTICION_RTA:
+            case BASE_PARTICION_RTA: 
                 t_list* lista_paquete_base = recibir_paquete(socket_memoria_server);
                 base_particion = list_get(lista_paquete_base,0);
                 sem_post(&sem_valor_base_particion);
                 list_destroy(lista_paquete_base);
             break;
+            case DEVOLUCION_CONTEXTO_RTA_OK: 
+                t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
+                int pid_v= *(uint32_t*)list_get(lista_paquete_ctx_rta,0);
+                int tid_v = *(uint32_t*)list_get(lista_paquete_ctx_rta,1);
+                
+                list_destroy(lista_paquete_ctx_rta);
+            break;            
             default:
                 {
                     log_error(logger_cpu, "Operacion invalida enviada desde Memoria:%d",cop);
@@ -224,8 +237,12 @@ int hacer_handshake (int socket_cliente){
 t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
     t_proceso *proceso_nuevo = malloc(sizeof(t_proceso));
    
-    proceso_nuevo->pid = *(uint32_t*)list_get(lista_paquete_proceso, 0);
-    proceso_nuevo->tid = *(uint32_t*)list_get(lista_paquete_proceso, 1);
+    proceso_nuevo->pid = *((uint32_t*)list_get(lista_paquete_proceso, 0));
+    log_info(logger_cpu, "recibi el pid:%u",proceso_nuevo->pid);
+
+    proceso_nuevo->tid = *((uint32_t*)list_get(lista_paquete_proceso, 1));
+    log_info(logger_cpu, "recibi el tid:%u",proceso_nuevo->tid);
+
     proceso_nuevo->registros_cpu.PC = 0;
     proceso_nuevo->registros_cpu.AX = 0;
     proceso_nuevo->registros_cpu.BX = 0;
@@ -235,6 +252,8 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
     proceso_nuevo->registros_cpu.FX = 0;
     proceso_nuevo->registros_cpu.GX = 0;
     proceso_nuevo->registros_cpu.HX = 0;
+    proceso_nuevo->registros_cpu.base = 0;
+    proceso_nuevo->registros_cpu.limite = 0;
 	return proceso_nuevo;
 }
 
@@ -297,13 +316,6 @@ instr_t* instruccion_deserializar(t_list* lista_paquete_inst){
 	return instruccion_nueva;
 }
 
- uint32_t deserealizar_marco(t_list*  lista_paquete ){
-    uint32_t marco_rec = malloc(sizeof(uint32_t));
-    marco_rec = *(uint32_t*)list_get(lista_paquete, 0);
-
-	return marco_rec;
-}
-
 char* deserealizar_valor_memoria(t_list*  lista_paquete ){
     //uint32_t tamanio_valor_recibido = *(uint32_t*)list_get(lista_paquete, 0);
     //char* valor_recibido = malloc(tamanio_valor_recibido);
@@ -318,12 +330,6 @@ char* deserealizar_valor_memoria(t_list*  lista_paquete ){
 }
 
 
-uint32_t deserealizar_tamanio_pag(t_list*  lista_paquete ){
-   
-   uint32_t valor_tam_pag = *(uint32_t*)list_get(lista_paquete, 0);
-
-	return valor_tam_pag;
-}
 
 void armar_instr(instr_t *instr, const char *input) {
     // Copia la cadena de entrada para no modificar el original

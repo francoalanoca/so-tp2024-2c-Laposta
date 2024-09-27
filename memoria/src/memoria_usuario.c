@@ -72,6 +72,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 //Crear un Proceso
 int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
     printf("Entro crear proceso\n");
+    printf("tam_proceso:%d,pid:%d,algoritmo_alocacion:%s\n",tam_proceso,pid,algoritmo_alocacion);
     printf("Tamanio lista de particiones:%d\n", list_size(lista_de_particiones));
     //encontrar hueco libre y marcar bitmap, si no encuentra tira error
     uint32_t tamanio_bloque_actual = 0;
@@ -101,7 +102,6 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
 
                 if (tam_proceso < tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
                     bitarray_set_bit(bitmap_particiones, i);
@@ -110,6 +110,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pid_por_bloque->bloque = i;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
                     list_add(pids_por_bloque,pid_por_bloque);
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                     return INICIAR_PROCESO_RTA_OK;
                 }
             }
@@ -136,10 +137,11 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
-                if(tam_proceso<tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
+                if(tam_proceso<=tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
                     if(tamanio_ultimo_bloque_best_fit == 0 || (tamanio_bloque_actual<tamanio_ultimo_bloque_best_fit)){
                         tamanio_ultimo_bloque_best_fit = tamanio_bloque_actual;
                         ultimo_bloque_best_fit = i;
+                        printf("El ultimo_bloque_best_fit es: %d\n", ultimo_bloque_best_fit);
                         bloque_libre_encontrado = true;
                     }
                 }
@@ -149,7 +151,6 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 return -1;
             }
             else {
-                inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
                  t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
@@ -159,6 +160,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     list_add(pids_por_bloque,pid_por_bloque);
                     printf("Se agrego a lista. Estado actual:\n");
                     print_lista_pid_por_bloque(pids_por_bloque);
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                      return INICIAR_PROCESO_RTA_OK; 
             }
         }
@@ -196,7 +198,6 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 return -1;
             }
             else {
-                inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
                 t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
@@ -204,6 +205,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pid_por_bloque->bloque = ultimo_bloque_worst_fit;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
                     list_add(pids_por_bloque,pid_por_bloque);
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 
                 return INICIAR_PROCESO_RTA_OK;
             }

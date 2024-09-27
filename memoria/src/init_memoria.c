@@ -291,6 +291,7 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     // nuevo_hilo->registros.HX = 0;
     // nuevo_hilo->lista_de_instrucciones = list_create();
     // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);TODO: FIXME: se me creaba el primer sin instrucciones
     
 
  
@@ -336,7 +337,8 @@ void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
 
         if (miniPCB->pid == pid){
 			list_add(miniPCB->hilos,hilo);
-            printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
+            log_warning(logger_memoria,"Se agrega tid %d a proceso : %d",hilo->tid,pid);
+           // printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
             encontrado = true;
         }
     }
@@ -571,22 +573,30 @@ t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid) {
 
 // Función que actualiza los registros del hilo con el tid correspondiente dentro del miniPCB con el pid correspondiente
 bool actualizar_contexto(t_m_contexto* contexto) {
+    printf("Entro a actualizar_contexto\n");
     // Verificamos si el contexto es válido
     if (contexto == NULL) {
         return false;
     }
-
+    printf("contexto no esnull\n");
     // Iteramos sobre la lista de miniPCBs
     size_t cantidad_miniPCBs = list_size(lista_miniPCBs);
+     printf("Vamos a iterar %d veces\n",cantidad_miniPCBs);
     for (size_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
+        printf("Obtengo miniPCB con pid:%d\n",miniPCB->pid);
+        printf("El pid del contexto ingresado es:%d\n",contexto->pid);
 
         // Verificamos si el pid coincide
         if (miniPCB->pid == contexto->pid) {
             // Ahora iteramos sobre la lista de hilos dentro de este miniPCB
             size_t cantidad_hilos = list_size(miniPCB->hilos);
+            printf("La cantidad de hilos del miniPCB es:%d\n",cantidad_hilos);
             for (size_t j = 0; j < cantidad_hilos; j++) {
                 t_hilo* hilo = list_get(miniPCB->hilos, j);
+
+                printf("Tid del hilo:%d\n",hilo->tid);
+                printf("Tid del contexto:%d\n",contexto->tid);
 
                 // Verificamos si el tid coincide
                 if (hilo->tid == contexto->tid) {

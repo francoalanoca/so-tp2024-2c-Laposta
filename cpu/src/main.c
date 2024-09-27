@@ -118,38 +118,29 @@ int main(int argc, char *argv[])
     sem_wait(&sem_servidor_creado);
     sem_wait(&sem_conexion_dispatch_iniciado);
     sem_wait(&sem_conexion_interrupt_iniciado);
-   // pthread_create(&hilo_ejecutar_ciclo, NULL,(void *) ejecutar_ciclo, (void*)params);
-    ciclo_params_t *params = malloc(sizeof(ciclo_params_t));
-    params->socket_memoria = socket_memoria;
-    params->proceso_actual = proceso_actual;
-   log_info(logger_cpu,"cargo parametros ");
-    params->lista_conexion_kernel_dispatch = lista_sockets_global;
-    params->conexion_kernel_interrupt = conexion_kernel_interrupt;
 
     pthread_t hilo_ejecutar_ciclo;
     log_info(logger_cpu,"conexion memoria %d",socket_memoria);
     log_info(logger_cpu,"voy a crear hilo");
-    int result = pthread_create(&hilo_ejecutar_ciclo, NULL, ejecutar_ciclo,(void*)params);
-    //pthread_join(hilo_ejecutar_ciclo,NULL);
+    int result = pthread_create(&hilo_ejecutar_ciclo, NULL, ejecutar_ciclo,NULL);
+
     pthread_join(servidor_dispatch, NULL);
     pthread_join(servidor_interrupt, NULL);
     pthread_join(hilo_ejecutar_ciclo, NULL);
     pthread_detach(hilo_atender_memoria);
 }
 
-void ejecutar_ciclo(void* arg) {
-    ciclo_params_t* params = (ciclo_params_t*)arg;
+void ejecutar_ciclo() {
    
-    int dispatch = list_get(lista_sockets_global,0);
-   // list_add_in_index(lista_sockets_global,1,(int*)1);
-   int *dispatch_interrup =(int *)list_get(lista_sockets_global,1);
+
+ 
     while (1) {
       
         pthread_mutex_lock(&mutex_proceso_actual);
        
         if (proceso_actual != NULL) {
             pthread_mutex_unlock(&mutex_proceso_actual);
-            ciclo_de_instrucciones( &socket_memoria, proceso_actual, dispatch,dispatch_interrup, &conexion_kernel_interrupt);
+            ciclo_de_instrucciones( &socket_memoria, proceso_actual, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
         } else {
             pthread_mutex_unlock(&mutex_proceso_actual);
            
