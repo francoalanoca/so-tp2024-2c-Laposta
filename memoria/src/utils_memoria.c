@@ -142,7 +142,99 @@ void enviar_creacion_memory_dump(uint32_t tamanio_nombre_archivo, char* nombre_a
 //Memoria deserializa/serializa lo enviado por Cpu
 
 
+void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete ){
 
+    //t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
+    
+    contexto->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Pid recibido: %d \n", contexto->pid);
+    
+    contexto->tid = *(uint32_t*)list_get(lista_paquete, 1);
+    printf("Tid recibido: %d \n", contexto->tid);
+
+    contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
+    printf("Registro PC recibido: %d \n", contexto->registros.PC);
+
+    contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
+    printf("Registro AX recibido: %d \n", contexto->registros.AX);
+
+    contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
+    printf("Registro BX recibido: %d \n", contexto->registros.BX);
+
+    contexto->registros.CX = *(uint32_t*)list_get(lista_paquete, 5);
+    printf("Registro CX recibido: %d \n", contexto->registros.CX);
+
+    contexto->registros.DX = *(uint32_t*)list_get(lista_paquete, 6);
+    printf("Registro DX recibido: %d \n", contexto->registros.DX);
+
+    contexto->registros.EX = *(uint32_t*)list_get(lista_paquete, 7);
+    printf("Registro EX recibido: %d \n", contexto->registros.EX);
+
+    contexto->registros.FX = *(uint32_t*)list_get(lista_paquete, 8);
+    printf("Registro FX recibido: %d \n", contexto->registros.FX);
+
+    contexto->registros.GX = *(uint32_t*)list_get(lista_paquete, 9);
+    printf("Registro GX recibido: %d \n", contexto->registros.GX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
+    printf("Registro HX recibido: %d \n", contexto->registros.HX);
+
+    contexto->base = *(uint32_t*)list_get(lista_paquete, 11);
+    printf("Registro base recibido: %d \n", contexto->base);
+
+    contexto->limite = *(uint32_t*)list_get(lista_paquete, 12);
+    printf("Registro limite recibido: %d \n", contexto->limite);
+
+   // return contexto;
+}
+
+
+
+/*t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
+
+    t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
+    
+    contexto->pid = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Pid recibido: %d \n", contexto->pid);
+    
+    contexto->tid = *(uint32_t*)list_get(lista_paquete, 1);
+    printf("Tid recibido: %d \n", contexto->tid);
+
+    contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
+    printf("Registro PC recibido: %d \n", contexto->registros.PC);
+
+    contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
+    printf("Registro AX recibido: %d \n", contexto->registros.AX);
+
+    contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
+    printf("Registro BX recibido: %d \n", contexto->registros.BX);
+
+    contexto->registros.CX = *(uint32_t*)list_get(lista_paquete, 5);
+    printf("Registro CX recibido: %d \n", contexto->registros.CX);
+
+    contexto->registros.DX = *(uint32_t*)list_get(lista_paquete, 6);
+    printf("Registro DX recibido: %d \n", contexto->registros.DX);
+
+    contexto->registros.EX = *(uint32_t*)list_get(lista_paquete, 7);
+    printf("Registro EX recibido: %d \n", contexto->registros.EX);
+
+    contexto->registros.FX = *(uint32_t*)list_get(lista_paquete, 8);
+    printf("Registro FX recibido: %d \n", contexto->registros.FX);
+
+    contexto->registros.GX = *(uint32_t*)list_get(lista_paquete, 9);
+    printf("Registro GX recibido: %d \n", contexto->registros.GX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
+    printf("Registro HX recibido: %d \n", contexto->registros.HX);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 11);
+    printf("Registro base recibido: %d \n", contexto->base);
+
+    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 12);
+    printf("Registro limite recibido: %d \n", contexto->limite);
+
+    return contexto;
+}*/
 
 
 void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
@@ -207,6 +299,9 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete ){
     
     peticion_valor->pid = *(uint32_t*)list_get(lista_paquete, 0);
     printf("Pid recibido: %d \n", peticion_valor->pid);
+
+    peticion_valor->tid = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Tid recibido: %d \n", peticion_valor->tid);
     
     peticion_valor->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 1);
     printf("Direccion fisica: %d \n", peticion_valor->direccion_fisica);
@@ -261,6 +356,9 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
     
     peticion_guardar->pid = *(uint32_t*)list_get(lista_paquete, 0);
     printf("Pid recibido: %d \n", peticion_guardar->pid);
+
+    peticion_guardar->tid = *(uint32_t*)list_get(lista_paquete, 0);
+    printf("Tid recibido: %d \n", peticion_guardar->tid);
     
     peticion_guardar->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 1);
     printf("Direccion fisica: %d \n", peticion_guardar->direccion_fisica);
@@ -304,48 +402,4 @@ void enviar_respuesta_actualizar_contexto(t_m_contexto* contexto ,int socket_cpu
     printf("PAQUETE ELIMINADO\n"); 
 }
 
-void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete ){
 
-    //t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
-    
-    contexto->pid = *(uint32_t*)list_get(lista_paquete, 0);
-    printf("Pid recibido: %d \n", contexto->pid);
-    
-    contexto->tid = *(uint32_t*)list_get(lista_paquete, 1);
-    printf("Tid recibido: %d \n", contexto->tid);
-
-    contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
-    printf("Registro PC recibido: %d \n", contexto->registros.PC);
-
-    contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
-    printf("Registro AX recibido: %d \n", contexto->registros.AX);
-
-    contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
-    printf("Registro BX recibido: %d \n", contexto->registros.BX);
-
-    contexto->registros.CX = *(uint32_t*)list_get(lista_paquete, 5);
-    printf("Registro CX recibido: %d \n", contexto->registros.CX);
-
-    contexto->registros.DX = *(uint32_t*)list_get(lista_paquete, 6);
-    printf("Registro DX recibido: %d \n", contexto->registros.DX);
-
-    contexto->registros.EX = *(uint32_t*)list_get(lista_paquete, 7);
-    printf("Registro EX recibido: %d \n", contexto->registros.EX);
-
-    contexto->registros.FX = *(uint32_t*)list_get(lista_paquete, 8);
-    printf("Registro FX recibido: %d \n", contexto->registros.FX);
-
-    contexto->registros.GX = *(uint32_t*)list_get(lista_paquete, 9);
-    printf("Registro GX recibido: %d \n", contexto->registros.GX);
-
-    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
-    printf("Registro HX recibido: %d \n", contexto->registros.HX);
-
-    contexto->base = *(uint32_t*)list_get(lista_paquete, 11);
-    printf("Registro base recibido: %d \n", contexto->base);
-
-    contexto->limite = *(uint32_t*)list_get(lista_paquete, 12);
-    printf("Registro limite recibido: %d \n", contexto->limite);
-
-   // return contexto;
-}

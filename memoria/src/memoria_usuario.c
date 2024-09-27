@@ -1,6 +1,7 @@
 #include "../include/memoria_usuario.h"
 
 //-------------------------Definicion de variables globales----------------------
+/*
 void* memoria_usuario;                          //espacio de usuario
 t_list* lista_particiones;              //lista de las particiones
 t_list* lista_particiones_dinamicas; //variable que guarda la lista de particiones
@@ -11,9 +12,10 @@ t_list* pids_por_bloque;
 
 uint32_t tamanio_total_memoria;
 char * algoritmo_alocacion;
-
+*/
 
 //-------------------------Definicion de funciones----------------------------
+/*
 //Inicializa memoria con particiones fijas
 void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo) {
     tamanio_total_memoria = mem_size;
@@ -36,7 +38,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 //printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap_particiones, 2) ? 1 : 0);
 
 }
-
+*/
 
 // Funcion para Asignar Memoria
 /*void* alocar_memoria(uint32_t size) {
@@ -68,6 +70,47 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 
     return NULL; // No se encontró un hueco adecuado
 }*/
+
+
+
+void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
+    t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
+    //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+
+    nuevo_proceso->pid = pid;
+    nuevo_proceso->hilos = list_create();
+
+    // nuevo_hilo->tid = 0;
+    // nuevo_hilo->registros.PC = 0;
+    // nuevo_hilo->registros.AX = 0;
+    // nuevo_hilo->registros.BX = 0;
+    // nuevo_hilo->registros.CX = 0;
+    // nuevo_hilo->registros.DX = 0;
+    // nuevo_hilo->registros.EX = 0;
+    // nuevo_hilo->registros.FX = 0;
+    // nuevo_hilo->registros.GX = 0;
+    // nuevo_hilo->registros.HX = 0;
+    // nuevo_hilo->lista_de_instrucciones = list_create();
+    // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);TODO: FIXME: se me creaba el primer sin instrucciones
+    
+
+ 
+    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
+
+    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
+
+    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
+
+    nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
+
+    nuevo_proceso->limite = tamanio_proceso;
+
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);
+
+    list_add(lista_miniPCBs,nuevo_proceso);
+}
+
 
 //Crear un Proceso
 int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
@@ -289,7 +332,7 @@ void write_mem(uint32_t direccion_fisica, uint32_t valor) {
 }*/
 
 
-
+/*
 //Funcion que en base a la cantidad de frames crea bitmap
 t_bitarray *crear_bitmap(int entradas){
     int ent = entradas;
@@ -320,7 +363,7 @@ t_bitarray *crear_bitmap(int entradas){
 printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap, 2) ? 1 : 0);
     return bitmap;
 }
-
+*/
 void uint32_to_string(uint32_t num, char *str, size_t size) {
     snprintf(str, size, "%u", num);
 }
@@ -379,9 +422,49 @@ uint32_t calcular_base_proceso_fijas(uint32_t bloque, t_list* particiones){
 
     return base;
 }
-
+/*
 //Funcion que redondea el valor al multiplo cercano de base y retorna
 int redondear_a_multiplo_mas_cercano_de(int base, int valor){
     int v = valor == 0 ? 1 : valor;
     return (int) ceil((float) v / (float) base) * base;
+}
+*/
+
+void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
+    t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+
+    nuevo_hilo->tid = tid;
+    nuevo_hilo->registros.PC = 0;
+    nuevo_hilo->registros.AX = 0;
+    nuevo_hilo->registros.BX = 0;
+    nuevo_hilo->registros.CX = 0;
+    nuevo_hilo->registros.DX = 0;
+    nuevo_hilo->registros.EX = 0;
+    nuevo_hilo->registros.FX = 0;
+    nuevo_hilo->registros.GX = 0;
+    nuevo_hilo->registros.HX = 0;
+
+    nuevo_hilo->lista_de_instrucciones = list_create();
+    leer_instrucciones_particiones_fijas(nombre_archivo,nuevo_hilo);
+    asignar_hilo_a_proceso(nuevo_hilo,pid);
+    
+}
+
+void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
+    bool encontrado = false;
+    for (int i = 0; i < list_size(lista_miniPCBs); i++){
+        t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
+
+        if (miniPCB->pid == pid){
+			list_add(miniPCB->hilos,hilo);
+            log_warning(logger_memoria,"Se agrega tid %d a proceso : %d",hilo->tid,pid);
+           // printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
+            encontrado = true;
+        }
+    }
+    if(!encontrado){
+        printf("No se asigno hilo ya que no se encuentra el proceso %d\n", pid);
+    }
+
+    
 }

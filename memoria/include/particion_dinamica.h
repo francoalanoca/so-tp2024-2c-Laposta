@@ -21,7 +21,7 @@
 
 //----------------------------------Prototipos---------------------------------
 
-//int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
+int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
 int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso);
 
 int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso);
@@ -41,5 +41,6 @@ t_hilo *busco_hilo_por_TID(uint32_t hilo_tid, t_miniPCB *proceso);
 
 void unificar_particiones_dinamicas(int indice_particion);
 void finalizar_proceso_dinamico(uint32_t proceso_pid);
+void finalizar_proceso(uint32_t proceso_pid);
 
 #endif 
