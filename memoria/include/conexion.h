@@ -19,6 +19,7 @@
 
 void iniciar_servidores();
 void iniciar_conexiones();
+int crear_socket_fs();
 //void escuchar_modulos();
 
 

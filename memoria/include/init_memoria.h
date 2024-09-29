@@ -140,7 +140,7 @@ typedef struct{
 extern int socket_memoria;
 extern int socket_cpu;
 //extern int socket_kernel;
-extern int socket_filesystem;
+//extern int socket_filesystem;
 
 extern t_log *logger_memoria;
 extern t_config *file_cfg_memoria;

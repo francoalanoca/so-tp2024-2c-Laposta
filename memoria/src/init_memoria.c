@@ -7,7 +7,7 @@
 int socket_memoria;
 int socket_cpu;
 //int socket_kernel;
-int socket_filesystem;
+//int socket_filesystem;
 
 t_log *logger_memoria; 
 t_config *file_cfg_memoria;
