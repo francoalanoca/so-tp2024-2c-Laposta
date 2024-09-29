@@ -5,19 +5,35 @@ int tamanioInterfaces;
 t_proceso* proceso_actual;
 
 instr_t* fetch(int conexion, t_proceso* proceso){
-    log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
-    log_info(logger_cpu, "PID: %u- TID:%u -FETCH- Program Counter: %u", proceso->pid,proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO
-    log_info(logger_cpu, "Voy a entrar a pedir_instruccion");
+    
+    log_info(logger_cpu, "TID:%d -FETCH- Program Counter: %d", proceso->pid,proceso->pid,proceso->registros_cpu.PC); //LOG OBLIGATORIO   
     pedir_instruccion(proceso, conexion); 
-    //TODO:WAIT semaforo
     sem_wait(&sem_valor_instruccion);
     return prox_inst;
 }
 
-tipo_instruccion decode(instr_t* instr){
+tipo_instruccion decode(instr_t* instr, int conexion_memo){
     log_info(logger_cpu, "EL codigo de instrucción es %d ",instr->id);
-    return instr->id;//TODO: VER IMPLEMENTACION
-   // return SET;
+    
+     switch(instr->id){
+            case READ_MEM:
+            {                       
+                solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
+                sem_wait(&sem_valor_base_particion);
+                return instr->id;
+                break;
+            }
+            case WRITE_MEM:
+            {              
+                solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
+                sem_wait(&sem_valor_base_particion);
+                return instr->id;
+                break;
+            } 
+            default:
+                return instr->id;
+        }    
+  
 }
 
 
@@ -25,49 +41,48 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
     
         switch(tipo_inst){
             case SET:
-            {   
-                log_info(logger_cpu, "ENTRO EN SET ");
-                log_info(logger_cpu, "PID: %u - Ejecutando: SET - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                char *endptr;
-                uint32_t param2_num = (uint32_t)strtoul(inst->param2, &endptr, 10);// Convertir la cadena a uint32_t
-                set(inst->param1, param2_num, proceso);
+            {      
+                log_info(logger_cpu, "TID: %u - Ejecutando: SET - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO           
+                set(inst->param1, inst->param2, proceso);
                 break;
             }
             case SUM:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: SUM - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                sum(inst->param1, inst->param2,proceso);
+                log_info(logger_cpu, "TID: %u - Ejecutando: SUM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                sum(inst->param1, inst->param2, proceso);
                 break;
             }
             case SUB:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: SUB - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                sub(inst->param1, inst->param2,proceso);
+                log_info(logger_cpu, "TID: %u - Ejecutando: SUB - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                sub(inst->param1, inst->param2, proceso);
                 break;
             }            
 
             case JNZ:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: JNZ - %s %s", proceso->pid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: JNZ - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 jnz(inst->param1, inst->param2,proceso);
                 break;
             }        
 
             case READ_MEM:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: READ_MEM - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: READ_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                read_mem(inst->param1,inst->param2,proceso_actual,conexion);
                 break;
             }   
 
             case WRITE_MEM:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: WRITE_MEM  - %s %s %s %s %s", proceso->pid,inst->param1,inst->param2,inst->param3,inst->param4,inst->param5); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: WRITE_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                write_mem(inst->param1,inst->param2,proceso_actual,conexion);
                 break;
             }   
 
             case LOG:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: LOG", proceso->pid); //LOG OBLIGATORIO
+                log_info(logger_cpu, "TID: %u - Ejecutando: LOG - %s", proceso->tid,inst->param1); //LOG OBLIGATORIO
                 loguear(inst->param1);
                 break;
             }
@@ -75,21 +90,21 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             // SYSCALLS:
             case DUMP_MEMORY:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: DUMP_MEMORY", proceso->pid);                
+                log_info(logger_cpu, "TID: %u - Ejecutando: DUMP_MEMORY", proceso->tid);                
                 enviar_contexto_a_memoria(proceso,conexion);
                 enviar_dump_memory_a_kernel(socket_dispatch);
                 break;
             }
             case IO:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: IO", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: IO - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_io_a_kernel(inst->param1,socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case PROCESS_CREATE:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_CREATE", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_CREATE - %s %s %s", proceso->tid,inst->param1, inst->param2, inst->param3); //LOG OBLIGATORIO
                
                 enviar_process_create_a_kernel(inst->param1, inst->param2, inst->param3, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
@@ -98,56 +113,56 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             }
             case THREAD_CREATE:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CREATE", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CREATE - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 enviar_thread_create_a_kernel(inst->param1, inst->param2, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_JOIN:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_JOIN", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_JOIN - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_thread_cancel_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_CANCEL:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_CANCEL", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CANCEL - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_thread_join_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_CREATE:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_CREATE", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_CREATE - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_create_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_LOCK:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_LOCK", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_LOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_lock_a_kernel(inst->param1, socket_dispatch); 
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case MUTEX_UNLOCK:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: MUTEX_UNLOCK", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_UNLOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_unlock_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_EXIT:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: THREAD_EXIT", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_EXIT", proceso->tid);
                 enviar_thread_exit_a_kernel(socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }                
             case PROCESS_EXIT:
             {
-                log_info(logger_cpu, "PID: %u - Ejecutando: PROCESS_EXIT", proceso->pid);
+                log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_EXIT", proceso->tid);
                 enviar_process_exit_a_kernel(socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
@@ -166,7 +181,7 @@ void check_interrupt(int conexion_kernel){
     if(interrupcion_kernel){
         proceso_actual= NULL;   
         printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
-        generar_interrupcion_a_kernel(conexion_kernel); 
+       
         interrupcion_kernel = false;
     }
     pthread_mutex_unlock(&mutex_interrupcion_kernel);
@@ -187,9 +202,10 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
 }
 
 //////////////////////////////////////// INSTRUCCIONES //////////////////////////////////////////
-void set(char* registro, uint32_t valor, t_proceso* proceso){
-    //printf("El valor del set es : %d ", valor);
+void set(char* registro, char* valor_char, t_proceso* proceso){
+    char *endptr;     
     registros registro_elegido = identificarRegistro(registro);
+    uint32_t valor = (uint32_t)strtoul(valor_char, &endptr, 10);// Convertir la cadena a uint32_t
     //pthread_mutex_lock(&mutex_proceso_actual);
     switch(registro_elegido){
         case PC:
@@ -235,6 +251,16 @@ void set(char* registro, uint32_t valor, t_proceso* proceso){
         case HX:
         {
           proceso->registros_cpu.HX = valor;
+            break;
+        }
+        case base:
+        {
+          proceso->registros_cpu.base = valor;
+            break;
+        }
+        case limite:
+        {
+          proceso->registros_cpu.limite = valor;
             break;
         }
         
@@ -515,22 +541,19 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kernel_dispatch){
-    uint32_t direccion_resultado;
+uint32_t mmu(uint32_t direccion_logica, t_proceso*  proceso, int conexion, int conexion_kernel_dispatch){
+    uint32_t direccion_fisica_resultado;
     uint32_t desplazamiento = direccion_logica;
-    obtener_base_particion(conexion,pid);
- 
+   
     
-    sem_wait(&sem_valor_base_particion);
     //validacion de limites de particion
-    if (1==1){
-        direccion_resultado = base_particion+desplazamiento ;  
-        log_info(logger_cpu, "PID: %u - ", proceso_actual->pid); //LOG OBLIGATORIO
-        return direccion_resultado;
+    if (proceso->registros_cpu.base + desplazamiento < proceso->registros_cpu.limite ){
+        direccion_fisica_resultado = proceso->registros_cpu.base +desplazamiento ;         
+        return direccion_fisica_resultado;
     }else{
         //segmentation fault
-        enviar_contexto_a_memoria(proceso_actual, conexion);
-        enviar_segfault_a_kernel(proceso_actual,conexion_kernel_dispatch);
+        enviar_contexto_a_memoria(proceso, conexion);
+        enviar_segfault_a_kernel(proceso,conexion_kernel_dispatch);
     }            
 
 
@@ -538,7 +561,7 @@ uint32_t mmu(uint32_t direccion_logica, int conexion, int pid, int conexion_kern
 
 
 
-void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, t_log* logger, int conexion){
+void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso, int conexion){
     // Lee el valor de memoria correspondiente a la Dirección Lógica que se encuentra en el 
     //Registro Dirección y lo almacena en el Registro Datos
     registros id_registro_direccion = identificarRegistro(registro_direccion);
@@ -550,36 +573,24 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
+    
 
-    uint32_t tamanio_a_leer = 4;
-
-    pedir_valor_a_memoria(dir_fisica_result,proceso->pid,tamanio_a_leer,conexion);
+    pedir_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,conexion);
     int valor_sem;
     sem_getvalue(&sem_valor_registro_recibido, &valor_sem);
     printf("valor sem_valor_registro_recibido:%d\n", valor_sem);
     sem_wait(&sem_valor_registro_recibido);
     printf("paso sem_valor_registro_recibido\n");
 
-    log_info(logger, "PID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->pid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
-    
-    char *endptr;
-    printf("paso endptr\n");
-    uint32_t valor_dir_fisica_uint32;
-    uint8_t valor_dir_fisica_uint8t;
-    if(tamanio_a_leer == sizeof(uint32_t)){
-         valor_dir_fisica_uint32 = (uint32_t)strtoul(valor_registro_obtenido, &endptr, 10);// Convertir la cadena a uint32_t
-        set(registro_datos,valor_dir_fisica_uint32,proceso);
-    }
-    else{
-         valor_dir_fisica_uint8t = (uint8_t)strtoul(valor_registro_obtenido, &endptr, 10);// Convertir la cadena a uint8_t
-        set(registro_datos,valor_dir_fisica_uint8t,proceso);
-    }
+    log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
+    set(registro_datos,valor_registro_obtenido,proceso);
+ 
     
     
 
 }
 
-void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, t_log* logger, int conexion){
+void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
     printf("registro: %s\n",registro_datos);
@@ -590,38 +601,40 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
-    //TODO: Si el tamanio de valor_registro_datos(es un int de 32 siempre?) es mayor a tamanio_pagina hay
-    //que dividir ambos y tomar el floor para obtener cant de paginas, con eso dividir datos a enviar en *cant de paginas*, y
-    //por cada pedacito de intfo llamar a mmu y agregar dir fisca obtenida en lista 
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso->registros_cpu.base,conexion, conexion_kernel_dispatch);
 
-
-// Calcular el tamaño necesario para el valor_str
-    int len = snprintf(NULL, 0, "%u", valor_registro_datos);
-    char* valor_str = malloc(len + 1);
-    snprintf(valor_str, len + 1, "%u", valor_registro_datos);
-
+    enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
     
-    log_info(logger, "PID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->pid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
+    log_info(logger_cpu, "TID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->tid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
 
 }
 
 
 
-void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tamanio, int conexion){
+void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int conexion){
         printf("entro a pedir_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
-        paquete_pedido_valor_memoria = (HANDSHAKE); // TODO: Crear codigo de operacion
-
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t));     
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t)); 
-        agregar_a_paquete(paquete_pedido_valor_memoria,  &tamanio,  sizeof(uint32_t));        
-            
+        paquete_pedido_valor_memoria = (READ_MEMORIA); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));            
         enviar_paquete(paquete_pedido_valor_memoria, conexion); 
         eliminar_paquete(paquete_pedido_valor_memoria);
 
 }
 
+void enviar_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, uint32_t valor, int conexion){
+        printf("entro a enviar_valor_a_memoria\n");
+        t_paquete* paquete_pedido_valor_memoria;
+        paquete_pedido_valor_memoria = (WRITE_MEMORIA); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));
+        agregar_a_paquete(paquete_pedido_valor_memoria,  &valor,  sizeof(uint32_t));    
+        enviar_paquete(paquete_pedido_valor_memoria, conexion); 
+        eliminar_paquete(paquete_pedido_valor_memoria);
+
+}
 
 //////////////////////////////////////// SYSCALLS //////////////////////////////////////////
 
@@ -634,7 +647,8 @@ void enviar_dump_memory_a_kernel(int socket_dispatch){
     agregar_a_paquete(paquete_dump_memory, &proceso_actual->pid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_dump_memory, &proceso_actual->tid,  sizeof(uint32_t));
     enviar_paquete(paquete_dump_memory, socket_dispatch); 
-    eliminar_paquete(paquete_dump_memory);    
+    eliminar_paquete(paquete_dump_memory); 
+    proceso_actual = NULL;   
 }
 
 
@@ -649,7 +663,8 @@ void enviar_io_a_kernel(char* tiempo ,int socket_dispatch){
     agregar_a_paquete(paquete_io, &proceso_actual->tid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_io, &tiempo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_io, socket_dispatch); 
-    eliminar_paquete(paquete_io);       
+    eliminar_paquete(paquete_io);  
+    proceso_actual = NULL;     
 }
 
 void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_proceso, char* prioridad_hilo, int socket_dispatch){
@@ -667,6 +682,7 @@ void enviar_process_create_a_kernel(char* nombre_pseudocodigo, char* tamanio_pro
     agregar_a_paquete(paquete_create_process, &prioridad_hilo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_create_process, socket_dispatch); 
     eliminar_paquete(paquete_create_process);
+    proceso_actual = NULL;
 
 }
 
@@ -683,6 +699,7 @@ void enviar_thread_create_a_kernel(char* nombre_pseudocodigo, char* prioridad_hi
     agregar_a_paquete(paquete_create_thread, &prioridad_hilo_num,  sizeof(uint32_t));
     enviar_paquete(paquete_create_thread, socket_dispatch); 
     eliminar_paquete(paquete_create_thread);
+    proceso_actual = NULL;
 }
 
 
@@ -695,7 +712,8 @@ void enviar_thread_join_a_kernel(char* tid ,int socket_dispatch){
        
     agregar_a_paquete(paquete_thread_join, &tid_numero,  sizeof(uint32_t));
     enviar_paquete(paquete_thread_join, socket_dispatch); 
-    eliminar_paquete(paquete_thread_join);    
+    eliminar_paquete(paquete_thread_join); 
+    proceso_actual = NULL;   
 }
 
 
@@ -708,7 +726,8 @@ void enviar_thread_cancel_a_kernel(char* tid ,int socket_dispatch){
        
     agregar_a_paquete(paquete_thread_cancel, &tid_numero,  sizeof(uint32_t));
     enviar_paquete(paquete_thread_cancel, socket_dispatch); 
-    eliminar_paquete(paquete_thread_cancel);      
+    eliminar_paquete(paquete_thread_cancel);  
+    proceso_actual = NULL;    
 }
 
 
@@ -723,6 +742,7 @@ void enviar_mutex_create_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_mutex_create_kernel,  recurso,  tamanio_recurso);            
     enviar_paquete(paquete_mutex_create_kernel, conexion_kernel); 
     eliminar_paquete(paquete_mutex_create_kernel);
+    proceso_actual = NULL;
 
 }
 
@@ -738,6 +758,7 @@ void enviar_mutex_lock_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_lock_kernel,  recurso,  tamanio_recurso);            
     enviar_paquete(paquete_lock_kernel, conexion_kernel); 
     eliminar_paquete(paquete_lock_kernel);
+    proceso_actual = NULL;
 
 }
 
@@ -752,27 +773,30 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_unlock_kernel,  recurso,  tamanio_recurso);      
     enviar_paquete(paquete_unlock_kernel, conexion_kernel); 
     eliminar_paquete(paquete_unlock_kernel);
+    proceso_actual = NULL;
 }
 
 
 void enviar_process_exit_a_kernel(int conexion_kernel){
     t_paquete* paquete_process_exit_kernel;   
     paquete_process_exit_kernel = crear_paquete(PROCESO_SALIR); 
-
+    
     agregar_a_paquete(paquete_process_exit_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
     enviar_paquete(paquete_process_exit_kernel, conexion_kernel); 
     eliminar_paquete(paquete_process_exit_kernel);    
+    proceso_actual = NULL;
 }
 
 
 void enviar_thread_exit_a_kernel(int conexion_kernel){
     t_paquete* paquete_thread_exit_kernel;   
     paquete_thread_exit_kernel = crear_paquete(HILO_SALIR); 
-
+    
     agregar_a_paquete(paquete_thread_exit_kernel,  &proceso_actual->pid,  sizeof(uint32_t)); 
     agregar_a_paquete(paquete_thread_exit_kernel,  &proceso_actual->tid,  sizeof(uint32_t));     
     enviar_paquete(paquete_thread_exit_kernel, conexion_kernel); 
-    eliminar_paquete(paquete_thread_exit_kernel);      
+    eliminar_paquete(paquete_thread_exit_kernel);  
+    proceso_actual = NULL;    
 }
 
 
@@ -791,18 +815,6 @@ void imprimir_contenido_paquete(t_paquete* paquete) {
     printf("\n");
 }
 
-void obtener_base_particion(int conexion, int pid){ 
-    printf("entro a obtener base particion\n");
-    t_paquete* paquete_pedido_tamanio_base;
-    paquete_pedido_tamanio_base = crear_paquete(BASE_PARTICION); 
-    agregar_a_paquete(paquete_pedido_tamanio_base, pid,  sizeof(uint32_t));
-    enviar_paquete(paquete_pedido_tamanio_base, conexion); 
-    eliminar_paquete(paquete_pedido_tamanio_base);
-
-}
-
-
- 
 
 void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
 {   log_info(logger_cpu, "Entro al ciclo");
@@ -821,7 +833,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
-    tipo_inst = decode(inst);
+    tipo_inst = decode(inst, conexion_mem);
     log_info(logger_cpu, "Voy a entrar a execute");
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT ) 
@@ -871,20 +883,9 @@ tipo_instruccion str_to_tipo_instruccion(const char *str) {
     return instruccion_a_devolver;
 }
 
-void generar_interrupcion_a_kernel(int conexion){
-    log_info(logger_cpu,"entro a generar_interrupcion_a_kernel\n");
-    t_paquete* paquete_interrupcion_kernel;    
-   
-    paquete_interrupcion_kernel = crear_paquete(HANDSHAKE); //TODO: crear codigo de operacion
-    enviar_paquete(paquete_interrupcion_kernel, conexion);   
-    eliminar_paquete(paquete_interrupcion_kernel);
-    log_info(logger_cpu,"Interrupcion kernel enviada a %d", conexion);
- }
-
-
 
 void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
-    printf("entro a DEVOLUCION_CONTEXTO\n");
+  
     t_paquete* paquete_devolucion_contexto;
 
     paquete_devolucion_contexto = crear_paquete(DEVOLUCION_CONTEXTO); 
@@ -903,10 +904,10 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.limite, sizeof(uint32_t));
     enviar_paquete(paquete_devolucion_contexto, conexion); 
     eliminar_paquete(paquete_devolucion_contexto);
-
+    log_info(logger_cpu,"## TID: %d- Actualizo Contexto Ejecución", proceso->tid); // LOG OBLIGATORIO
  }
 
- void solicitar_contexto_(t_proceso* proceso, int conexion){
+ void solicitar_contexto_a_memoria(t_proceso* proceso, int conexion){
     printf("entro a paquete_solicitud_contexto\n");
     t_paquete* paquete_solicitud_contexto;
 
