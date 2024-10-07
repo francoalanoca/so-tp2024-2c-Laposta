@@ -270,8 +270,33 @@ void memoria_atender_kernel(void* socket){
 			char* nombre_archivo = generar_nombre_archivo(pid, tid);
 			uint32_t tamanio_nombre_archivo = (strlen(nombre_archivo)+1) * sizeof(char);
 
+			t_miniPCB* proceso_a_leer = busco_proceso_por_PID(pid);
+			//obtener base y tamanio del proceso asociado al pid
+			uint32_t base_proceso = proceso_a_leer->base;
+			uint32_t tamanio_proceso = proceso_a_leer->limite;
+
+			//crear variable que diga cuantas leídas debo hacer en base al tamanio del proceso
+			uint32_t leidas_a_hacer = tamanio_proceso / 4; //siempre se lee de a 4 bytes
+			
+			//hacer un for con la variable anterior y por cada pasada hacer un read e ir concatenandolo en una variable
+			char* contenido = malloc(tamanio_proceso);
+			char* leido_actual = malloc(4);
+			for(int i=0;i<leidas_a_hacer;i++){
+        	if(read_mem(base_proceso,leido_actual)){
+				//concateno lo leido con lo que ya habia leido antes
+				strcat(contenido, leido_actual);
+			}
+			else{
+				printf("Ocurrio un error al leer el contenido del proceso\n");
+			}
+        	
+    		}
+
+			//ver el tamanio real de lo leído
+			uint32_t tamanio_contenido = strlen(contenido) + 1; //no hace falta multiplicar por sizeof(char) ya que este siempre vale 1 byte
+
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-			//enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,/*tamanio_contenido, contenido,socket_fs*/);
+			enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
 			log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;
 
