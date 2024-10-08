@@ -296,6 +296,25 @@ void memoria_atender_kernel(void* socket){
 			uint32_t tamanio_contenido = strlen(contenido) + 1; //no hace falta multiplicar por sizeof(char) ya que este siempre vale 1 byte
 
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			
+			//crear conexion con fs y enviar peticion
+			int socket_filesystem = crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
+            //enviar_solicitud_espacio_a_memoria(un_pcb,socket_filesystem);
+			enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem);
+          
+            //int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
+			//int respuesta=recibir_resp_de_fs_memory_dump(socket_filesystem);
+			int respuesta = recibir_operacion(socket_filesystem);
+        
+			//close(socket_memoria);
+            close(socket_filesystem);
+
+			if(respuesta==PEDIDO_MEMORY_DUMP_RTA){
+                log_info(logger_memoria,"recibi OK rta memory dump de fs\n");
+            }else{
+               log_info(logger_memoria,"hubo ERROR en rta memory dump de fs\n");
+            }
+
 			enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
 			log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;
