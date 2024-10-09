@@ -84,27 +84,39 @@ void mutex_lock(char* recurso){
             sem_post(&(semaforos->espacio_en_cpu));
 
         }   
-    }else//si no existe el tcb-> hace nada, debe serguir el mismo thread
-        enviar_thread_a_cpu(tcb_ejecutando);
-
+    }else{//si no existe el mutex->mando a exit el tcb que hizo el lock y activo el planificador
+            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            agregar_a_lista(tcb_ejecutando,lista_exit,&(semaforos->mutex_lista_exit));
+            sem_post(&(semaforos->espacio_en_cpu));
+    }
 }
+
 //pasa el mutex al siguiente tcb en espera o no hace nada si el mutex no existe
 void mutex_unlock(char* recurso, t_tcb* tcb){
     //controlo que el mutex exista y este asignado al tcb
     t_mutex* mutex_a_desbloquear=NULL;
-    mutex_a_desbloquear=quitar_mutex_a_thread(recurso,tcb);
+    t_mutex* mutex_existe=buscar_mutex(recurso,tcb->pid);
+    if(mutex_existe!=NULL){
+        mutex_a_desbloquear=quitar_mutex_a_thread(recurso,tcb);
             
-    if(mutex_a_desbloquear!=NULL){//si lo tenia asignado(y existe)
+        if(mutex_a_desbloquear!=NULL){//si lo tenia asignado
         //asgino al primero que esperaba el mutex
-        t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
+            t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
         //desbloqueo tcb_con_mutex porque ya se le asigno el mutex 
-        buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
+            buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
         //envio el tcb con mutex a ready
-        agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
-        sem_post(&(semaforos->contador_threads_en_ready));
-    }
-    //continua ejecutando el que hizo la syscall
-    enviar_thread_a_cpu(tcb);
+             agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+             sem_post(&(semaforos->contador_threads_en_ready));
+        
+        }
+            //continua ejecutando el que hizo la syscall
+            enviar_thread_a_cpu(tcb);
+    }else{ //no existe mutex-> mando hilo a exit y activo el planificador
+            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
+            sem_post(&(semaforos->espacio_en_cpu));
+        }
+
 }
 
 // terminar thread: quitar TID de pcb, enviar mensaje a memoria, mandar a ready los tcb joineados al thread eliminado, destruir tcb
@@ -112,12 +124,17 @@ void thread_exit(t_tcb *tcb){
     bool se_logro_eliminar=quitar_tid_de_proceso(tcb);
     if(se_logro_eliminar){
     pthread_t hilo_manejo_exit;
+
+    desbloquear_hilos_por_fin_de_hilo(tcb);
+    
+    //liberar memoria
     pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
     pthread_detach(hilo_manejo_exit);
     
     }else
         log_info(logger_kernel, " EL hilo no existe o ya fue eliminado del proceso");
 }
+
 void thread_cancel(int tid_a_cancelar,int pid)
 {
     t_pcb* pcb=buscar_proceso_por(pid);
@@ -125,9 +142,8 @@ void thread_cancel(int tid_a_cancelar,int pid)
 
     if(indice_de_tid!=-1){//el tcb aun no se elimino
         //busco donde este el pcb}
-
         t_tcb* tcb_a_cancelar=NULL;
-        if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo
+        if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo, aunque DIJERON QUE ESTE CASO NO LO EVALUAN
             tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_exec,tid_a_cancelar,pid,&(semaforos->mutex_lista_exec));
         }
         if(tcb_a_cancelar==NULL){

@@ -109,7 +109,7 @@ t_mutex* buscar_mutex(char* recurso,int pid){
 void asignar_mutex(t_tcb * tcb, t_mutex* mutex){
         mutex->estado=ASIGNADO;
         mutex->thread_asignado=tcb;
-        list_add(tcb->mutex_asignados,tcb);
+        list_add(tcb->mutex_asignados,mutex);
 }
 
 
@@ -199,7 +199,7 @@ t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb){
     for(int i=0;i<list_size(tcb->mutex_asignados);i++){
          mutex=(t_mutex*)list_get(tcb->mutex_asignados,i);
         if(strcmp(recurso,mutex->recurso)==0){
-            list_remove(tcb->mutex_asignados,1);
+            list_remove(tcb->mutex_asignados,i);
             return mutex;
         }
     }
@@ -207,11 +207,10 @@ t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb){
 }
 t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex){
     t_tcb* tcb=NULL;
-    if(list_size(mutex->lista_threads_bloquedos)){
-   
-    tcb=(t_tcb*)list_remove(mutex->lista_threads_bloquedos,0);
+    if(list_size(mutex->lista_threads_bloquedos)>0){
     
-        list_add(tcb->mutex_asignados,mutex);
+    tcb=(t_tcb*)list_remove(mutex->lista_threads_bloquedos,0);
+        asignar_mutex(tcb,mutex);
         mutex->thread_asignado=tcb;
     }
     return tcb;
@@ -251,4 +250,52 @@ void hilo_sleep_io(){
         sleep(tiempo);
         sem_post(&(semaforos->sem_io_sleep_en_uso));
     }
+}
+
+
+//TODO: FIXME: controlar semaforos
+//recorre las lista de bloqueados y desbloquea tcb por mutex o join 
+void desbloquear_hilos_por_fin_de_hilo(t_tcb* tcb_finalizado){
+    sem_wait(&(semaforos->mutex_lista_blocked));
+    for (int i = 0; i < list_size(lista_blocked); i++) {
+        t_tcb* tcb_bloqueado = list_get(lista_blocked, i);
+        
+        //desbloquea por join
+        if (((t_tcb*)(tcb_bloqueado->thread_target))->tid == tcb_finalizado->tid ) {
+            
+            list_remove(lista_blocked, i);
+            i--; // Ajustar el índice después de eliminar
+            tcb_bloqueado->thread_target=NULL;
+            agregar_a_lista(tcb_bloqueado,lista_new,&(semaforos->mutex_lista_new));
+
+            sem_post(&(semaforos->contador_threads_en_ready));
+            continue;
+        }
+        bool desbloqueado=false;
+        //recorre todos los mutex del que finaliza
+        for (int j= 0; j < list_size(tcb_finalizado->mutex_asignados)&& !desbloqueado; j++){
+            t_mutex* mute_aux=list_get(tcb_finalizado->mutex_asignados,j);
+           
+            //recorre los tcb bloq de cada mutex
+            for (int k = 0; k < list_size(mute_aux->lista_threads_bloquedos) ; k++)
+            {
+                t_tcb* tcb_aux=(t_tcb*)list_get(mute_aux->lista_threads_bloquedos,k);
+                //desbloquea por mutex
+                if(tcb_aux->tid==tcb_bloqueado->tid){
+                    list_remove(lista_blocked,i);
+                    i--; // Ajustar el índice después de eliminar
+                    list_remove(mute_aux->lista_threads_bloquedos,k);
+                    mute_aux->thread_asignado=NULL;
+                    mute_aux->estado=SIN_ASIGNAR;
+                    agregar_a_lista(tcb_aux,lista_new,&(semaforos->mutex_lista_new));
+                    sem_post(&(semaforos->contador_threads_en_ready));
+                    desbloqueado=true;
+                    break;
+                }
+            }  
+        }  
+
+    }
+    sem_post(&(semaforos->mutex_lista_blocked));
+   
 }

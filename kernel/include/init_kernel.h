@@ -124,7 +124,7 @@ extern t_list* lista_new;
 extern t_list* lista_procesos_global;
 extern t_list* lista_espera_io;
 
-
+void desbloquear_hilos_por_fin_de_hilo(t_tcb* tcb_finalizado);
 int conectar_a_memoria();
 void generar_conexiones_a_cpu();
 void procesar_conexion_interrupt(void *socket);
