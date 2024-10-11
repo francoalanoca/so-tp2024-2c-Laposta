@@ -6,7 +6,7 @@ int fd_mod2 = -1;
 int fd_mod3 = -1;
 //pcb *pcb_actual;
 
-void* crear_servidor_dispatch(char* ip_file_system){
+void* crear_servidor_fs(char* ip_file_system){
     log_info(logger_file_system, "empieza crear_servidor_dispatch");
 
     log_info(logger_file_system, "valor de PUERTO_ESCUCHA_DISPATCH: %s", cfg_file_system->PUERTO_ESCUCHA);
@@ -19,10 +19,10 @@ if (puerto_escucha != NULL) {
 else{
     log_info(logger_file_system,"error al asignar memoria a variable del puerto");
 }
-    //strcpy(puerto_escucha, cfg_file_system->PUERTO_ESCUCHA_DISPATCH);
+   
     log_info(logger_file_system, "crea puerto_escucha");
     printf("El puerto_escucha es: %s", puerto_escucha);
-    fd_mod2 = iniciar_servidor(logger_file_system, "SERVER file_system DISPATCH", ip_file_system,  puerto_escucha);
+    fd_mod2 = iniciar_servidor(logger_file_system, "SERVER file_system ", ip_file_system,  puerto_escucha);
     log_info(logger_file_system, "inicio servidor");
     if (fd_mod2 == 0) {
         log_error(logger_file_system, "Fallo al crear el servidor, cerrando file_system");
@@ -37,7 +37,7 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
     log_info(logger_file_system, "entra a server escuchar");
     int cliente_socket = esperar_cliente(logger_file_system, "FILE_SYSTEM", server_socket);
     log_info(logger_file_system, "cliente conectado socket %d", cliente_socket);
-    *global_socket = cliente_socket; // la segunda conexion, que sea la del escuchar interrupciones desde kernel va a pisar esta variable y vamos a poder enviar.
+    *global_socket = cliente_socket; 
     
     
     if (cliente_socket != -1) {
@@ -50,7 +50,7 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
         int* socket_ptr = malloc(sizeof(int));
         *socket_ptr = cliente_socket;
       
-        //pthread_create(&atenderProcesoNuevo, NULL,procesar_conexion,cliente_socket);//TODO:Redefinir procesar_conexion para que reciba un PCB
+      
         pthread_create(&atenderProcesoNuevo, NULL,(void*)procesar_conexion,(void*)args);
         pthread_detach(atenderProcesoNuevo);
         return 1;
@@ -79,7 +79,14 @@ void procesar_conexion(void *v_args){
 
         switch (cop){
     
-            
+            case CREACION_DUMP:
+            {
+                printf("CREACION_DUMP recibido\n");
+                t_list* lista_paquete = recibir_paquete(cliente_socket);
+                t_dumped* dumped = dumped_deserializar(lista_paquete); 
+
+                break;  
+            }
             default:
             {
                 printf("Codigo de operacion no identifcado\n");

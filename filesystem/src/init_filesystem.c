@@ -16,8 +16,9 @@ int checkProperties(char *path_config) {
     char *properties[] = {
             "PUERTO_ESCUCHA",
             "MOUNT_DIR",
-            "PUERTO_ESCUCHA_DISPATCH",
-            "PUERTO_ESCUCHA_INTERRUPT",
+            "BLOCK_SIZE",
+            "BLOCK_COUNT",
+            "RETARDO_ACCESO_BLOQUE",
             "LOG_LEVEL",
             NULL
             };
@@ -44,13 +45,13 @@ int cargar_configuracion(char *path) {
     log_info(logger_file_system, "PUERTO_MEMORIA cargado correctamente: %s", cfg_file_system->MOUNT_DIR);
 
     cfg_file_system->BLOCK_SIZE = config_get_int_value(file_cfg_file_system, "BLOCK_SIZE");
-    log_info(logger_file_system, "TIEMPO_UNIDAD_TRABAJO cargado correctamente: %d", cfg_file_system->BLOCK_SIZE);
+    log_info(logger_file_system, "BLOCK_SIZE cargado correctamente: %d", cfg_file_system->BLOCK_SIZE);
 
     cfg_file_system->BLOCK_COUNT = config_get_int_value(file_cfg_file_system, "BLOCK_COUNT");
-    log_info(logger_file_system, "TIEMPO_UNIDAD_TRABAJO cargado correctamente: %d", cfg_file_system->BLOCK_COUNT);
+    log_info(logger_file_system, "BLOCK_COUNT cargado correctamente: %d", cfg_file_system->BLOCK_COUNT);
 
     cfg_file_system->RETARDO_ACCESO_BLOQUE = config_get_int_value(file_cfg_file_system, "RETARDO_ACCESO_BLOQUE");
-    log_info(logger_file_system, "TIEMPO_UNIDAD_TRABAJO cargado correctamente: %d", cfg_file_system->RETARDO_ACCESO_BLOQUE);
+    log_info(logger_file_system, "RETARDO_ACCESO_BLOQUE cargado correctamente: %d", cfg_file_system->RETARDO_ACCESO_BLOQUE);
     
 
     cfg_file_system-> LOG_LEVEL = strdup(config_get_string_value(file_cfg_file_system, "LOG_LEVEL"));
