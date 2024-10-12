@@ -162,7 +162,8 @@ void thread_cancel(int tid_a_cancelar,int pid)
             thread_exit(tcb_a_cancelar);
             
             }
-    }
+    }else log_info(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
+
  //hace nada
 }
 //pone a tcb en bloqueados y esperar
