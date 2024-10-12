@@ -153,10 +153,10 @@ void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete ){
     printf("Tid recibido: %d \n", contexto->tid);
 
     contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
-    printf("Registro PC recibido: %d \n", contexto->registros.PC);
+    log_warning(logger_memoria,"Registro PC recibido: %d \n", contexto->registros.PC);
 
     contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
-    printf("Registro AX recibido: %d \n", contexto->registros.AX);
+    log_warning(logger_memoria,"Registro AX recibido: %d \n", contexto->registros.AX);
 
     contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
     printf("Registro BX recibido: %d \n", contexto->registros.BX);
@@ -289,6 +289,7 @@ void enviar_respuesta_instruccion(char* proxima_instruccion ,int socket_cpu) {
     
     enviar_paquete(paquete_instruccion, socket_cpu);   
     printf("Instruccion enviada %s\n", proxima_instruccion); 
+    printf("LONGITUD DE LA INTRUCCION: %d\n", strlen(proxima_instruccion)); 
     eliminar_paquete(paquete_instruccion);
 }
 

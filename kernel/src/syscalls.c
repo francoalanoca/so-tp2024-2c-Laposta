@@ -19,15 +19,17 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
 
 t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
     t_tcb* tcb_th=crear_tcb(prioridad_th, pid);
+
     int socket_memoria=conectar_a_memoria();
     enviar_a_memoria_creacion_thread( tcb_th,pseudo_codigo, socket_memoria);
     int rta_memoria=recibir_resp_de_memoria_a_solicitud(socket_memoria);
     if(rta_memoria==INICIAR_HILO_RTA_OK){
-        log_info(logger_kernel,"memoria cargo las estructuras de  thread");
+        log_info(logger_kernel,"memoria creo el hilo");
+        close(socket_memoria);
+        return tcb_th;
     }
     close(socket_memoria);
-    return tcb_th;
-
+    return NULL;
 }
 //TODO: deberiamos tener un mutext para cada proceso.Aca modifico su estuctura
 void mutex_create(char* nombre_mutex,int pid_mutex){
@@ -65,13 +67,16 @@ void mutex_lock(char* recurso){
     t_mutex* mutex=NULL;
     sem_wait(&(semaforos->mutex_lista_exec));
     t_tcb* tcb_ejecutando=(t_tcb*)list_get(lista_exec,0);
-    sem_wait(&(semaforos->mutex_lista_exec));
-        mutex=buscar_mutex(recurso,tcb_ejecutando->pid);
+    sem_post(&(semaforos->mutex_lista_exec));
+
+    log_warning(logger_kernel,"buscando mutex para lockear ");  
+    mutex=buscar_mutex(recurso,tcb_ejecutando->pid);
     if(mutex!=NULL){
         if(mutex->estado==SIN_ASIGNAR){
+            log_warning(logger_kernel,"lockeando mutex: %s",mutex->recurso);
             asignar_mutex(tcb_ejecutando,mutex);
             //continua ejecutando el mismo tcb-->vuelvo a  enviar el mismo tcb a ejecutar
-            enviar_thread_a_cpu(tcb_ejecutando);
+            enviar_thread_a_cpu(tcb_ejecutando,config_kernel->conexion_cpu_dispatch);
         }else{
             //se bloquea--> quito el tcb de exec y lo mando a espera de mutex y bloq
             // y marco la cpu como libre
@@ -110,7 +115,7 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
         
         }
             //continua ejecutando el que hizo la syscall
-            enviar_thread_a_cpu(tcb);
+            enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }else{ //no existe mutex-> mando hilo a exit y activo el planificador
             remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
@@ -163,6 +168,8 @@ void thread_cancel(int tid_a_cancelar,int pid)
 //pone a tcb en bloqueados y esperar
 void thread_join(t_tcb* tcb_en_exec, int tid_target){
     t_pcb* pcb=buscar_proceso_por(tcb_en_exec->pid);
+    log_warning(logger_kernel,"buscando pcb target para thread_join");
+    mostrar_pcb(pcb,logger_kernel);
     
     int posicion_tid=buscar_indice_de_tid_en_proceso(pcb,tid_target);
     
@@ -182,5 +189,5 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
             
             }
     }else    //continua ejecutando el que hizo la syscall
-        enviar_thread_a_cpu(tcb_en_exec);
+        enviar_thread_a_cpu(tcb_en_exec,config_kernel->conexion_cpu_dispatch);
 }

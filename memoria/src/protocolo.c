@@ -38,13 +38,17 @@ void memoria_atender_cpu(){
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			contexto_encontrado->pid = pid;
 			contexto_encontrado->tid = tid;
+			log_warning(logger_memoria,"contexto encontrado: registros");
+			log_warning(logger_memoria,"PC=%d",contexto_encontrado->registros.PC);
+			log_warning(logger_memoria,"AX=%d",contexto_encontrado->registros.AX);
+			log_warning(logger_memoria,"BX=%d",contexto_encontrado->registros.BX);
 			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
 			log_info(logger_memoria, "## Contexto Solicitado - (PID:TID) - (%d:%d)\n",pid,tid);
 			free(contexto_encontrado);
 			break;
 
 		case SOLICITUD_INSTRUCCION:
-			sleep(8);
+			//sleep(8);
 			log_info(logger_memoria, "Recibí SOLICITUD_INSTRUCCION \n");
 			valores = recibir_paquete(socket_cpu);
 			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
@@ -120,7 +124,7 @@ void memoria_atender_cpu(){
 
 		case -1:
 			log_error(logger_memoria, "CPU se desconecto. Terminando servidor.\n");
-			//return EXIT_FAILURE;
+			return EXIT_FAILURE;
 			break;
 
 		default:

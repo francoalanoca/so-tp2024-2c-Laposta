@@ -60,9 +60,8 @@ void *planificar_fifo()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
-         log_info(logger_kernel, "thread enviado a cpu");
-        
-        enviar_thread_a_cpu(tcb);
+
+        enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
 }
 
@@ -82,7 +81,7 @@ void *planificar_prioridades()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
-        enviar_thread_a_cpu(tcb);
+        enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
 }
 
@@ -122,7 +121,7 @@ void *planificar_colas_multinivel()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
-        enviar_thread_a_cpu(tcb);
+        enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
         iniciar_quantum(tcb);//se inicia el contador de tiempo RR en un hilo
     }
 }

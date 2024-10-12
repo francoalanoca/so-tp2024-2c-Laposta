@@ -88,6 +88,6 @@ void limpiarCadena(char* cadena);
 void generar_interrupcion_a_kernel(int conexion);
 void enviar_contexto_a_memoria(t_proceso* proceso, int conexion);
 void solicitar_contexto_a_memoria(t_proceso* proceso, int conexion);
-void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto);
+
 void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch);
 #endif //CPU_UTILS_H

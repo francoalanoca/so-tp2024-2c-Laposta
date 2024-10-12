@@ -25,7 +25,7 @@ void  inicializar_hilos_largo_plazo(){
 void* planificar_procesos(){
     
     while (1) {
-              log_info(logger_kernel, "Iniciando planificador de largo plazo");
+
         sem_wait(&(semaforos->sem_procesos_new));//se ingreso un proceso
       
 
@@ -34,7 +34,7 @@ void* planificar_procesos(){
         un_pcb=list_get(lista_new,0);
         sem_post(&(semaforos->mutex_lista_new));
                     // chequeamos si el pcb no es null
-         log_info(logger_kernel, "pcb obtenido de NEW");
+
 
         if (un_pcb == NULL) {
             
@@ -47,10 +47,14 @@ void* planificar_procesos(){
             close(socket_memoria);
             if(respuesta==INICIAR_PROCESO_RTA_OK){
                 log_info(logger_kernel,"recibi ok para crear proceso");
-               t_tcb* tcb=NULL;
-               tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
+               t_tcb* tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
+
+                // pasar_new_a_ready();  TODO: no se puede usar por que en NEW hay procesos y en READY hay hilos
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
-                pasar_new_a_ready();
+                remover_de_lista(lista_new,0,&(semaforos->mutex_lista_new));
+                agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_new));
+                t_tcb* prueba_tcb=(t_tcb*)list_get(lista_ready,0);
+
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{
@@ -58,11 +62,9 @@ void* planificar_procesos(){
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
                  sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             }
-           
-          
+                 
         }
     }
-    log_info(logger_kernel, "No hay procesos en la cola NEW");
     return NULL; 
 }
 
@@ -70,7 +72,7 @@ void* planificar_procesos(){
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado) {
     if (!list_is_empty(lista_origen)) {
         sem_wait(sem_origen);
-        t_tcb* tcb = list_remove(lista_origen, 0); 
+        t_tcb* tcb = (t_tcb*)list_remove(lista_origen, 0);
         sem_post(sem_origen);
         sem_wait(sem_destino);
         tcb->estado = nuevo_estado;
@@ -100,7 +102,6 @@ void agregar_a_cola(t_pcb *pcb,t_list* lista,sem_t* sem){
     list_add(lista,pcb);
 }
 void pasar_new_a_ready() {
-    log_info(logger_kernel, "Pasando thread de NEW a READY");
     mover_procesos(lista_new, lista_ready, &(semaforos->mutex_lista_new), &(semaforos->mutex_lista_ready), READY); 
 }
 void pasar_ready_a_exit() { //se usara? ver finalizar proceso
