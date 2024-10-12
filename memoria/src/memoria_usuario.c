@@ -1,6 +1,7 @@
 #include "../include/memoria_usuario.h"
 
 //-------------------------Definicion de variables globales----------------------
+/*
 void* memoria_usuario;                          //espacio de usuario
 t_list* lista_particiones;              //lista de las particiones
 t_list* lista_particiones_dinamicas; //variable que guarda la lista de particiones
@@ -11,9 +12,10 @@ t_list* pids_por_bloque;
 
 uint32_t tamanio_total_memoria;
 char * algoritmo_alocacion;
-
+*/
 
 //-------------------------Definicion de funciones----------------------------
+/*
 //Inicializa memoria con particiones fijas
 void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo) {
     tamanio_total_memoria = mem_size;
@@ -36,7 +38,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 //printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap_particiones, 2) ? 1 : 0);
 
 }
-
+*/
 
 // Funcion para Asignar Memoria
 /*void* alocar_memoria(uint32_t size) {
@@ -69,9 +71,51 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
     return NULL; // No se encontró un hueco adecuado
 }*/
 
+
+
+void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
+    t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
+    //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+
+    nuevo_proceso->pid = pid;
+    nuevo_proceso->hilos = list_create();
+
+    // nuevo_hilo->tid = 0;
+    // nuevo_hilo->registros.PC = 0;
+    // nuevo_hilo->registros.AX = 0;
+    // nuevo_hilo->registros.BX = 0;
+    // nuevo_hilo->registros.CX = 0;
+    // nuevo_hilo->registros.DX = 0;
+    // nuevo_hilo->registros.EX = 0;
+    // nuevo_hilo->registros.FX = 0;
+    // nuevo_hilo->registros.GX = 0;
+    // nuevo_hilo->registros.HX = 0;
+    // nuevo_hilo->lista_de_instrucciones = list_create();
+    // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);TODO: FIXME: se me creaba el primer sin instrucciones
+    
+
+ 
+    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
+
+    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
+
+    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
+
+    nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
+
+    nuevo_proceso->limite = tamanio_proceso;
+
+    //list_add(nuevo_proceso->hilos,nuevo_hilo);
+
+    list_add(lista_miniPCBs,nuevo_proceso);
+}
+
+
 //Crear un Proceso
-int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
+int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
     printf("Entro crear proceso\n");
+    printf("tam_proceso:%d,pid:%d,algoritmo_alocacion:%s\n",tam_proceso,pid,algoritmo_alocacion);
     printf("Tamanio lista de particiones:%d\n", list_size(lista_de_particiones));
     //encontrar hueco libre y marcar bitmap, si no encuentra tira error
     uint32_t tamanio_bloque_actual = 0;
@@ -109,6 +153,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                     pid_por_bloque->bloque = i;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
                     list_add(pids_por_bloque,pid_por_bloque);
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                     return INICIAR_PROCESO_RTA_OK;
                 }
             }
@@ -135,10 +180,11 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
-                if(tam_proceso<tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
+                if(tam_proceso<=tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
                     if(tamanio_ultimo_bloque_best_fit == 0 || (tamanio_bloque_actual<tamanio_ultimo_bloque_best_fit)){
                         tamanio_ultimo_bloque_best_fit = tamanio_bloque_actual;
                         ultimo_bloque_best_fit = i;
+                        printf("El ultimo_bloque_best_fit es: %d\n", ultimo_bloque_best_fit);
                         bloque_libre_encontrado = true;
                     }
                 }
@@ -157,6 +203,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                     list_add(pids_por_bloque,pid_por_bloque);
                     printf("Se agrego a lista. Estado actual:\n");
                     print_lista_pid_por_bloque(pids_por_bloque);
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                      return INICIAR_PROCESO_RTA_OK; 
             }
         }
@@ -201,6 +248,7 @@ int crear_proceso(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t p
                     pid_por_bloque->bloque = ultimo_bloque_worst_fit;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
                     list_add(pids_por_bloque,pid_por_bloque);
+                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 
                 return INICIAR_PROCESO_RTA_OK;
             }
@@ -223,6 +271,8 @@ void finalizar_proceso_fijas(uint32_t pid){
     printf("bloque_x_pid: %d\n",bloque_x_pid->bloque);
     bitarray_clean_bit(bitmap_particiones,bloque_x_pid->bloque);
    list_remove_and_destroy_element(pids_por_bloque,indice_bloque_a_liberar,free);
+
+   eliminar_proceso_de_lista(pid);
     
 }
 
@@ -282,7 +332,7 @@ void write_mem(uint32_t direccion_fisica, uint32_t valor) {
 }*/
 
 
-
+/*
 //Funcion que en base a la cantidad de frames crea bitmap
 t_bitarray *crear_bitmap(int entradas){
     int ent = entradas;
@@ -313,7 +363,7 @@ t_bitarray *crear_bitmap(int entradas){
 printf("El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap, 2) ? 1 : 0);
     return bitmap;
 }
-
+*/
 void uint32_to_string(uint32_t num, char *str, size_t size) {
     snprintf(str, size, "%u", num);
 }
@@ -372,9 +422,49 @@ uint32_t calcular_base_proceso_fijas(uint32_t bloque, t_list* particiones){
 
     return base;
 }
-
+/*
 //Funcion que redondea el valor al multiplo cercano de base y retorna
 int redondear_a_multiplo_mas_cercano_de(int base, int valor){
     int v = valor == 0 ? 1 : valor;
     return (int) ceil((float) v / (float) base) * base;
+}
+*/
+
+void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
+    t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
+
+    nuevo_hilo->tid = tid;
+    nuevo_hilo->registros.PC = 0;
+    nuevo_hilo->registros.AX = 0;
+    nuevo_hilo->registros.BX = 0;
+    nuevo_hilo->registros.CX = 0;
+    nuevo_hilo->registros.DX = 0;
+    nuevo_hilo->registros.EX = 0;
+    nuevo_hilo->registros.FX = 0;
+    nuevo_hilo->registros.GX = 0;
+    nuevo_hilo->registros.HX = 0;
+
+    nuevo_hilo->lista_de_instrucciones = list_create();
+    leer_instrucciones_particiones_fijas(nombre_archivo,nuevo_hilo);
+    asignar_hilo_a_proceso(nuevo_hilo,pid);
+    
+}
+
+void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
+    bool encontrado = false;
+    for (int i = 0; i < list_size(lista_miniPCBs); i++){
+        t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
+
+        if (miniPCB->pid == pid){
+			list_add(miniPCB->hilos,hilo);
+            log_warning(logger_memoria,"Se agrega tid %d a proceso : %d",hilo->tid,pid);
+           // printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
+            encontrado = true;
+        }
+    }
+    if(!encontrado){
+        printf("No se asigno hilo ya que no se encuentra el proceso %d\n", pid);
+    }
+
+    
 }

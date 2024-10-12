@@ -75,9 +75,7 @@ void generar_conexiones_a_cpu()
         if(config_kernel->conexion_cpu_dispatch>0)
             log_info(logger_kernel, "conectado a cpu");
 
-    socket_cpu=crear_conexion(logger_kernel,"CPU",config_kernel->ip_cpu,config_kernel->puerto_dispatch);
-        if(config_kernel->conexion_cpu_dispatch>0)
-            log_info(logger_kernel, "conectado a cpu2");
+
     pthread_create(&conexion_cpu_dispatch_hilo, NULL, (void *)procesar_conexion_dispatch, (void *)&(config_kernel->conexion_cpu_dispatch));
     pthread_detach(conexion_cpu_dispatch_hilo);
     

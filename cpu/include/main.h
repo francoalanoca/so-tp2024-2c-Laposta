@@ -10,16 +10,9 @@
 #include "../include/server_cpu.h"
 
 
-typedef struct {
-    int socket_memoria;
-    t_proceso *proceso_actual;
-    t_list *tlb;
-    t_list* lista_conexion_kernel_dispatch;
-    int conexion_kernel_interrupt;
-} ciclo_params_t;
 
 
-void ejecutar_ciclo(void* arg) ;
+void ejecutar_ciclo() ;
 
 
 

@@ -12,7 +12,7 @@
 #include <commons/bitarray.h>
 #include <commons/collections/list.h>
 
-#include "../include/memoria_usuario.h"
+//#include "../include/memoria_usuario.h"
 
 
 //#include "../include/instrucciones.h"
@@ -36,28 +36,58 @@ typedef struct{
 typedef struct {
     uint32_t PC;
     uint32_t AX, BX, CX, DX, EX, FX, GX, HX;
-    uint32_t base;
-    uint32_t limite;
-} t_registro_cpu;
+} t_registro_hilos;
 
 typedef struct{
     uint32_t pid;
     t_list* hilos;
-    t_registro_cpu registros;
+    uint32_t base;
+    uint32_t limite;
 } t_miniPCB;
 
 
 
 typedef struct{
     uint32_t tid;
-    t_registro_cpu registros;
+    t_registro_hilos registros;
     t_list *lista_de_instrucciones;
 }t_hilo;
 
+
+
+
+
+
+
+// Estructura para las particiones dinamicas
+typedef struct{
+    uint32_t pid;                   // Id del proceso al que pertenece la particion
+    uint32_t tid;                   // Id del hilo al que pertenece la particion
+    uint32_t inicio;                // Posición de inicio en el espacio de memoria
+    uint32_t tamanio;               // Tamaño de la partición
+    bool ocupado;                   // Estado de la partición: libre u ocupada
+    //t_particion_dinamica* siguiente;  // Puntero a la siguiente partición (lista enlazada)
+} t_particion_dinamica;
+
+//struct para controlar los pids asociados a cada bloque en particiones fijas
+typedef struct{
+    uint32_t pid;                     //pcb del proceso
+    uint32_t bloque;     //bloque de memoria en donde se encuentra el proceso
+} t_pid_por_bloque;
+
+
+
+
+
+
+
+//----------------Serializar/Deserializar------------------
 typedef struct{
     uint32_t pid;
     uint32_t tid;
-    t_registro_cpu registros;
+    t_registro_hilos registros;
+    uint32_t base;
+    uint32_t limite;
 } t_m_contexto;
 
 
@@ -88,6 +118,7 @@ typedef struct{
 //struct para deserializar/serializar al leer o escribir
 typedef struct{
     uint32_t pid;
+    uint32_t tid;
     uint32_t direccion_fisica;
     uint32_t tamanio; //siempre son 4 bytes?
     char* valor;
@@ -108,21 +139,33 @@ typedef struct{
 
 extern int socket_memoria;
 extern int socket_cpu;
-extern int socket_kernel;
+//extern int socket_kernel;
 extern int socket_filesystem;
 
 extern t_log *logger_memoria;
 extern t_config *file_cfg_memoria;
 extern t_config_memoria *cfg_memoria;
 
-extern void* memoria;
+extern void* memoria_usuario;    
 extern t_list* lista_particiones;
+extern t_list* lista_particiones_dinamicas;
 extern t_list* lista_miniPCBs;
-extern pthread_mutex_t mutex_memoria;
 extern uint32_t cantidad_particiones_memoria;
      
 extern t_bitarray *bitmap_particiones;
+extern t_list* pids_por_bloque;
+extern uint32_t tamanio_total_memoria;  
+extern char * algoritmo_alocacion;   
+extern pthread_mutex_t mutex_memoria;
 
+
+
+                    
+
+           
+// extern t_list* lista_miniPCBs;  TODO: FIXME: aaaaaaaaaaaaaaaaaa poruqe esta definido en init_memoria.h tambien??
+  
+    
 
 
 //----------------------------------Prototipos---------------------------------
@@ -138,16 +181,19 @@ int inicializar_memoria();
 
 void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
 
+void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo);
 
-//t_bitarray *crear_bitmap(int entradas);
+t_bitarray *crear_bitmap(int entradas);
+
+int redondear_a_multiplo_mas_cercano_de(int base, int valor);
 
 void cerrar_programa();
 
-void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso);
+//void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso);
 
-void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo, uint32_t tamanio_proceso);
+//void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo);
 
-void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
+//void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid);
 
 t_list* char_array_to_list(char** array);
 
@@ -175,7 +221,7 @@ bool existe_hilo_en_memoria(uint32_t pid, uint32_t tid);
 
 uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid);
 
-void eliminar_proceso_de_lista(t_list* lista_procesos, uint32_t pid);
+void eliminar_proceso_de_lista(uint32_t pid);
 
 t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid);
 
@@ -183,9 +229,15 @@ bool actualizar_contexto(t_m_contexto* contexto);
 
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
 
-bool write_mem(uint32_t direccion_fisica, char* valor, uint32_t longitud);
+bool write_mem(uint32_t direccion_fisica, char* valor);
 
 bool read_mem(uint32_t direccion_fisica, char* resultado);
+
+//int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
+
+//void finalizar_proceso(uint32_t proceso_pid);
+
+char* generar_nombre_archivo(uint32_t pid, uint32_t tid);
 
 
 #endif /* MEMORIA_H */
