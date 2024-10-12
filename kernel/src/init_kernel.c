@@ -238,9 +238,9 @@ void procesar_conexion_dispatch()
             int tid = *((int *)list_get(params_th_cancel, 0));
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *thread_asociado = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
             thread_cancel(tid,thread_asociado->pid);
-
+            enviar_thread_a_cpu(thread_asociado,fd_conexion_cpu);
             break;
 
         default:

@@ -144,9 +144,10 @@ void thread_cancel(int tid_a_cancelar,int pid)
 {
     t_pcb* pcb=buscar_proceso_por(pid);
     int indice_de_tid=buscar_indice_de_tid_en_proceso(pcb,tid_a_cancelar);
-
+    log_info(logger_kernel,"hilo a cancelar: PID:%d, TID:%d",tid_a_cancelar,pid);
     if(indice_de_tid!=-1){//el tcb aun no se elimino
         //busco donde este el pcb}
+        log_info(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
         t_tcb* tcb_a_cancelar=NULL;
         if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo, aunque DIJERON QUE ESTE CASO NO LO EVALUAN
             tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_exec,tid_a_cancelar,pid,&(semaforos->mutex_lista_exec));
@@ -160,7 +161,6 @@ void thread_cancel(int tid_a_cancelar,int pid)
          if(tcb_a_cancelar!=NULL) {//muevo a exit
             agregar_a_lista(tcb_a_cancelar,lista_exit,&(semaforos->mutex_lista_exit));
             thread_exit(tcb_a_cancelar);
-            
             }
     }else log_info(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
 
