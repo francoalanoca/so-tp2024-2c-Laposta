@@ -162,3 +162,196 @@ int crear_archivo_bloques (char * path_archivo_bloques, int block_size, int bloc
     }
     return 0;
 }// fin cargar archivo de bloques
+
+/////////////////////////////////////////////////////// FCB ///////////////////////////////////////////////////
+ t_FCB* inicializar_fcb(char* nombre_archivo, uint32_t tamanio_archivo, uint32_t primer_bloque) {
+    t_FCB* fcb = malloc(sizeof(t_FCB));
+    if (!fcb) {
+        perror("Error al inicializar el FCB");
+        exit(EXIT_FAILURE);
+    }
+    memset(fcb,0, sizeof (t_FCB));
+
+    fcb->nombre_archivo = strdup(nombre_archivo);
+    fcb->tamanio_archivo = tamanio_archivo;
+    fcb->primer_bloque = primer_bloque;
+    return fcb;
+}
+
+t_FCB* cargar_fcb(t_config *file_fcb) {
+    t_FCB* fcb = malloc(sizeof(t_FCB));
+    if (!fcb) {
+        perror("Error al cargar el FCB");
+        exit(EXIT_FAILURE);
+    }
+    fcb->nombre_archivo = strdup(config_get_string_value(file_fcb, "nombre_archivo"));
+    //log_info(logger_entradasalida, "ENTRO EN CARGAR FCB");
+    fcb->tamanio_archivo = config_get_int_value(file_fcb, "tamanio_archivo");
+    fcb->primer_bloque = config_get_int_value(file_fcb, "primer_bloque");  
+    return fcb;   
+}
+
+
+void persistir_fcb(t_FCB *fcb) {
+
+    char path_directory_fcb [100] ;
+    strcpy(path_directory_fcb, cfg_file_system->MOUNT_DIR);
+    char file_path[100]; // Tamaño suficiente para almacenar la ruta completa del archivo
+
+    snprintf(file_path, sizeof(file_path), "%s/%s",path_directory_fcb,fcb->nombre_archivo);
+
+    t_config* file_fcb = config_create(file_path);
+    if (file_fcb == NULL) {
+        log_info(logger_file_system, "ERROR AL CREAR  CONFIG PARA PERSISTIR ARCHIVO FCB %s", file_path);
+    }
+
+    char* tamanio_archivo = uint32_to_string(fcb->tamanio_archivo);
+    char* primer_bloque = uint32_to_string(fcb->primer_bloque);
+
+    config_set_value(file_fcb,"nombre_archivo", fcb->nombre_archivo );
+    log_info(logger_file_system, "PERSISTIDO PARAMETRO nombre_archivo: %s", fcb->nombre_archivo);
+
+    config_set_value(file_fcb,"tamanio_archivo", tamanio_archivo );
+    log_info(logger_file_system, "PERSISTIDO PARAMETRO tamanio_archivo: %d", fcb->tamanio_archivo);
+
+    config_set_value(file_fcb,"primer_bloque", primer_bloque );
+    log_info(logger_file_system, "PERSISTIDO PARAMETRO primer_bloque: %d", fcb->primer_bloque);
+
+    if (!config_save(file_fcb)){
+        perror("Error al guardar fcb");
+    };
+
+    config_destroy(file_fcb);
+
+}
+
+void init_fcb_dict() {
+    fcb_dict = dictionary_create();
+}
+
+t_dictionary* fcb_dict;
+void agregar_fcb_to_dict(t_FCB* fcb) {
+    dictionary_put(fcb_dict, fcb->nombre_archivo, fcb);
+}
+
+bool termina_en_txt(const char *nombre) {
+    const char *ext = strrchr(nombre, '.');
+    return ext != NULL && strcmp(ext, ".txt") == 0;
+}
+
+void cargar_directorio_fcbs(char* path_fcb ){
+    DIR *directorio_fcb = opendir(path_fcb);
+    struct dirent *fcb;
+
+    if(directorio_fcb == NULL){
+        log_info(logger_file_system, "No se pudo abrir el directorio de fcb ");
+        exit(1);
+    }
+
+    fcb_dict = dictionary_create();
+
+    log_info(logger_file_system, "Cargando directorio fcb en diccionario");
+    while ((fcb = readdir(directorio_fcb)) != NULL) {
+        // Verificar que el directorio no sea "." ni ".." (directorios especiales)
+        if (strcmp(fcb->d_name, ".") != 0 && strcmp(fcb->d_name, "..") != 0  && termina_en_txt(fcb->d_name)) {
+            // aca se puede crear un nuevo t_fcb para cada archivo y asociarlo al nombre del archivo en el diccionario
+            t_FCB* nuevo_fcb = buscar_cargar_fcb(fcb->d_name);
+           // Agregar el nuevo_fcb al diccionario con el nombre del archivo como clave
+            dictionary_put(fcb_dict, fcb->d_name, nuevo_fcb);           
+        }
+    }
+
+    closedir(directorio_fcb);
+}
+
+t_FCB* buscar_cargar_fcb(char* nombre) {
+
+    t_FCB* fcb = malloc(sizeof (t_FCB));
+    if (fcb == NULL)  {
+        log_info(logger_file_system, "NO SE PUDO ASIGNAR MEMORIA AL FCB");
+    };
+    char path_fcb [100] ;
+    strcpy(path_fcb, cfg_file_system->MOUNT_DIR); // Directorio donde se encuentran los fcbs
+    char file_path[100]; // Tamaño suficiente para almacenar la ruta completa del archivo
+    snprintf(file_path, sizeof(file_path), "%s/%s",path_fcb,nombre);
+    t_config* file_fcb;
+
+    //cargar el fcb del archivo
+    if((file_fcb = config_create(file_path)) == NULL){ //config_create: Devuelve un puntero hacia la estructura creada o NULL en caso de no encontrar el archivo en el path especificado
+        log_info(logger_file_system, "ARCHIVO NO ENCONTRADO : %s",file_path);
+    }else {
+        log_info(logger_file_system, "ARCHIVO ENCONTRADO : %s",file_path);
+    }
+
+    fcb = cargar_fcb(file_fcb);
+    return  fcb;
+
+}
+
+
+
+
+////////////////////////////////////////////// UTILIDAD/////////////////////////////////////////////////
+
+
+uint32_t encontrar_bit_libre(t_bitarray* bitarray_in) {
+
+    log_info(logger_file_system, "tamaño del bitarray %d %d",bitarray_get_max_bit(bitarray_in), bitarray_test_bit(&bitarray_in, 0));
+    uint32_t i;
+    for (i = 0; i < bitarray_get_max_bit(bitarray_in); i++) {
+        if (!bitarray_test_bit(bitarray_in, i)) {
+            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: libre", i); //LOG OBLIGATORIO
+            return i;
+        }else {
+            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: ocupado", i); //LOG OBLIGATORIO
+        }
+    }
+    return -1; // Retorna -1 si no se encuentra ningún bit en 0
+}
+
+void sincronizar_bitmap (){
+    memcpy(bitmap, bitarray->bitarray, bitmap_size_in_bytes);
+    int resultado_sync = msync(bitmap, bitmap_size_in_bytes, MS_SYNC);
+    int resultado_fync= fsync(fd_bitmap);
+    if (resultado_sync == -1 || resultado_fync == -1) {
+        perror("Error al sincronizar el bitmap");
+        // Manejar el error según sea necesario
+    } else {
+        log_info(logger_file_system, "SINCRONIZACION DE BITMAP EXITOSA");
+    }
+}
+
+
+bool hay_espacio_total_disponible(int espacio_necesario){
+    int espacio_disponible = 0;
+    for (int i = 0; i < bitarray_get_max_bit(bitarray); i++) {
+        if (!bitarray_test_bit(bitarray, i)) {
+            espacio_disponible++;
+        }
+    }
+    log_info(logger_file_system,"Cantidad de bits %d:",  bitarray_get_max_bit(bitarray));
+    log_info(logger_file_system,"Bloques/bits libres %d:",  espacio_disponible);
+    log_info(logger_file_system,"Espacio total disponible %d:",  espacio_disponible*cfg_file_system->BLOCK_SIZE);
+return espacio_disponible*cfg_file_system->BLOCK_SIZE >= espacio_necesario+cfg_file_system->BLOCK_SIZE; // agrego el tamaño del bloque de punteros
+}   
+
+
+
+void imprimir_estado_bitarray() {
+
+    log_info(logger_file_system, "ESTADO BITARRAY:");
+    uint32_t i;
+    for (i = 0; i < bitarray_get_max_bit(bitarray); i++) {
+        if (bitarray_test_bit(bitarray, i)) {
+            log_info(logger_file_system,"%d",1);         
+        }else {
+            log_info(logger_file_system,"%d",0); 
+        }
+    }
+}
+
+void free_t_FCB(t_FCB* fcb) {
+
+        free(fcb);
+ 
+}
