@@ -309,14 +309,18 @@ void memoria_atender_kernel(void* socket){
 			//close(socket_memoria);
             close(socket_filesystem);
 
-			if(respuesta==PEDIDO_MEMORY_DUMP_RTA){
+			if(respuesta==PEDIDO_MEMORY_DUMP_RTA_OK){
                 log_info(logger_memoria,"recibi OK rta memory dump de fs\n");
+				//Enviar a kernel OK
+				enviar_confirmacion_memory_dump_a_kernel(PEDIDO_MEMORY_DUMP_RTA_OK,fd_kernel);
             }else{
                log_info(logger_memoria,"hubo ERROR en rta memory dump de fs\n");
+			   //Enviar a kernel ERROR
+			   enviar_confirmacion_memory_dump_a_kernel(PEDIDO_MEMORY_DUMP_RTA_ERROR,fd_kernel);
             }
 
-			enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
-			log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
+			//enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
+			//log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;
 
 		case -1:
