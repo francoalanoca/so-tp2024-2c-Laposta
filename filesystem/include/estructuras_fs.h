@@ -49,32 +49,22 @@ typedef struct
 extern t_FCB *fcb;
 
 t_FCB* inicializar_fcb(char* nombre_archivo, uint32_t tamanio_archivo, uint32_t primer_bloque);
-t_FCB* cargar_fcb(t_config *file_fcb);
-
  
 
 char* uint32_to_string (uint32_t number);
 
-//diccionario para guardar los fcb tiempo de ejecución
-extern t_dictionary* fcb_dict;
 
 ///////////////////////////////////////////////FUNCIONALIDADES//////////////////////////////////////
-//crea un archivo a partir de su nombre: Crea un fcb, lo persiste y lo agrega al diccionario de fbc.
-uint32_t crear_archivo(char* nombre);
 
-void escribir_archivo(t_dumped* archivo);
-
-
-
+uint32_t* asignar_bloques(uint32_t tamanio);
+void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir);
+ void grabar_bloques(uint32_t* array_bloques);
 //Devuelve la posicion del primer bit libre que encuentra.
 uint32_t encontrar_bit_libre(t_bitarray* bitarray);
-//Busca el archivo fcb.txt en el directiorio de fcb a partir del nombre de archivo
-t_FCB* buscar_cargar_fcb(char* nombre);
 
 
 // devuelve si hay espacio disponible no importa si está contiguo
 bool hay_espacio_total_disponible(int espacio_necesario);
-
 
 //inicia la interfaz 
 void iniciar_fs (); 
@@ -84,8 +74,6 @@ void sincronizar_bitmap ();
 //crea el archivo de bloques fisico en la ruta especificada.
 int crear_archivo_bloques (char * path_archivo_bloques, int block_size, int block_count) ;
 void cerrar_bitmap();
-// carga en un diccionario todos los archivos fcb persistidos en una ruta de carpeta
-void cargar_directorio_fcbs(char* path_fcb );
 //guarda la estructura fcb en un archivo fisico terminado en txt
 void persistir_fcb(t_FCB *fcb); 
 //devuelve la posicion de un bit libre en un bit array

@@ -178,19 +178,6 @@ int crear_archivo_bloques (char * path_archivo_bloques, int block_size, int bloc
     return fcb;
 }
 
-t_FCB* cargar_fcb(t_config *file_fcb) {
-    t_FCB* fcb = malloc(sizeof(t_FCB));
-    if (!fcb) {
-        perror("Error al cargar el FCB");
-        exit(EXIT_FAILURE);
-    }
-    fcb->nombre_archivo = strdup(config_get_string_value(file_fcb, "nombre_archivo"));
-    //log_info(logger_entradasalida, "ENTRO EN CARGAR FCB");
-    fcb->tamanio_archivo = config_get_int_value(file_fcb, "tamanio_archivo");
-    fcb->primer_bloque = config_get_int_value(file_fcb, "primer_bloque");  
-    return fcb;   
-}
-
 
 void persistir_fcb(t_FCB *fcb) {
 
@@ -225,73 +212,61 @@ void persistir_fcb(t_FCB *fcb) {
 
 }
 
-void init_fcb_dict() {
-    fcb_dict = dictionary_create();
-}
 
-t_dictionary* fcb_dict;
-void agregar_fcb_to_dict(t_FCB* fcb) {
-    dictionary_put(fcb_dict, fcb->nombre_archivo, fcb);
-}
+/////////////////////////////////////////// FUNCIONALIDADES /////////////////////////////////////////////////////////////////
 
-bool termina_en_txt(const char *nombre) {
-    const char *ext = strrchr(nombre, '.');
-    return ext != NULL && strcmp(ext, ".txt") == 0;
-}
+uint32_t* asignar_bloques(uint32_t tamanio) {
 
-void cargar_directorio_fcbs(char* path_fcb ){
-    DIR *directorio_fcb = opendir(path_fcb);
-    struct dirent *fcb;
+    log_info(logger_file_system, "entramos en agrandar archivo");
 
-    if(directorio_fcb == NULL){
-        log_info(logger_file_system, "No se pudo abrir el directorio de fcb ");
-        exit(1);
+    uint32_t cant_bloques_nuevos = (tamanio / cfg_file_system->BLOCK_SIZE)+1;
+    uint32_t *array_punteros;
+    array_punteros = malloc(cant_bloques_nuevos * sizeof(uint32_t));
+    int i;
+    log_info(logger_file_system, "CANTIDAD DE BLOQUES NECESARIOS : %d",cant_bloques_nuevos);    
+
+    for (i = 0; i < cant_bloques_nuevos; i++) {
+        uint32_t posicion_bit_libre =  encontrar_bit_libre(bitarray);
+        //asignar bloques en bitmap
+        bitarray_set_bit(bitarray, posicion_bit_libre);
+
+        array_punteros[i] = posicion_bit_libre;
     }
+    sincronizar_bitmap ();
+    return array_punteros;
+ }
 
-    fcb_dict = dictionary_create();
+ void grabar_bloques(uint32_t* array_bloques) {
 
-    log_info(logger_file_system, "Cargando directorio fcb en diccionario");
-    while ((fcb = readdir(directorio_fcb)) != NULL) {
-        // Verificar que el directorio no sea "." ni ".." (directorios especiales)
-        if (strcmp(fcb->d_name, ".") != 0 && strcmp(fcb->d_name, "..") != 0  && termina_en_txt(fcb->d_name)) {
-            // aca se puede crear un nuevo t_fcb para cada archivo y asociarlo al nombre del archivo en el diccionario
-            t_FCB* nuevo_fcb = buscar_cargar_fcb(fcb->d_name);
-           // Agregar el nuevo_fcb al diccionario con el nombre del archivo como clave
-            dictionary_put(fcb_dict, fcb->d_name, nuevo_fcb);           
-        }
-    }
+    //grabar bloque de punteros la posición de los punteros
+        // el primer bloque del array es el bloque de punteros
+    //grabar bloques de datos con los datos
+        // desde el segundo bloque
+ }
 
-    closedir(directorio_fcb);
-}
+void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir){
 
-t_FCB* buscar_cargar_fcb(char* nombre) {
+    int retardo = cfg_file_system->RETARDO_ACCESO_BLOQUE / 1000;
+    sleep(retardo);
 
-    t_FCB* fcb = malloc(sizeof (t_FCB));
-    if (fcb == NULL)  {
-        log_info(logger_file_system, "NO SE PUDO ASIGNAR MEMORIA AL FCB");
+    if (fseek(archivo_bloques,(numero_bloque * cfg_file_system->BLOCK_SIZE ) , SEEK_SET)!= 0){
+        log_info(logger_file_system,"Error al mover el puntero de archivo al bloque: %d ",numero_bloque);
+        return -1;
+    }  else{
+        log_info(logger_file_system, "PUNTERO POSICIONADO EN BLOQUE: %d ",numero_bloque );
     };
-    char path_fcb [100] ;
-    strcpy(path_fcb, cfg_file_system->MOUNT_DIR); // Directorio donde se encuentran los fcbs
-    char file_path[100]; // Tamaño suficiente para almacenar la ruta completa del archivo
-    snprintf(file_path, sizeof(file_path), "%s/%s",path_fcb,nombre);
-    t_config* file_fcb;
 
-    //cargar el fcb del archivo
-    if((file_fcb = config_create(file_path)) == NULL){ //config_create: Devuelve un puntero hacia la estructura creada o NULL en caso de no encontrar el archivo en el path especificado
-        log_info(logger_file_system, "ARCHIVO NO ENCONTRADO : %s",file_path);
-    }else {
-        log_info(logger_file_system, "ARCHIVO ENCONTRADO : %s",file_path);
-    }
-
-    fcb = cargar_fcb(file_fcb);
-    return  fcb;
+    if (fwrite(datos_escribir, tamanio_escritura, 1, archivo_bloques)<= 0){
+        log_info(logger_file_system,"Error al escribir el bloque: %d ",numero_bloque);
+        return -1;
+    }  else{
+        log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %s",numero_bloque, datos_escribir);
+    };
 
 }
 
 
-
-
-////////////////////////////////////////////// UTILIDAD/////////////////////////////////////////////////
+////////////////////////////////////////////// UTILIDAD///////////////////////////////////////////////////////////////////////
 
 
 uint32_t encontrar_bit_libre(t_bitarray* bitarray_in) {
@@ -300,10 +275,10 @@ uint32_t encontrar_bit_libre(t_bitarray* bitarray_in) {
     uint32_t i;
     for (i = 0; i < bitarray_get_max_bit(bitarray_in); i++) {
         if (!bitarray_test_bit(bitarray_in, i)) {
-            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: libre", i); //LOG OBLIGATORIO
+            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: libre", i); 
             return i;
         }else {
-            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: ocupado", i); //LOG OBLIGATORIO
+            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: ocupado", i); 
         }
     }
     return -1; // Retorna -1 si no se encuentra ningún bit en 0
@@ -314,8 +289,7 @@ void sincronizar_bitmap (){
     int resultado_sync = msync(bitmap, bitmap_size_in_bytes, MS_SYNC);
     int resultado_fync= fsync(fd_bitmap);
     if (resultado_sync == -1 || resultado_fync == -1) {
-        perror("Error al sincronizar el bitmap");
-        // Manejar el error según sea necesario
+        perror("Error al sincronizar el bitmap");        
     } else {
         log_info(logger_file_system, "SINCRONIZACION DE BITMAP EXITOSA");
     }
@@ -355,3 +329,4 @@ void free_t_FCB(t_FCB* fcb) {
         free(fcb);
  
 }
+
