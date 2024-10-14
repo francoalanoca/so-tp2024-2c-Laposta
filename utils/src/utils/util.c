@@ -287,10 +287,10 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 
 void enviar_paquete(t_paquete* paquete, int socket_cliente)
 {
-    printf("ENTRO A enviar_paquete\n"); 
+
 	int bytes = paquete->buffer->size + 2*sizeof(int);
 	void* a_enviar = serializar_paquete(paquete, bytes);
-	printf("voy a enviar\n"); 
+
 	send(socket_cliente, a_enviar, bytes, 0);
     printf("ya envie\n"); 
 	free(a_enviar);
@@ -298,11 +298,11 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente)
 
 void eliminar_paquete(t_paquete* paquete)
 {
-    printf("ENTRO eliminar_paquete\n"); 
+
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
-    printf("FIN eliminar_paquete\n"); 
+
 }
 
 void liberar_conexion(int socket_cliente)
