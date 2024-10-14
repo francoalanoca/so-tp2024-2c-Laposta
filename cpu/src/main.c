@@ -140,10 +140,11 @@ void ejecutar_ciclo() {
        
         if (proceso_actual != NULL) {
             pthread_mutex_unlock(&mutex_proceso_actual);
-            ciclo_de_instrucciones( &socket_memoria, proceso_actual, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
+            t_proceso* proceso_aux_para_evitar_problemas_con_syscalls_al_porner_el_actual_en_null=proceso_actual;
+            ciclo_de_instrucciones( &socket_memoria, proceso_aux_para_evitar_problemas_con_syscalls_al_porner_el_actual_en_null, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
         } else {
             pthread_mutex_unlock(&mutex_proceso_actual);
-           
+                      
         }
     }
 

@@ -89,16 +89,14 @@ void procesar_conexion_dispatch(void *v_args){
             {
                 printf("Ejecutando procesoo\n");
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
-                int pid=*((int*)list_get(lista_paquete_proceso_ejecutar,0));
-                int tid=*((int*)list_get(lista_paquete_proceso_ejecutar,1));
-
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
-                //TODO: harcodeo tid y pid
-                proceso->pid=0;
-                proceso->tid=0;
                 pthread_mutex_lock(&mutex_proceso_actual);
                 proceso_actual = proceso; //Agregar a lista de procesos?               
+                //TODO: AGrego aca solicitud contexto para cualquier instruccion
+                solicitar_contexto_a_memoria(proceso,socket_memoria);
+                sem_wait(&sem_valor_base_particion);
                 pthread_mutex_unlock(&mutex_proceso_actual);
+
                 //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
                 //free(proceso);
                 printf("pase free proceso\n"); 
@@ -138,7 +136,15 @@ void procesar_conexion_interrupt(void *v_args){
 
 
         switch (cop){       
- 
+            case FIN_DE_QUANTUM:
+            {
+                log_info(logger_cpu, "## Llega interrupción al puerto Interrupt"); // LOG OBLIGATORIO
+                pthread_mutex_lock(&mutex_proceso_actual);
+                proceso_actual = NULL;               
+                pthread_mutex_unlock(&mutex_proceso_actual);
+                
+                break;
+            }
 
             default:
             {
@@ -155,7 +161,7 @@ void procesar_conexion_interrupt(void *v_args){
  
 }
 
-void atender_memoria (int *socket_mr) {
+void atender_memoria(int *socket_mr) {
    int socket_memoria_server = *socket_mr;
   // free(socket);
     op_code cop;
@@ -204,11 +210,12 @@ void atender_memoria (int *socket_mr) {
                 }
                 break;
                 }
-            case BASE_PARTICION_RTA: 
-                t_list* lista_paquete_base = recibir_paquete(socket_memoria_server);
-                base_particion = list_get(lista_paquete_base,0);
+            case SOLICITUD_CONTEXTO_RTA: 
+                t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
+                proceso_actual=malloc(sizeof(t_proceso));//TODO: FIXME: ahhhhhhhhhhhhhhhhh
+                deserializar_contexto_(proceso_actual, lista_paquete_contexto); // ojo con semarofo de proceso actual
                 sem_post(&sem_valor_base_particion);
-                list_destroy(lista_paquete_base);
+                list_destroy(lista_paquete_contexto);
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
