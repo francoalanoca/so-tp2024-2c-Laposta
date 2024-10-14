@@ -776,6 +776,11 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
     agregar_a_paquete(paquete_unlock_kernel,  recurso,  tamanio_recurso);      
     enviar_paquete(paquete_unlock_kernel, conexion_kernel); 
     eliminar_paquete(paquete_unlock_kernel);
+    //proceso_actual = NULL;
+}
+
+
+void enviar_process_exit_a_kernel(int conexion_kernel){
     t_paquete* paquete_process_exit_kernel;   
     paquete_process_exit_kernel = crear_paquete(PROCESO_SALIR); 
     
@@ -844,9 +849,13 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
+    
+    tipo_inst=inst->id;
+    //tipo_inst = decode(inst, conexion_mem);
     log_info(logger_cpu, "Voy a entrar a execute");
     
     //TODO: FIXME: CUANDO SE EJECUTA UNA SYSCALL SE PONE PROCESO_ACTUAL EN NULL-->luego de EXECUTE NO SE PUEDE HACER PROCESO_ACTUAL->PC+=1;
+    execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT ) 
     {
         proceso->registros_cpu.PC += 1;
