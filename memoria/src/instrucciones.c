@@ -60,6 +60,7 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hil
 	}
     //Agregamos el proceso a la lista de procesos
 	list_add(miniPCB->hilos, hilo_proceso);
+    //MUTEX MINIPCB?
     list_add(lista_miniPCBs, miniPCB);
 
     fclose(archivo);

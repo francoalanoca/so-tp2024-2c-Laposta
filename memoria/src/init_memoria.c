@@ -62,7 +62,7 @@ int init(char *path_config){
 
 
     //inicializo el archivo de configuracion
-    file_cfg_memoria = iniciar_config(path_config,logger_memoria);
+   // file_cfg_memoria = iniciar_config(path_config,logger_memoria);
 
     //Retorna lo que devuelve la funcion check luego de validar la propierties
     return checkProperties(path_config);
@@ -324,7 +324,7 @@ void cerrar_programa(){
 
     //cortar_conexiones();
     //cerrar_servers();  
-    config_destroy(file_cfg_memoria);
+   // config_destroy(file_cfg_memoria);
     log_info(logger_memoria,"TERMINADA_LA_CONFIG");
     log_info(logger_memoria, "TERMINANDO_EL_LOG");
     log_destroy(logger_memoria);
