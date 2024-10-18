@@ -61,9 +61,10 @@ void memoria_atender_cpu(){
 		case READ_MEMORIA:
 			log_info(logger_memoria, "Recibí READ_MEMORIA \n");
 			valores = recibir_paquete(socket_cpu);
-			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
-            char* respuesta_leer = malloc(4);
-			memset(respuesta_leer, 0, sizeof(respuesta_leer));
+			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores); 
+			uint32_t tamanio_rta = 4;    
+            char* respuesta_leer = malloc(tamanio_rta);
+			memset(respuesta_leer, 0, tamanio_rta);
 			//INICIO MUTEX
 			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -124,7 +125,7 @@ void memoria_atender_cpu(){
 
 		case -1:
 			log_error(logger_memoria, "CPU se desconecto. Terminando servidor.\n");
-			return EXIT_FAILURE;
+			//return EXIT_FAILURE;
 			break;
 
 		default:

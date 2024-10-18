@@ -157,6 +157,10 @@ extern t_list* pids_por_bloque;
 extern uint32_t tamanio_total_memoria;  
 extern char * algoritmo_alocacion;   
 extern pthread_mutex_t mutex_memoria;
+extern pthread_mutex_t mutex_lista_particiones_dinamicas;
+extern pthread_mutex_t mutex_lista_miniPCBs;
+extern pthread_mutex_t mutex_bitmap_particiones;
+extern pthread_mutex_t mutex_pids_por_bloque;
 
 
 

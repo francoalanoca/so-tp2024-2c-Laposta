@@ -24,6 +24,11 @@ t_list* pids_por_bloque;
 uint32_t tamanio_total_memoria;
 char * algoritmo_alocacion;
 pthread_mutex_t mutex_memoria;
+pthread_mutex_t mutex_lista_particiones_dinamicas;
+pthread_mutex_t mutex_lista_miniPCBs;
+pthread_mutex_t mutex_bitmap_particiones;
+pthread_mutex_t mutex_pids_por_bloque;
+
 
 
 
@@ -542,11 +547,11 @@ void mostrar_lista_miniPCB(t_list* lista_miniPCB) {
 
 void print_bitarray(t_bitarray *bitarray) {
     // Obtengo la cantidad máxima de bits que puede tener el bitarray
-    size_t max_bits = bitarray_get_max_bit(bitarray);
+    uint32_t max_bits = bitarray_get_max_bit(bitarray);
     printf("Contenido del bitarray:\n");
 
     // Recorro cada bit en el bitarray
-    for (size_t i = 0; i < max_bits; i++) {
+    for (uint32_t i = 0; i < max_bits; i++) {
         // Verifico el valor del bit en la posición 'i'
         int bit_value = bitarray_test_bit(bitarray, i) ? 1 : 0;
         printf("%d", bit_value);
@@ -642,9 +647,9 @@ bool actualizar_contexto(t_m_contexto* contexto) {
     }
     printf("contexto no esnull\n");
     // Iteramos sobre la lista de miniPCBs
-    size_t cantidad_miniPCBs = list_size(lista_miniPCBs);
+    uint32_t cantidad_miniPCBs = list_size(lista_miniPCBs);
      printf("Vamos a iterar %d veces\n",cantidad_miniPCBs);
-    for (size_t i = 0; i < cantidad_miniPCBs; i++) {
+    for (uint32_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
         printf("Obtengo miniPCB con pid:%d\n",miniPCB->pid);
         printf("El pid del contexto ingresado es:%d\n",contexto->pid);
@@ -652,9 +657,9 @@ bool actualizar_contexto(t_m_contexto* contexto) {
         // Verificamos si el pid coincide
         if (miniPCB->pid == contexto->pid) {
             // Ahora iteramos sobre la lista de hilos dentro de este miniPCB
-            size_t cantidad_hilos = list_size(miniPCB->hilos);
+            uint32_t cantidad_hilos = list_size(miniPCB->hilos);
             printf("La cantidad de hilos del miniPCB es:%d\n",cantidad_hilos);
-            for (size_t j = 0; j < cantidad_hilos; j++) {
+            for (uint32_t j = 0; j < cantidad_hilos; j++) {
                 t_hilo* hilo = list_get(miniPCB->hilos, j);
 
                 printf("Tid del hilo:%d\n",hilo->tid);

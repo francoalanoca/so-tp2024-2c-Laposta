@@ -107,8 +107,9 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
     nuevo_proceso->limite = tamanio_proceso;
 
     //list_add(nuevo_proceso->hilos,nuevo_hilo);
-    //MUTEX LISTA MINIPCB
+    pthread_mutex_lock(&mutex_lista_miniPCBs);
     list_add(lista_miniPCBs,nuevo_proceso);
+    pthread_mutex_unlock(&mutex_lista_miniPCBs);
 }
 
 
@@ -147,14 +148,17 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 if (tam_proceso < tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
-                    //MUTEX BITMAP_PARTICIONES?
+
+                    pthread_mutex_lock(&mutex_pids_por_bloque);
                     bitarray_set_bit(bitmap_particiones, i);
+                    pthread_mutex_unlock(&mutex_pids_por_bloque);
                     t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
                     pid_por_bloque->pid = pid;
                     pid_por_bloque->bloque = i;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
-                    //MUTEX PIDS_POR_BLOQUE?
+                    pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
+                    pthread_mutex_unlock(&mutex_pids_por_bloque);
                     inicializar_proceso(pid, tam_proceso); //VER UBICACION
                     return INICIAR_PROCESO_RTA_OK;
                 }
@@ -197,14 +201,16 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
             }
             else {
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
-                //MUTEX BITMAP_PARTICIONES?
+                pthread_mutex_lock(&mutex_bitmap_particiones);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
+                pthread_mutex_unlock(&mutex_bitmap_particiones);
                  t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
                     pid_por_bloque->pid = pid;
                     pid_por_bloque->bloque = ultimo_bloque_best_fit;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
-                    //MUTEX PIDS_POR_BLOQUE?
+                    pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
+                    pthread_mutex_unlock(&mutex_pids_por_bloque);
                     printf("Se agrego a lista. Estado actual:\n");
                     print_lista_pid_por_bloque(pids_por_bloque);
                     inicializar_proceso(pid, tam_proceso); //VER UBICACION
@@ -246,14 +252,16 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
             }
             else {
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
-                //MUTEX BITMAP_PARTICIONES?
+                pthread_mutex_lock(&mutex_bitmap_particiones);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
+                pthread_mutex_unlock(&mutex_bitmap_particiones);
                 t_pid_por_bloque* pid_por_bloque = malloc(sizeof(t_pid_por_bloque));
                     pid_por_bloque->pid = pid;
                     pid_por_bloque->bloque = ultimo_bloque_worst_fit;
                     //PENDIENTE:Verificar que el pid no este ya en memoria
-                    //MUTEX PIDS_POR_BLOQUE?
+                    pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
+                    pthread_mutex_unlock(&mutex_pids_por_bloque);
                     inicializar_proceso(pid, tam_proceso); //VER UBICACION
                 
                 return INICIAR_PROCESO_RTA_OK;
@@ -275,10 +283,12 @@ void finalizar_proceso_fijas(uint32_t pid){
 
     t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
     printf("bloque_x_pid: %d\n",bloque_x_pid->bloque);
-    //MUTEX BITMAP_PARTICIONES?
+    pthread_mutex_lock(&mutex_bitmap_particiones);
     bitarray_clean_bit(bitmap_particiones,bloque_x_pid->bloque);
-    //MUTEX PIDS_POR_BLOQUE
-   list_remove_and_destroy_element(pids_por_bloque,indice_bloque_a_liberar,free);
+    pthread_mutex_unlock(&mutex_bitmap_particiones);
+    pthread_mutex_lock(&mutex_pids_por_bloque);
+    list_remove_and_destroy_element(pids_por_bloque,indice_bloque_a_liberar,free);
+    pthread_mutex_unlock(&mutex_pids_por_bloque);
 
    eliminar_proceso_de_lista(pid);
     

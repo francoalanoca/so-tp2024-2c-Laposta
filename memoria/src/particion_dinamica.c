@@ -167,8 +167,10 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
         proceso->base = particion->inicio;
         proceso->limite = tamanio_proceso + particion->inicio;
         proceso->hilos = list_create();
-        //MUTEX MINIPCB?
+
+        pthread_mutex_lock(&mutex_lista_miniPCBs);
         list_add(lista_miniPCBs, proceso);
+        pthread_mutex_unlock(&mutex_lista_miniPCBs);
 
         //list_add(lista_particiones_dinamicas, particion); //VER
         log_info(logger_memoria, "Asiganada una particion exacta al PID - %d \n", particion->pid);
@@ -198,11 +200,13 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     particion->tamanio = tamanio_proceso;
     particion->ocupado = true;
     //particion->siguiente = nueva_particion;
-    //MUTEX MINIPCB?
+    pthread_mutex_lock(&mutex_lista_miniPCBs);
     list_add(lista_miniPCBs, proceso);
+    pthread_mutex_unlock(&mutex_lista_miniPCBs);
     //list_add(lista_particiones_dinamicas, particion); //VER
-    //MUTEX LISTA_PARTICIONES_DINAMICAS?
+    pthread_mutex_lock(&mutex_lista_particiones_dinamicas);
     list_add(lista_particiones_dinamicas, nueva_particion);
+    pthread_mutex_unlock(&mutex_lista_particiones_dinamicas);
     log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
     }
 
@@ -239,10 +243,11 @@ char* escribir_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, char* va
         log_info(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
     }
 
-    //MUTEX MEM_USUARIO?
     //Copiar los 4 bytes del valor en la memoria.
+    
+    pthread_mutex_lock(&mutex_memoria);
     memcpy(memoria_usuario + direccion_fisica, valor, tamanio_a_escribir);
-    //FIN MUTEX MEM_USUARIO?
+    pthread_mutex_unlock(&mutex_memoria);
     escrito = "OK";
 
     return escrito;
