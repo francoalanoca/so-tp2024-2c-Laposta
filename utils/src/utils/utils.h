@@ -82,11 +82,11 @@ typedef  enum
     FINALIZAR_HILO_RTA_OK,
     FINALIZAR_HILO_RTA_ERROR_NO_EXISTE,
     PEDIDO_MEMORY_DUMP,
-    PEDIDO_MEMORY_DUMP_RTA,
-
+    PEDIDO_MEMORY_DUMP_RTA_OK,
+    PEDIDO_MEMORY_DUMP_RTA_ERROR,
 //---------------FILESYSTEM-MEMORIA-------------------
     CREACION_DUMP,
-    CREACION_DUMP_RTA
+    
 }op_code; 
 
 typedef struct {
