@@ -132,6 +132,14 @@ typedef struct{
 
 } t_dump;
 
+//struct para deserializar/serializar al leer o escribir
+typedef struct{
+    uint32_t tamanio_nombre_archivo;
+    char* nombre_archivo;
+    uint32_t tamanio_contenido;
+    char* contenido;
+    uint32_t fd_kernel;
+} t_peticion_dump_fs;
 
 
 //----------------------------------Variables Externs-------------------------

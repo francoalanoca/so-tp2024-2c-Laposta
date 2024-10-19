@@ -23,6 +23,7 @@
 //----------------------------------Prototipos---------------------------------
 void memoria_atender_cpu();
 void memoria_atender_kernel(void* arg);
+void atender_dump_memory_fs(t_peticion_dump_fs* peticion_fs);
 
 
 
