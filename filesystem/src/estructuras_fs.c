@@ -215,13 +215,13 @@ void persistir_fcb(t_FCB *fcb) {
 
 /////////////////////////////////////////// FUNCIONALIDADES /////////////////////////////////////////////////////////////////
 
-uint32_t* asignar_bloques(uint32_t tamanio) {
+t_list* asignar_bloques(uint32_t tamanio) {
 
     log_info(logger_file_system, "entramos en agrandar archivo");
 
     uint32_t cant_bloques_nuevos = (tamanio / cfg_file_system->BLOCK_SIZE)+1;
-    uint32_t *array_punteros;
-    array_punteros = malloc(cant_bloques_nuevos * sizeof(uint32_t));
+    t_list* lista_punteros;
+    lista_punteros = malloc(sizeof(t_list));
     int i;
     log_info(logger_file_system, "CANTIDAD DE BLOQUES NECESARIOS : %d",cant_bloques_nuevos);    
 
@@ -229,20 +229,63 @@ uint32_t* asignar_bloques(uint32_t tamanio) {
         uint32_t posicion_bit_libre =  encontrar_bit_libre(bitarray);
         //asignar bloques en bitmap
         bitarray_set_bit(bitarray, posicion_bit_libre);
-
-        array_punteros[i] = posicion_bit_libre;
+        //colecto las posicones para luego escribir sobre ellas
+        list_add(lista_punteros,posicion_bit_libre);
+        
     }
     sincronizar_bitmap ();
-    return array_punteros;
+    return lista_punteros;
  }
 
- void grabar_bloques(uint32_t* array_bloques) {
 
+ void grabar_bloques(t_list* lista_bloques, char *datos_escribir) {
+   int  block_size = cfg_file_system->BLOCK_SIZE;
+   int datos_length = strlen(datos_escribir);
     //grabar bloque de punteros la posición de los punteros
-        // el primer bloque del array es el bloque de punteros
+        // el primer bloque de la lista es el bloque de punteros
+    escribir_punteros (lista_bloques);    
+       
     //grabar bloques de datos con los datos
         // desde el segundo bloque
+    for (int i = 1; i < list_size(lista_bloques); i++) {
+        int offset = (i - 1) * block_size; // Calcular el offset para el bloque actual
+        int tamanio_fragmento;
+
+        // calculo tamanio de fragmentos para no tirar segfault o escribir basura
+        if (datos_length - offset < block_size) {
+            tamanio_fragmento = datos_length - offset;
+        } else {
+            tamanio_fragmento = block_size;
+        }
+
+        // Escribir el bloque con el fragmento correspondiente
+        escribir_bloque(i, tamanio_fragmento, datos_escribir + offset);
+    }
  }
+
+void escribir_punteros (uint32_t* lista_bloques ){
+
+    int retardo = cfg_file_system->RETARDO_ACCESO_BLOQUE / 1000;
+    sleep(retardo);
+    uint32_t posicion_bloque_punteros = list_get(lista_bloques,0);
+
+    // en el archivo se ubica en el byte 0 del bloque de punteros
+    if (fseek(archivo_bloques,(posicion_bloque_punteros * cfg_file_system->BLOCK_SIZE ) , SEEK_SET)!= 0){
+        log_info(logger_file_system,"Error al mover el puntero de archivo al bloque: %d ",posicion_bloque_punteros);
+        return -1;
+    }  else{
+        log_info(logger_file_system, "PUNTERO POSICIONADO EN BLOQUE: %d ",posicion_bloque_punteros );
+    };
+    // escribe cada  puntero de tamaño 4 bytes dentro del bloque de punteros
+    for (int i = 1; i < list_size(lista_bloques); i++) {
+        if (fwrite(list_get(lista_bloques,i), 4, 1, archivo_bloques)<= 0){
+            log_info(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
+            return -1;
+        }  else{
+            log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
+        };
+    };
+}
 
 void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir){
 
