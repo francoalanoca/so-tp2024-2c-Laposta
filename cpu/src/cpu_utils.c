@@ -121,14 +121,15 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case THREAD_JOIN:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_JOIN - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
-                enviar_thread_cancel_a_kernel(inst->param1, socket_dispatch);
+                 enviar_thread_join_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
             case THREAD_CANCEL:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CANCEL - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
-                enviar_thread_join_a_kernel(inst->param1, socket_dispatch);
+               
+                enviar_thread_cancel_a_kernel(inst->param1, socket_dispatch);
                 enviar_contexto_a_memoria(proceso,conexion);
                 break;
             }
@@ -707,7 +708,7 @@ void enviar_thread_join_a_kernel(char* tid ,int socket_dispatch){
     printf("entro a enviar_thread_join_a_kernel\n");
     t_paquete* paquete_thread_join;
     char *endptr;
-    paquete_thread_join = crear_paquete(HILO_CREAR); 
+    paquete_thread_join = crear_paquete(HILO_JUNTAR); 
     uint32_t tid_numero = (uint32_t)strtoul(tid, &endptr, 10);
        
     agregar_a_paquete(paquete_thread_join, &tid_numero,  sizeof(uint32_t));
