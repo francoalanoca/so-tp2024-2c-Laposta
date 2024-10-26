@@ -192,3 +192,34 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
     }else    //continua ejecutando el que hizo la syscall
         enviar_thread_a_cpu(tcb_en_exec,config_kernel->conexion_cpu_dispatch);
 }
+
+void memory_dump()
+{
+    pthread_t hilo_dump; 
+    pthread_create(&hilo_dump,NULL,atender_dump_memory,NULL);
+    pthread_detach(hilo_dump);
+}
+
+void* atender_dump_memory(){
+    //Tomo el pcb actual y lo paso a blocked
+    sem_wait(&(semaforos->mutex_lista_exec));
+    t_tcb *thread_dump = list_get(lista_exec, 0);
+    sem_post(&(semaforos->mutex_lista_exec));
+    pasar_execute_a_blocked();
+
+    int tid_actual = thread_dump->tid;
+    int pid_actual = thread_dump->pid;
+
+    int socket_conexion_memoria = conectar_a_memoria();
+    int respuesta = recibir_operacion(socket_conexion_memoria);
+    if (respuesta == PEDIDO_MEMORY_DUMP_RTA_ERROR){
+        //Paso a exit el hilo en blocked en caso de error del dump
+        t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
+        agregar_a_lista(thread_en_cuestion, lista_exit, &(semaforos->mutex_lista_exit));
+    }
+    else if (respuesta == PEDIDO_MEMORY_DUMP_RTA_OK){
+        //Paso a ready el hilo en ready en caso de exito del dump para continuar con la ejecucion del mismo
+        t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
+        agregar_a_lista(thread_en_cuestion, lista_ready, &(semaforos->mutex_lista_ready));
+    }
+}

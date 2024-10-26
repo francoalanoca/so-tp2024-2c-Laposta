@@ -242,6 +242,10 @@ void procesar_conexion_dispatch()
             thread_cancel(tid,thread_asociado->pid);
             enviar_thread_a_cpu(thread_asociado,fd_conexion_cpu);
             break;
+        case PEDIDO_MEMORY_DUMP:
+            log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
+            memory_dump();
+            break;
 
         default:
             log_info(logger_kernel," OPERACION INVALIDA RECIBIDA DE CPU ");
