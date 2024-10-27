@@ -14,25 +14,8 @@ instr_t* fetch(int conexion, t_proceso* proceso){
 
 tipo_instruccion decode(instr_t* instr, int conexion_memo){
     log_info(logger_cpu, "EL codigo de instrucción es %d ",instr->id);
-    
-     switch(instr->id){
-            case READ_MEM:
-            {                       
-                solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
-                sem_wait(&sem_valor_base_particion);
-                return instr->id;
-                break;
-            }
-            case WRITE_MEM:
-            {              
-                solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
-                sem_wait(&sem_valor_base_particion);
-                return instr->id;
-                break;
-            } 
-            default:
-                return instr->id;
-        }    
+     
+    return instr->id  ; 
   
 }
 
@@ -91,7 +74,7 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case DUMP_MEMORY:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: DUMP_MEMORY", proceso->tid);                
-                enviar_contexto_a_memoria(proceso,conexion);
+             
                 enviar_dump_memory_a_kernel(socket_dispatch);
                 break;
             }
@@ -99,7 +82,7 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: IO - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_io_a_kernel(inst->param1,socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+            
                 break;
             }
             case PROCESS_CREATE:
@@ -107,7 +90,7 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
                 log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_CREATE - %s %s %s", proceso->tid,inst->param1, inst->param2, inst->param3); //LOG OBLIGATORIO
                
                 enviar_process_create_a_kernel(inst->param1, inst->param2, inst->param3, socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+            
                 
                 break;
             }
@@ -115,14 +98,14 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CREATE - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
                 enviar_thread_create_a_kernel(inst->param1, inst->param2, socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+               
                 break;
             }
             case THREAD_JOIN:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_JOIN - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                  enviar_thread_join_a_kernel(inst->param1, socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+            
                 break;
             }
             case THREAD_CANCEL:
@@ -130,42 +113,41 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CANCEL - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                
                 enviar_thread_cancel_a_kernel(inst->param1, socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+              
                 break;
             }
             case MUTEX_CREATE:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_CREATE - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_create_a_kernel(inst->param1, socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+               
                 break;
             }
             case MUTEX_LOCK:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_LOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_lock_a_kernel(inst->param1, socket_dispatch); 
-                enviar_contexto_a_memoria(proceso,conexion);
+               
                 break;
             }
             case MUTEX_UNLOCK:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_UNLOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
                 enviar_mutex_unlock_a_kernel(inst->param1, socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+              
                 break;
             }
             case THREAD_EXIT:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_EXIT", proceso->tid);
                 enviar_thread_exit_a_kernel(socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+              
                 break;
             }                
             case PROCESS_EXIT:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_EXIT", proceso->tid);
-                enviar_process_exit_a_kernel(socket_dispatch);
-                enviar_contexto_a_memoria(proceso,conexion);
+                enviar_process_exit_a_kernel(socket_dispatch);               
                 break;
             }            
 
@@ -239,7 +221,7 @@ void set(char* registro, char* valor_char, t_proceso* proceso){
           proceso->registros_cpu.EX = valor;
             break;
         }
-        case FX:
+        case FX: 
         {
           proceso->registros_cpu.FX = valor;
             break;
@@ -834,7 +816,8 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
-    tipo_inst = decode(inst, conexion_mem);
+    
+    tipo_inst= decode(inst, conexion_mem);
     log_info(logger_cpu, "Voy a entrar a execute");
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT ) 

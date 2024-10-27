@@ -194,6 +194,9 @@ void hilo_sleep_io();
 int buscar_indice_de_mayor_prioridad();
 void iniciar_quantum(t_tcb* tcb);
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado);
+void mostrar_tcbs(t_list* lista_tcb, t_log* logger);
+void memory_dump();
+void* atender_dump_memory();
 
 
 #endif /* KERNEL_H_ */

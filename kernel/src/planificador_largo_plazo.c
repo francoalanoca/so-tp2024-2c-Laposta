@@ -97,7 +97,9 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
 
 
 void agregar_a_cola(t_pcb *pcb,t_list* lista,sem_t* sem){
+    sem_wait(sem);
     list_add(lista,pcb);
+    sem_post(sem);
 }
 void pasar_new_a_ready() {
     log_info(logger_kernel, "Pasando thread de NEW a READY");

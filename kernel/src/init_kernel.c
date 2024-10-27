@@ -188,6 +188,10 @@ void procesar_conexion_dispatch(void *socket)
             thread_cancel(tid,thread_asociado->pid);
 
             break;
+        case PEDIDO_MEMORY_DUMP:
+            log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
+            memory_dump();
+            break;
 
         default:
 

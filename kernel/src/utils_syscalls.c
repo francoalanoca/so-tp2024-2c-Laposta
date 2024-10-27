@@ -252,3 +252,58 @@ void hilo_sleep_io(){
         sem_post(&(semaforos->sem_io_sleep_en_uso));
     }
 }
+
+
+//TODO: FIXME: controlar semaforos
+//recorre las lista de bloqueados y desbloquea tcb por mutex o join 
+void desbloquear_hilos_por_fin_de_hilo(t_tcb* tcb_finalizado){
+    log_warning(logger_kernel,"## Desbloqueo de hilos por fin de hilo. Tid finalizando: %d",tcb_finalizado->tid);
+    sem_wait(&(semaforos->mutex_lista_blocked));
+    mostrar_tcbs(lista_blocked,logger_kernel);
+    for (int i = 0 ; i < list_size(lista_blocked); i++) {
+        t_tcb* tcb_bloqueado = list_get(lista_blocked, i);
+        log_warning(logger_kernel,"entre en el for %d vez .tamanio lista block:%d",i,list_size(lista_blocked));
+        //desbloquea por join
+        if (tcb_bloqueado->thread_target != NULL &&
+            ((t_tcb*)(tcb_bloqueado->thread_target))->pid == tcb_finalizado->pid &&
+            ((t_tcb*)(tcb_bloqueado->thread_target))->tid == tcb_finalizado->tid  ) {
+            
+            list_remove(lista_blocked, i);
+            i--; // Ajustar el índice después de eliminar
+            log_warning(logger_kernel,"desbloqueando hilo pid:%d, tid:%d ",tcb_bloqueado->pid,tcb_bloqueado->tid);
+            tcb_bloqueado->thread_target=NULL;
+            agregar_a_lista(tcb_bloqueado,lista_ready,&(semaforos->mutex_lista_ready));
+
+            sem_post(&(semaforos->contador_threads_en_ready));
+            continue;
+        }
+        bool desbloqueado=false;
+        //recorre todos los mutex del que finaliza
+        for (int j= 0; j < list_size(tcb_finalizado->mutex_asignados)&& !desbloqueado; j++){
+            t_mutex* mute_aux=list_get(tcb_finalizado->mutex_asignados,j);
+           
+            //recorre los tcb bloq de cada mutex
+            for (int k = 0; k < list_size(mute_aux->lista_threads_bloquedos) ; k++)
+            {
+                t_tcb* tcb_aux=(t_tcb*)list_get(mute_aux->lista_threads_bloquedos,k);
+                //desbloquea por mutex
+                if(tcb_aux->tid==tcb_bloqueado->tid){
+                    list_remove(lista_blocked,i);
+                    i--; // Ajustar el índice después de eliminar
+            log_warning(logger_kernel,"desbloqueando hilo pid:%d, tid:%d ",tcb_bloqueado->pid,tcb_bloqueado->tid);
+
+                    list_remove(mute_aux->lista_threads_bloquedos,k);
+                    mute_aux->thread_asignado=NULL;
+                    mute_aux->estado=SIN_ASIGNAR;
+                    agregar_a_lista(tcb_aux,lista_ready,&(semaforos->mutex_lista_ready));
+                    sem_post(&(semaforos->contador_threads_en_ready));
+                    desbloqueado=true;
+                    break;
+                }
+            }  
+        }  
+
+    }
+    sem_post(&(semaforos->mutex_lista_blocked));
+   
+}
