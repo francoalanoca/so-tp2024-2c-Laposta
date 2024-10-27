@@ -215,6 +215,23 @@ void persistir_fcb(t_FCB *fcb) {
 
 /////////////////////////////////////////// FUNCIONALIDADES /////////////////////////////////////////////////////////////////
 
+ void dumpear(t_dumped* dumped, int socket_cliente){
+    
+    if (hay_espacio_total_disponible(dumped->tamanio_archivo))
+    {
+        t_list* lista_bloques = malloc(sizeof(t_list));
+        asignar_bloques(dumped->tamanio_archivo) ;
+        grabar_bloques( lista_bloques, dumped->contenido);
+        enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
+        list_destroy(lista_bloques);
+    }else {
+        enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_ERROR,socket_cliente);
+    }
+
+
+ }
+
+
 t_list* asignar_bloques(uint32_t tamanio) {
 
     log_info(logger_file_system, "entramos en agrandar archivo");
@@ -261,6 +278,7 @@ t_list* asignar_bloques(uint32_t tamanio) {
         // Escribir el bloque con el fragmento correspondiente
         escribir_bloque(i, tamanio_fragmento, datos_escribir + offset);
     }
+    fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
  }
 
 void escribir_punteros (uint32_t* lista_bloques ){
@@ -279,12 +297,13 @@ void escribir_punteros (uint32_t* lista_bloques ){
     // escribe cada  puntero de tamaño 4 bytes dentro del bloque de punteros
     for (int i = 1; i < list_size(lista_bloques); i++) {
         if (fwrite(list_get(lista_bloques,i), 4, 1, archivo_bloques)<= 0){
-            log_info(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
+            log_debug(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
             return -1;
         }  else{
-            log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
+            log_debug(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
         };
     };
+    fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
 }
 
 void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir){
@@ -373,3 +392,9 @@ void free_t_FCB(t_FCB* fcb) {
  
 }
 
+void enviar_resultado_memoria(op_code codigo_operacion, int socket_memoria){
+
+    if (send(socket_memoria, &codigo_operacion, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
+        log_debug(logger_file_system, "Error al enviar respuesta de handshake a kernel"); // guarda con este log
+    }       
+}

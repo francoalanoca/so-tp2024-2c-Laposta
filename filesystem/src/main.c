@@ -8,6 +8,8 @@ int main(char argc, char *argv[]) {
 
     printf("iniciando...\n");
 
+     sem_init(&sem_file_system, 0, 0);
+
     if (!init(path_config) || !cargar_configuracion(path_config)) {
         cerrar_programa();
         printf("No se pudo inicializar entrada salida");

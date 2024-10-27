@@ -82,12 +82,12 @@ typedef  enum
     FINALIZAR_HILO_RTA_OK,
     FINALIZAR_HILO_RTA_ERROR_NO_EXISTE,
     PEDIDO_MEMORY_DUMP,
-    PEDIDO_MEMORY_DUMP_RTA_OK,
-    PEDIDO_MEMORY_DUMP_RTA_ERROR,
+    PEDIDO_MEMORY_DUMP_RTA_OK, //usamos los mismo con FS
+    PEDIDO_MEMORY_DUMP_RTA_ERROR, //usamos los mismo con FS
 //---------------FILESYSTEM-MEMORIA-------------------
     CREACION_DUMP,
     
-}op_code; 
+}op_code;  
 
 typedef struct {
     uint32_t size; // Tamaño del payload

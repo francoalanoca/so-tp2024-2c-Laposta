@@ -6,3 +6,17 @@ t_dumped* dumped_deserializar(t_list* lista) {
 
 
 }
+
+void liberar_t_dumped(t_dumped* dumped) {
+    if (dumped == NULL) {
+        return; 
+    }
+   
+    if (dumped->nombre_archivo != NULL) {
+        free(dumped->nombre_archivo);
+    }
+    if (dumped->contenido != NULL) {
+        free(dumped->contenido);
+    }
+    free(dumped);
+}

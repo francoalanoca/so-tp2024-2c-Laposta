@@ -55,10 +55,10 @@ char* uint32_to_string (uint32_t number);
 
 
 ///////////////////////////////////////////////FUNCIONALIDADES//////////////////////////////////////
-
-uint32_t* asignar_bloques(uint32_t tamanio);
+void dumpear(t_dumped* dumped, int socket_cliente);
+t_list* asignar_bloques(uint32_t tamanio);
 void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir);
- void grabar_bloques(uint32_t* array_bloques);
+void grabar_bloques(t_list* lista_bloques, char *datos_escribir);
 //Devuelve la posicion del primer bit libre que encuentra.
 uint32_t encontrar_bit_libre(t_bitarray* bitarray);
 
@@ -82,4 +82,5 @@ uint32_t encontrar_bit_libre(t_bitarray* bitarray_in);
 void imprimir_estado_bitarray() ;
 //para liberar la memoria ocupada por un fcb
 void free_t_FCB(t_FCB* fcb); 
+void enviar_resultado_memoria(op_code codigo_operacion, int socket_memoria);
 #endif //ESTRUCTURAS_FS_H

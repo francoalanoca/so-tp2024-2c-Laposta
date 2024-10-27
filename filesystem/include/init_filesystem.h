@@ -50,4 +50,5 @@ static t_config_file_system *cfg_file_system_start()
     return cfg;
 }
 
+sem_t sem_file_system;
 #endif /* INIT_FILE_SYSTEM_H */
