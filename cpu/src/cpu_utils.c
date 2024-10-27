@@ -14,27 +14,7 @@ instr_t* fetch(int conexion, t_proceso* proceso){
 
 tipo_instruccion decode(instr_t* instr, int conexion_memo){
     log_info(logger_cpu, "EL codigo de instrucción es %d ",instr->id);
-    
-    //  switch(instr->id){
-    //         case READ_MEM:
-    //         {                       
-    //             solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
-    //             sem_wait(&sem_valor_base_particion);
-    //             return instr->id;
-    //             break;
-    //         }
-    //         case WRITE_MEM:
-    //         {              
-    //             solicitar_contexto_a_memoria(conexion_memo, proceso_actual);
-    //             sem_wait(&sem_valor_base_particion);
-    //             return instr->id;
-    //             break;
-    //         } 
-    //         default:
-
-    //             return instr->id;
-    //     } 
-
+     
     return instr->id  ; 
   
 }
@@ -847,8 +827,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
     
-    tipo_inst=inst->id;
-    //tipo_inst = decode(inst, conexion_mem);
+    tipo_inst= decode(inst, conexion_mem);
     log_info(logger_cpu, "Voy a entrar a execute");
     
     //TODO: FIXME: CUANDO SE EJECUTA UNA SYSCALL SE PONE PROCESO_ACTUAL EN NULL-->luego de EXECUTE NO SE PUEDE HACER PROCESO_ACTUAL->PC+=1;
