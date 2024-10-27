@@ -84,7 +84,7 @@ void procesar_conexion(void *v_args){
                 printf("CREACION_DUMP recibido\n");
                 t_list* lista_paquete = recibir_paquete(cliente_socket);
                 t_dumped* dumped = dumped_deserializar(lista_paquete); 
-                sem_wait(&sem_file_system);
+                sem_wait(&sem_file_system); // cambiar a clase mutex
                 dumpear(dumped, cliente_socket);
                 sem_post(&sem_file_system);
                 liberar_t_dumped(dumped);
