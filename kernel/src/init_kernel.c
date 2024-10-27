@@ -54,6 +54,9 @@ void inicializar_semaforos()
     sem_init(&(semaforos->sem_io_sleep_en_uso),0,1); //revisar aca si empieza con 1 0 0
     sem_init(&(semaforos->sem_io_solicitud),0,0);
     sem_init(&(semaforos->sem_sleep_io),0,0);
+
+
+    sem_init(&(semaforos->mutex_conexion_dispatch),0,1);
 }
 
 int conectar_a_memoria()
@@ -76,7 +79,8 @@ void generar_conexiones_a_cpu()
             log_info(logger_kernel, "conectado a cpu");
 
 
-    pthread_create(&conexion_cpu_dispatch_hilo, NULL, (void *)procesar_conexion_dispatch, (void *)&(config_kernel->conexion_cpu_dispatch));
+    // pthread_create(&conexion_cpu_dispatch_hilo, NULL, (void *)procesar_conexion_dispatch, (void *)&(config_kernel->conexion_cpu_dispatch));
+     pthread_create(&conexion_cpu_dispatch_hilo, NULL, (void *)procesar_conexion_dispatch, NULL);
     pthread_detach(conexion_cpu_dispatch_hilo);
     
 
@@ -94,16 +98,29 @@ void generar_conexiones_a_cpu()
 //     interfaz_io->threads_en_espera = list_create();
 // }
 
-void procesar_conexion_dispatch(void *socket)
+void procesar_conexion_dispatch()
 {
     // TODO: operaciones a ejecutar
     while (1)
     {
 
-        int fd_conexion_cpu = *((int *)socket);
+        int fd_conexion_cpu = config_kernel->conexion_cpu_dispatch;
         int operacion = recibir_operacion(fd_conexion_cpu);
         switch (operacion)
         {
+        case PROCESO_SALIR:
+         t_list *params_proceso_salir = recibir_paquete(fd_conexion_cpu);
+                log_info(logger_kernel, "se recibio instruccion PROCESO SALIR:");
+                //TODO: implementar la finalizacion de proceso: ELIMINACION DE HILOS RESTANTES (SI LOS HAY) 
+                sem_wait(&(semaforos->mutex_lista_exec));
+                t_tcb *proceso_a_finalizar =(t_tcb*) list_get(lista_exec, 0);
+                sem_post(&(semaforos->mutex_lista_exec));
+                pasar_execute_a_exit();
+                thread_exit(proceso_a_finalizar);
+                sem_post(&(semaforos->espacio_en_cpu));
+                log_warning(logger_kernel, "HILOS EN EXIT");
+                mostrar_tcbs(lista_exit,logger_kernel);
+        break;
         case PROCESO_CREAR:
             log_info(logger_kernel, "se recibio instruccion INICIAR PROCESO");
             t_list *params_para_creacion = recibir_paquete(fd_conexion_cpu);
@@ -113,22 +130,49 @@ void procesar_conexion_dispatch(void *socket)
 
             process_create(ruta_codigo, tamanio_proceso, prioridad_main);
 
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb* sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
+            sem_post(&(semaforos->mutex_lista_exec));
+            
+            enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
+
             break;
         case HILO_CREAR:
             log_info(logger_kernel, "se recibio instruccion INICIAR HILO");
             t_list *params_thread = recibir_paquete(fd_conexion_cpu);
             char *codigo_th = list_get(params_thread, 0);
             int prioridad_th = *((int *)list_get(params_thread, 1));
-            int pid_asociado = *((int *)list_get(params_thread, 2));
-            thread_create(codigo_th, prioridad_th, pid_asociado);
+            sem_wait(&(semaforos->mutex_lista_exec));
+            int pid_asociado=((t_tcb *)list_get(lista_exec, 0))->pid;
+            sem_post(&(semaforos->mutex_lista_exec));
+            
+            t_tcb* nuevo_tcb=thread_create(codigo_th, prioridad_th, pid_asociado);
+            agregar_a_lista(nuevo_tcb,lista_ready,&(semaforos->mutex_lista_ready));
+            sem_post(&(semaforos->contador_threads_en_ready));
+            log_info(logger_kernel, "se agrego hilo a lista_ready");
+ 
+            sem_wait(&(semaforos->mutex_lista_exec));
+            sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
+            sem_post(&(semaforos->mutex_lista_exec));
+            
+            enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
 
             break;
         case MUTEX_CREAR: // recurso,pid
-            log_info(logger_kernel, "se recibio instruccion MUTEX_CREATE");
             t_list *params_mutex_create = recibir_paquete(fd_conexion_cpu);
-            char *nombre_mutex = list_get(params_mutex_create, 0);
-            int pid_mutex = *((int *)list_get(params_mutex_create, 1));
+             int pid_mutex = *((int *)list_get(params_mutex_create, 0));
+            char *nombre_mutex = list_get(params_mutex_create, 1);
+            log_info(logger_kernel, "se recibio instruccion MUTEX_CREATE %s",nombre_mutex);
+           
             mutex_create(nombre_mutex, pid_mutex);
+            
+            sem_wait(&(semaforos->mutex_lista_exec));
+            sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
+            sem_post(&(semaforos->mutex_lista_exec));
+
+            enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
+            log_info(logger_kernel, "se envio rta_mutex_create a cpu");
+
 
             break;
         case IO_EJECUTAR: // PID, TID, tiempo de io en milisegundos
@@ -140,9 +184,13 @@ void procesar_conexion_dispatch(void *socket)
 
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
-            log_info(logger_kernel, "se recibio instruccion MUTEX_LOCK");
             t_list *params_lock = recibir_paquete(fd_conexion_cpu);
             char *recurso = list_get(params_lock, 0);
+
+            sem_wait(&(semaforos->mutex_lista_ready)); 
+            log_info(logger_kernel, "se recibio instruccion MUTEX_LOCK %s",recurso);
+
+            sem_post(&(semaforos->mutex_lista_ready));
             mutex_lock(recurso);
 
             break;
@@ -156,23 +204,29 @@ void procesar_conexion_dispatch(void *socket)
             mutex_unlock(recurso_unlok,th_unlock);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
-            log_info(logger_kernel, "se recibio instruccion HILO_JUNTAR");
             t_list *params_juntar = recibir_paquete(fd_conexion_cpu);
             int tid_target = *((int *)list_get(params_juntar, 0));
              sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *th_en_exec = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
+            log_info(logger_kernel, "se recibio instruccion HILO_JUNTAR a tid:%d",tid_target);
+            
             thread_join(th_en_exec,tid_target);
         break;
 
         case HILO_SALIR:
             log_info(logger_kernel, "se recibio instruccion FINALIZAR_HILO");
+            recibir_paquete(fd_conexion_cpu);// recibo el paquete para no tener basura en el socket
+            
             // quito de exec
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *thread_saliente = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
             thread_exit(thread_saliente);
             pasar_execute_a_exit();
+
+        //  log_info(logger_kernel, "HILO EN EXEC luego de desalojar...");
+        //  mostrar_tcbs(lista_exec,logger_kernel);
             // marca la cpu como libre
             sem_post(&(semaforos->espacio_en_cpu));
             
@@ -184,9 +238,9 @@ void procesar_conexion_dispatch(void *socket)
             int tid = *((int *)list_get(params_th_cancel, 0));
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *thread_asociado = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
             thread_cancel(tid,thread_asociado->pid);
-
+            enviar_thread_a_cpu(thread_asociado,fd_conexion_cpu);
             break;
         case PEDIDO_MEMORY_DUMP:
             log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
@@ -194,7 +248,9 @@ void procesar_conexion_dispatch(void *socket)
             break;
 
         default:
-
+            log_info(logger_kernel," OPERACION INVALIDA RECIBIDA DE CPU ");
+            
+            return EXIT_FAILURE;
          break;
         }
     }
@@ -220,8 +276,8 @@ void mostrar_pcb(t_pcb *pcb, t_log *logger)
         log_info(logger, "Lista de TIDs:");
         for (int i = 0; i < list_size(pcb->lista_tids); i++)
         {
-            int *tid = (int *)list_get(pcb->lista_tids, i);
-            log_info(logger, "\tTID #%d: %d", i, *tid);
+            int tid = *(int *)list_get(pcb->lista_tids, i);
+            log_info(logger, "\tTID #%d: %d", i, tid);
         }
     }
     else
@@ -253,5 +309,42 @@ void mostrar_pcb(t_pcb *pcb, t_log *logger)
     else
     {
         log_warning(logger, "La ruta del pseudocódigo es NULL");
+    }
+}
+
+void mostrar_tcbs(t_list* lista_tcb, t_log* logger) {
+    if (lista_tcb == NULL || list_size(lista_tcb) == 0) {
+        log_info(logger, "No hay hilos en la lista.");
+        return;
+    }
+
+    log_info(logger, "Lista de TCBs:");
+    for (int i = 0; i < list_size(lista_tcb); i++) {
+        t_tcb* tcb = list_get(lista_tcb, i);
+
+        log_info(logger, "TCB #%d:", i + 1);
+        log_info(logger, "\tTID: %d", tcb->tid);
+        log_info(logger, "\tPrioridad: %d", tcb->prioridad);
+        log_info(logger, "\tPID: %d", tcb->pid);
+        log_info(logger, "\tTiempo de IO: %d", tcb->tiempo_de_io);
+        //log_info(logger, "\tEstado: %d", tcb->estado);  // Usa una función para convertir el estado a texto si es necesario
+
+        if (tcb->thread_target != NULL) {
+            t_tcb* target = (t_tcb*) tcb->thread_target;
+            log_info(logger, "\tEsperando hilo TID: %d", target->tid);
+        } else {
+            log_info(logger, "\tNo está esperando ningún hilo.");
+        }
+        
+        // Mostrar los mutex asignados
+        if (tcb->mutex_asignados != NULL && list_size(tcb->mutex_asignados) > 0) {
+            log_info(logger, "\tMutex asignados:");
+            for (int j = 0; j < list_size(tcb->mutex_asignados); j++) {
+                t_mutex* mutex = list_get(tcb->mutex_asignados, j);
+                log_info(logger, "\t\tRecurso: %s", mutex->recurso);
+            }
+        } else {
+            log_info(logger, "\tNo tiene mutex asignados.");
+        }
     }
 }
