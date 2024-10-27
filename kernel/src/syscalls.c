@@ -222,4 +222,5 @@ void* atender_dump_memory(){
         t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
         agregar_a_lista(thread_en_cuestion, lista_ready, &(semaforos->mutex_lista_ready));
     }
+    close(socket_conexion_memoria);
 }
