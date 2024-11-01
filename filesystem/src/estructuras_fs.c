@@ -41,7 +41,7 @@ void iniciar_fs () {
         return EXIT_FAILURE;
     }
 
-    cargar_directorio_fcbs(cfg_file_system->MOUNT_DIR);
+    
 
     log_info(logger_file_system, "File system iniciado");  
     
@@ -397,4 +397,13 @@ void enviar_resultado_memoria(op_code codigo_operacion, int socket_memoria){
     if (send(socket_memoria, &codigo_operacion, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
         log_debug(logger_file_system, "Error al enviar respuesta de handshake a kernel"); // guarda con este log
     }       
+}
+
+char* uint32_to_string (uint32_t number) {
+    char* str ;
+    if (asprintf(&str, "%u", number)== -1) {
+        //error al asignar memoria
+        return NULL;
+    }
+    return str;
 }

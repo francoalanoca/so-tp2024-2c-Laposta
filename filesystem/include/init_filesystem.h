@@ -10,6 +10,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 extern int conexion_memoria;
+extern  pthread_mutex_t  mtx_file_system;
 typedef struct {
     t_log *log;
     int fd;
@@ -50,5 +51,5 @@ static t_config_file_system *cfg_file_system_start()
     return cfg;
 }
 
-sem_t sem_file_system;
+
 #endif /* INIT_FILE_SYSTEM_H */

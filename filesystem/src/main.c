@@ -1,6 +1,7 @@
 #include "../include/main.h"
 
 char *path_config;
+pthread_mutex_t mtx_file_system;
 
 int main(char argc, char *argv[]) {
 
@@ -8,7 +9,7 @@ int main(char argc, char *argv[]) {
 
     printf("iniciando...\n");
 
-     sem_init(&sem_file_system, 0, 0);
+    pthread_mutex_init(&mtx_file_system, NULL);
 
     if (!init(path_config) || !cargar_configuracion(path_config)) {
         cerrar_programa();
