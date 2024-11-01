@@ -132,6 +132,14 @@ typedef struct{
 
 } t_dump;
 
+//struct para deserializar/serializar al leer o escribir
+typedef struct{
+    uint32_t tamanio_nombre_archivo;
+    char* nombre_archivo;
+    uint32_t tamanio_contenido;
+    char* contenido;
+    uint32_t fd_kernel;
+} t_peticion_dump_fs;
 
 
 //----------------------------------Variables Externs-------------------------
@@ -140,7 +148,7 @@ typedef struct{
 extern int socket_memoria;
 extern int socket_cpu;
 //extern int socket_kernel;
-extern int socket_filesystem;
+//extern int socket_filesystem;
 
 extern t_log *logger_memoria;
 extern t_config *file_cfg_memoria;
@@ -157,6 +165,10 @@ extern t_list* pids_por_bloque;
 extern uint32_t tamanio_total_memoria;  
 extern char * algoritmo_alocacion;   
 extern pthread_mutex_t mutex_memoria;
+extern pthread_mutex_t mutex_lista_particiones_dinamicas;
+extern pthread_mutex_t mutex_lista_miniPCBs;
+extern pthread_mutex_t mutex_bitmap_particiones;
+extern pthread_mutex_t mutex_pids_por_bloque;
 
 
 

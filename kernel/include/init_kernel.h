@@ -106,6 +106,9 @@ typedef struct{
     sem_t sem_io_sleep_en_uso;
     sem_t sem_io_solicitud;
     sem_t sem_sleep_io;
+
+
+    sem_t mutex_conexion_dispatch;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
@@ -124,11 +127,11 @@ extern t_list* lista_new;
 extern t_list* lista_procesos_global;
 extern t_list* lista_espera_io;
 
-
+void desbloquear_hilos_por_fin_de_hilo(t_tcb* tcb_finalizado);
 int conectar_a_memoria();
 void generar_conexiones_a_cpu();
 void procesar_conexion_interrupt(void *socket);
-void procesar_conexion_dispatch(void *socket);
+void procesar_conexion_dispatch();
 void iniciar_modulo(char *ruta_config);
 void cargar_config_kernel(char *ruta_config);
 void process_create(char* ruta_instrucciones,int tamanio_proceso,int prioridad_hilo_main);
@@ -162,7 +165,7 @@ void inicializar_listas();
 t_pcb* buscar_proceso_por(int pid_buscado);
 void mostrar_pcb(t_pcb* pcb, t_log* logger);
 t_tcb* thread_create(char* pseudocodigo,int prio,int pid);
-void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar);
+void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar,int socket_dispatch);
 void ejecutar_io(int tiempo);
 void *manejar_bloqueados();
 
@@ -194,6 +197,9 @@ void hilo_sleep_io();
 int buscar_indice_de_mayor_prioridad();
 void iniciar_quantum(t_tcb* tcb);
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado);
+void mostrar_tcbs(t_list* lista_tcb, t_log* logger);
+void memory_dump();
+void* atender_dump_memory();
 
 
 #endif /* KERNEL_H_ */

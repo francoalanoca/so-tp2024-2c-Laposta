@@ -122,18 +122,14 @@ void enviar_respuesta_finalizar_hilo(uint32_t pid_proceso_a_finalizar ,uint32_t 
     eliminar_paquete(paquete_finalizar_hilo); 
 }
 
-void enviar_creacion_memory_dump(uint32_t tamanio_nombre_archivo, char* nombre_archivo ,uint32_t tamanio_contenido,char* contenido, int socket_fs){
-    t_paquete* paquete_creacion_memory_dump;
+void enviar_confirmacion_memory_dump_a_kernel(op_code cod_ope,int socket_kernel){
+    t_paquete* paquete_confirmacion_memory_dump;
  
-    paquete_creacion_memory_dump = crear_paquete(CREACION_DUMP);
- 
-    agregar_a_paquete(paquete_creacion_memory_dump, nombre_archivo,  tamanio_nombre_archivo);
-    agregar_a_paquete(paquete_creacion_memory_dump, &tamanio_contenido,  sizeof(uint32_t));
-    agregar_a_paquete(paquete_creacion_memory_dump, contenido,  tamanio_contenido);
+    paquete_confirmacion_memory_dump = crear_paquete(cod_ope);
     
-    enviar_paquete(paquete_creacion_memory_dump, socket_fs);   
-    printf("Peticion creacion memory dump enviada \n"); 
-    eliminar_paquete(paquete_creacion_memory_dump); 
+    enviar_paquete(paquete_confirmacion_memory_dump, socket_kernel);   
+    printf("Peticion confirmacion memory dump enviada \n"); 
+    eliminar_paquete(paquete_confirmacion_memory_dump); 
 }
 
 
@@ -153,10 +149,10 @@ void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete ){
     printf("Tid recibido: %d \n", contexto->tid);
 
     contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
-    printf("Registro PC recibido: %d \n", contexto->registros.PC);
+    log_warning(logger_memoria,"Registro PC recibido: %d \n", contexto->registros.PC);
 
     contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
-    printf("Registro AX recibido: %d \n", contexto->registros.AX);
+    log_warning(logger_memoria,"Registro AX recibido: %d \n", contexto->registros.AX);
 
     contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
     printf("Registro BX recibido: %d \n", contexto->registros.BX);
@@ -289,6 +285,7 @@ void enviar_respuesta_instruccion(char* proxima_instruccion ,int socket_cpu) {
     
     enviar_paquete(paquete_instruccion, socket_cpu);   
     printf("Instruccion enviada %s\n", proxima_instruccion); 
+    printf("LONGITUD DE LA INTRUCCION: %d\n", strlen(proxima_instruccion)); 
     eliminar_paquete(paquete_instruccion);
 }
 
@@ -300,13 +297,13 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete ){
     peticion_valor->pid = *(uint32_t*)list_get(lista_paquete, 0);
     printf("Pid recibido: %d \n", peticion_valor->pid);
 
-    peticion_valor->tid = *(uint32_t*)list_get(lista_paquete, 0);
+    peticion_valor->tid = *(uint32_t*)list_get(lista_paquete, 1);
     printf("Tid recibido: %d \n", peticion_valor->tid);
     
-    peticion_valor->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 1);
+    peticion_valor->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 2);
     printf("Direccion fisica: %d \n", peticion_valor->direccion_fisica);
 
-    peticion_valor->tamanio = *(uint32_t*)list_get(lista_paquete, 2);
+    peticion_valor->tamanio = *(uint32_t*)list_get(lista_paquete, 3);
     printf("Tamanio proceso: %d \n", peticion_valor->tamanio);
 
     return peticion_valor;
@@ -357,16 +354,16 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
     peticion_guardar->pid = *(uint32_t*)list_get(lista_paquete, 0);
     printf("Pid recibido: %d \n", peticion_guardar->pid);
 
-    peticion_guardar->tid = *(uint32_t*)list_get(lista_paquete, 0);
+    peticion_guardar->tid = *(uint32_t*)list_get(lista_paquete, 1);
     printf("Tid recibido: %d \n", peticion_guardar->tid);
     
-    peticion_guardar->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 1);
+    peticion_guardar->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 2);
     printf("Direccion fisica: %d \n", peticion_guardar->direccion_fisica);
 
-    peticion_guardar->tamanio = *(uint32_t*)list_get(lista_paquete, 2);
+    peticion_guardar->tamanio = *(uint32_t*)list_get(lista_paquete, 3);
     printf("Tamanio proceso: %d \n", peticion_guardar->tamanio);
 
-    peticion_guardar->valor = list_get(lista_paquete, 3);
+    peticion_guardar->valor = list_get(lista_paquete, 4);
     printf("Valor: %s \n", peticion_guardar->valor);
 
     return peticion_guardar;
@@ -402,4 +399,18 @@ void enviar_respuesta_actualizar_contexto(t_m_contexto* contexto ,int socket_cpu
     printf("PAQUETE ELIMINADO\n"); 
 }
 
+/*---------------------------- FILE SYSTEM-------------------------*/
 
+void enviar_creacion_memory_dump(uint32_t tamanio_nombre_archivo, char* nombre_archivo ,uint32_t tamanio_contenido,char* contenido, int socket_fs){
+    t_paquete* paquete_creacion_memory_dump;
+ 
+    paquete_creacion_memory_dump = crear_paquete(CREACION_DUMP);
+ 
+    agregar_a_paquete(paquete_creacion_memory_dump, nombre_archivo,  tamanio_nombre_archivo);
+    agregar_a_paquete(paquete_creacion_memory_dump, &tamanio_contenido,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_creacion_memory_dump, contenido,  tamanio_contenido);
+    
+    enviar_paquete(paquete_creacion_memory_dump, socket_fs);   
+    printf("Peticion creacion memory dump enviada \n"); 
+    eliminar_paquete(paquete_creacion_memory_dump); 
+}

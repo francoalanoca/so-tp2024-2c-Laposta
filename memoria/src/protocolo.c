@@ -38,13 +38,17 @@ void memoria_atender_cpu(){
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			contexto_encontrado->pid = pid;
 			contexto_encontrado->tid = tid;
+			log_warning(logger_memoria,"contexto encontrado: registros");
+			log_warning(logger_memoria,"PC=%d",contexto_encontrado->registros.PC);
+			log_warning(logger_memoria,"AX=%d",contexto_encontrado->registros.AX);
+			log_warning(logger_memoria,"BX=%d",contexto_encontrado->registros.BX);
 			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
 			log_info(logger_memoria, "## Contexto Solicitado - (PID:TID) - (%d:%d)\n",pid,tid);
 			free(contexto_encontrado);
 			break;
 
 		case SOLICITUD_INSTRUCCION:
-			sleep(8);
+			//sleep(8);
 			log_info(logger_memoria, "Recibí SOLICITUD_INSTRUCCION \n");
 			valores = recibir_paquete(socket_cpu);
 			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
@@ -57,9 +61,10 @@ void memoria_atender_cpu(){
 		case READ_MEMORIA:
 			log_info(logger_memoria, "Recibí READ_MEMORIA \n");
 			valores = recibir_paquete(socket_cpu);
-			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores);     
-            char* respuesta_leer = malloc(4);
-			memset(respuesta_leer, 0, sizeof(respuesta_leer));
+			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores); 
+			uint32_t tamanio_rta = 4;    
+            char* respuesta_leer = malloc(tamanio_rta);
+			memset(respuesta_leer, 0, tamanio_rta);
 			//INICIO MUTEX
 			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -296,8 +301,22 @@ void memoria_atender_kernel(void* socket){
 			uint32_t tamanio_contenido = strlen(contenido) + 1; //no hace falta multiplicar por sizeof(char) ya que este siempre vale 1 byte
 
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-			enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
-			log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
+			//preparo la informacion para pasarsela al nuevo hilo
+			t_peticion_dump_fs* peticion_fs = malloc(sizeof(t_peticion_dump_fs));
+			peticion_fs->tamanio_nombre_archivo = tamanio_nombre_archivo;
+			peticion_fs->nombre_archivo = nombre_archivo;
+			peticion_fs->tamanio_contenido = tamanio_contenido;
+			peticion_fs->contenido = contenido;
+			peticion_fs->fd_kernel = fd_kernel;
+
+			//creamos hilo para creacion de nueva conexion con fs
+			pthread_t hilo_dump_fs; 
+    		pthread_create(&hilo_dump_fs, NULL, (void *)atender_dump_memory_fs, peticion_fs);
+    		pthread_detach(hilo_dump_fs); //va el & o no? si lo pongo me tira un warning
+			
+
+			//enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
+			//log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;
 
 		case -1:
@@ -315,6 +334,29 @@ void memoria_atender_kernel(void* socket){
     //  }
 }
 
+void atender_dump_memory_fs(t_peticion_dump_fs* peticion_fs){
+	//crear conexion con fs y enviar peticion
+	int socket_filesystem = crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
+    //enviar_solicitud_espacio_a_memoria(un_pcb,socket_filesystem);
+	enviar_creacion_memory_dump(peticion_fs->tamanio_nombre_archivo,peticion_fs->nombre_archivo,peticion_fs->tamanio_contenido, peticion_fs->contenido,socket_filesystem);
+     
+    //int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
+	//int respuesta=recibir_resp_de_fs_memory_dump(socket_filesystem);
+	int respuesta = recibir_operacion(socket_filesystem);
+        
+	//close(socket_memoria);
+    close(socket_filesystem);
+
+	if(respuesta==PEDIDO_MEMORY_DUMP_RTA_OK){
+        log_info(logger_memoria,"recibi OK rta memory dump de fs\n");
+		//Enviar a kernel OK
+		enviar_confirmacion_memory_dump_a_kernel(PEDIDO_MEMORY_DUMP_RTA_OK,peticion_fs->fd_kernel);
+    }else{
+        log_info(logger_memoria,"hubo ERROR en rta memory dump de fs\n");
+	   //Enviar a kernel ERROR
+	   enviar_confirmacion_memory_dump_a_kernel(PEDIDO_MEMORY_DUMP_RTA_ERROR,peticion_fs->fd_kernel);
+    }
+}
 
 
 

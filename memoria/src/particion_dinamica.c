@@ -161,12 +161,22 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
 
         particion->tamanio = tamanio_proceso;
         particion->ocupado = true;
-        list_add(lista_particiones_dinamicas, particion);
+
+        t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
+        proceso->pid = particion->pid;
+        proceso->base = particion->inicio;
+        proceso->limite = tamanio_proceso + particion->inicio;
+        proceso->hilos = list_create();
+
+        pthread_mutex_lock(&mutex_lista_miniPCBs);
+        list_add(lista_miniPCBs, proceso);
+        pthread_mutex_unlock(&mutex_lista_miniPCBs);
+
+        //list_add(lista_particiones_dinamicas, particion); //VER
         log_info(logger_memoria, "Asiganada una particion exacta al PID - %d \n", particion->pid);
         log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
-    }
-
-    log_info(logger_memoria, "La particion es grande para el proceso \n");
+    }else{
+        log_info(logger_memoria, "La particion es grande para el proceso \n");
     log_info(logger_memoria, "Ajustando el tamaño a la particion");
 
     //Creamos una nueva partición para la parte libre
@@ -174,8 +184,8 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     nueva_particion->inicio = particion->inicio + tamanio_proceso;      //Empieza a partir del fin del proceso anterior
     nueva_particion->tamanio = particion->tamanio - tamanio_proceso;    //La nueva particion tiene tamaño = total- usado
     nueva_particion->ocupado = false;                                   //La nueva particion esta libre
-    nueva_particion->pid = 0;                                           //No tiene proceso asignado (ver si va 0)
-    nueva_particion->tid = 0;                                           //No tiene hilo asignado (ver si va 0)
+    nueva_particion->pid = -1;                                           //No tiene proceso asignado (ver si va 0)
+    nueva_particion->tid = -1;                                           //No tiene hilo asignado (ver si va 0)
     //nueva_particion->siguiente = particion->siguiente;
     log_info(logger_memoria, "Creada una particion libre con el sobrante \n");
     log_info(logger_memoria, "Tamanio de la nueva particion libre: %d", nueva_particion->tamanio);
@@ -190,11 +200,17 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     particion->tamanio = tamanio_proceso;
     particion->ocupado = true;
     //particion->siguiente = nueva_particion;
-
+    pthread_mutex_lock(&mutex_lista_miniPCBs);
     list_add(lista_miniPCBs, proceso);
-    list_add(lista_particiones_dinamicas, particion);
+    pthread_mutex_unlock(&mutex_lista_miniPCBs);
+    //list_add(lista_particiones_dinamicas, particion); //VER
+    pthread_mutex_lock(&mutex_lista_particiones_dinamicas);
     list_add(lista_particiones_dinamicas, nueva_particion);
+    pthread_mutex_unlock(&mutex_lista_particiones_dinamicas);
     log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
+    }
+
+    
 }
 
 
@@ -228,8 +244,10 @@ char* escribir_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, char* va
     }
 
     //Copiar los 4 bytes del valor en la memoria.
+    
+    pthread_mutex_lock(&mutex_memoria);
     memcpy(memoria_usuario + direccion_fisica, valor, tamanio_a_escribir);
-
+    pthread_mutex_unlock(&mutex_memoria);
     escrito = "OK";
 
     return escrito;

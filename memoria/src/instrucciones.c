@@ -60,7 +60,9 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hil
 	}
     //Agregamos el proceso a la lista de procesos
 	list_add(miniPCB->hilos, hilo_proceso);
+    pthread_mutex_lock(&mutex_lista_miniPCBs);
     list_add(lista_miniPCBs, miniPCB);
+    pthread_mutex_unlock(&mutex_lista_miniPCBs);
 
     fclose(archivo);
 }
@@ -140,7 +142,7 @@ int contador=0;
 //Funcion que busca una instruccion en base a un pid, tid y pc
 char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_counter){
     //TODO: eliminar hardcodeo
-   proceso_pid=hilo_tid=0;
+   //proceso_pid=hilo_tid=0;
   log_info(logger_memoria,"cantidad de pids total: %d",list_size(lista_miniPCBs));
     t_miniPCB* mini=(t_miniPCB*)list_get(lista_miniPCBs,0);
      log_info(logger_memoria,"cantidad de hilos del pid 0 : %d",list_size(mini->hilos));

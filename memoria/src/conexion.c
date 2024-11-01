@@ -53,6 +53,10 @@ void iniciar_conexiones(){
    //  socket_filesystem = crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
 }
 
+int crear_socket_fs(){
+    return  crear_conexion(logger_memoria, "File System", cfg_memoria->IP_FILESYSTEM, cfg_memoria->PUERTO_FILESYSTEM);
+}
+
 
 /*
 void escuchar_modulos(){

@@ -31,6 +31,7 @@ void enviar_respuesta_write_memoria(uint32_t pid, int socket_cliente, op_code co
 void enviar_respuesta_actualizar_contexto(t_m_contexto* contexto ,int socket_cpu, op_code cod_ope);
 void enviar_creacion_memory_dump(uint32_t tamanio_nombre_archivo, char* nombre_archivo ,uint32_t tamanio_contenido,char* contenido, int socket_fs);
 void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete );
+void enviar_confirmacion_memory_dump_a_kernel(op_code cod_ope,int socket_kernel);
 
 
 #endif /* MEMORIA_H */
