@@ -1,5 +1,6 @@
 #include "../include/main.h"
 
+
 char *path_config;
 pthread_mutex_t mtx_file_system;
 
@@ -17,11 +18,14 @@ int main(char argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-
-  
-
-
-
+    pthread_t fs;
+    pthread_create(&fs, NULL, (void *)iniciar_fs, NULL);
+   
+    pthread_t servidor_fs;
+    pthread_create(&servidor_fs, NULL, (void *)crear_servidor_fs, "127.0.0.0");
+    pthread_join (servidor_fs,NULL);
+    pthread_join (fs,NULL);
+     printf("pasado hilos...\n");
     
     
 
