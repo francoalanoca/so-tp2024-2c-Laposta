@@ -196,6 +196,8 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
         perror("Error al guardar fcb");
     };
     
+    log_info(logger_file_system,"Archivo Creado: %s - Tamaño: %d",dumped->nombre_archivo,dumped->tamanio_archivo); // LOG OBLIGATORIO
+
     config_destroy(file_metadata);
     fclose(file_metadata_vacio);
     
