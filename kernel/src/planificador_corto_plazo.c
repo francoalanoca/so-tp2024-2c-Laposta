@@ -13,7 +13,7 @@ void inicializar_hilos_planificador()
         log_info(logger_kernel, "Planificador por Prioridades seleccionado");
         crear_hilo_planificador_prioridades();
     }
-    else if (strcmp(config_kernel->algoritmo_planif, "COLAS_MULTINIVEL") == 0)
+    else if (strcmp(config_kernel->algoritmo_planif, "CMN") == 0)
     {
         log_info(logger_kernel, "Planificador por Colas Multinivel seleccionado");
         crear_hilo_planificador_colas_multinivel();

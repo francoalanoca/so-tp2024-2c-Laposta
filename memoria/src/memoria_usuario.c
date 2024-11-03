@@ -145,7 +145,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
 
-                if (tam_proceso < tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
+                if (tam_proceso <= tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
 
@@ -236,7 +236,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
                 printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
-                if(tam_proceso<tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
+                if(tam_proceso<=tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
                     if(tamanio_ultimo_bloque_worst_fit == 0 || (tamanio_bloque_actual>tamanio_ultimo_bloque_worst_fit)){
                         tamanio_ultimo_bloque_worst_fit = tamanio_bloque_actual;
                         ultimo_bloque_worst_fit = i;
