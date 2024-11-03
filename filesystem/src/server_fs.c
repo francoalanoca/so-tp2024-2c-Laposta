@@ -83,7 +83,9 @@ void procesar_conexion(void *v_args){
             {
                 printf("CREACION_DUMP recibido\n");
                 t_list* lista_paquete = recibir_paquete(cliente_socket);
+                printf("paquete recibido\n");
                 t_dumped* dumped = dumped_deserializar(lista_paquete); 
+                printf("paquete deserealizado\n");
                 pthread_mutex_lock(&mtx_file_system); // cambiar a clase mutex
                 dumpear(dumped, cliente_socket);
                 pthread_mutex_unlock(&mtx_file_system);

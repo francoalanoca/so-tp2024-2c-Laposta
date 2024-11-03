@@ -216,12 +216,14 @@ void persistir_fcb(t_FCB *fcb) {
 /////////////////////////////////////////// FUNCIONALIDADES /////////////////////////////////////////////////////////////////
 
  void dumpear(t_dumped* dumped, int socket_cliente){
-    
+    log_info(logger_file_system, "Nombre de archivo recibido: %s",dumped->nombre_archivo);
+    log_info(logger_file_system, "Contenido de archivo: %s",dumped->contenido);
+    log_info(logger_file_system, "tamanio solicitodo: %d",dumped->tamanio_archivo);
     if (hay_espacio_total_disponible(dumped->tamanio_archivo))
     {
         t_list* lista_bloques = malloc(sizeof(t_list));
-        asignar_bloques(dumped->tamanio_archivo) ;
-        grabar_bloques( lista_bloques, dumped->contenido);
+        
+        grabar_bloques( asignar_bloques(dumped->tamanio_archivo) , dumped->contenido);
         enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
@@ -234,8 +236,8 @@ void persistir_fcb(t_FCB *fcb) {
 
 t_list* asignar_bloques(uint32_t tamanio) {
 
-    log_info(logger_file_system, "entramos en agrandar archivo");
-
+    log_info(logger_file_system, "entramos en asignar bloques");
+    log_info(logger_file_system, "tamanio solicitodo: %d",tamanio);
     uint32_t cant_bloques_nuevos = (tamanio / cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
     lista_punteros = malloc(sizeof(t_list));
