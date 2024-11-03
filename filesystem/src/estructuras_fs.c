@@ -224,7 +224,7 @@ void persistir_fcb(t_FCB *fcb) {
         t_list* lista_bloques = malloc(sizeof(t_list));
         
         grabar_bloques( asignar_bloques(dumped->tamanio_archivo) , dumped->contenido);
-        enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
+        //enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
         enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_ERROR,socket_cliente);
@@ -278,7 +278,7 @@ t_list* asignar_bloques(uint32_t tamanio) {
         }
 
         // Escribir el bloque con el fragmento correspondiente
-        escribir_bloque(i, tamanio_fragmento, datos_escribir + offset);
+        escribir_bloque(list_get(lista_bloques,i), tamanio_fragmento, datos_escribir + offset);
     }
     fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
  }
@@ -296,13 +296,25 @@ void escribir_punteros (uint32_t* lista_bloques ){
     }  else{
         log_info(logger_file_system, "PUNTERO POSICIONADO EN BLOQUE: %d ",posicion_bloque_punteros );
     };
+     log_info(logger_file_system, "vamos a escribir el bloque de punteros tamaño de lista %d ",list_size(lista_bloques) );
+      log_info(logger_file_system, "contenido de lista %d ",list_get(lista_bloques,0) );
+      log_info(logger_file_system, "contenido de lista %d ",list_get(lista_bloques,1) );
+      log_info(logger_file_system, "contenido de lista %d ",list_get(lista_bloques,2) );
+
+    
+    if (archivo_bloques == NULL) {
+        perror("Error al abrir el archivo");
+        return;
+    }      
     // escribe cada  puntero de tamaño 4 bytes dentro del bloque de punteros
     for (int i = 1; i < list_size(lista_bloques); i++) {
-        if (fwrite(list_get(lista_bloques,i), 4, 1, archivo_bloques)<= 0){
-            log_debug(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
+         log_info(logger_file_system, "puntero a escribir %d ",list_get(lista_bloques,i) );
+            uint32_t puntero = list_get(lista_bloques,i);
+        if (fwrite(&puntero, 4, 1, archivo_bloques)<= 0){
+            log_info(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
             return -1;
         }  else{
-            log_debug(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
+            log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
         };
     };
     fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
@@ -326,7 +338,7 @@ void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escr
     }  else{
         log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %s",numero_bloque, datos_escribir);
     };
-
+    fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
 }
 
 

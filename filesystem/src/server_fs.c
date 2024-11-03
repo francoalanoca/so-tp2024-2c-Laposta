@@ -89,7 +89,7 @@ void procesar_conexion(void *v_args){
                 pthread_mutex_lock(&mtx_file_system); // cambiar a clase mutex
                 dumpear(dumped, cliente_socket);
                 pthread_mutex_unlock(&mtx_file_system);
-                liberar_t_dumped(dumped);
+                //liberar_t_dumped(dumped);
                 list_destroy_and_destroy_elements(lista_paquete, free);
                 break;  
             }
