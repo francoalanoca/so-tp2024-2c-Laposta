@@ -74,8 +74,8 @@ void sincronizar_bitmap ();
 //crea el archivo de bloques fisico en la ruta especificada.
 int crear_archivo_bloques (char * path_archivo_bloques, int block_size, int block_count) ;
 void cerrar_bitmap();
-//guarda la estructura fcb en un archivo fisico terminado en txt
-void persistir_fcb(t_FCB *fcb); 
+//guarda la estructura metadata en un archivo fisico terminado en txt
+void persistir_metadata(t_dumped *dumped, int primer_bloque ); 
 //devuelve la posicion de un bit libre en un bit array
 uint32_t encontrar_bit_libre(t_bitarray* bitarray_in); 
 

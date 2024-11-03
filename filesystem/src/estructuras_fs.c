@@ -9,20 +9,24 @@ void* bitmap;
 t_bitarray* bitarray;
 char * path_archivo_bitmap ;
 char * path_archivo_bloques;
-
+char* path_metadata;
 void iniciar_fs () {
     
     
     path_archivo_bitmap  = string_new();
     path_archivo_bloques = string_new();    
+    path_metadata = string_new();
 
     string_append(&path_archivo_bitmap,cfg_file_system->MOUNT_DIR); 
     string_append(&path_archivo_bitmap,"/bitmap.dat");
     log_info(logger_file_system, "variables cargadas  %s",path_archivo_bitmap);
     string_append(&path_archivo_bloques,cfg_file_system->MOUNT_DIR); 
     string_append(&path_archivo_bloques,"/bloques.dat");
+    string_append(&path_metadata,cfg_file_system->MOUNT_DIR); 
+    string_append(&path_metadata,"/files"); 
 
-
+    crear_directorio_si_no_existe(cfg_file_system->MOUNT_DIR);
+    crear_directorio_si_no_existe(path_metadata);
     //BITMAP//
     if(crear_bitmap (path_archivo_bitmap)>=0 ) {
         log_info(logger_file_system, "Bitmap creado correctamente");
@@ -163,52 +167,38 @@ int crear_archivo_bloques (char * path_archivo_bloques, int block_size, int bloc
     return 0;
 }// fin cargar archivo de bloques
 
-/////////////////////////////////////////////////////// FCB ///////////////////////////////////////////////////
- t_FCB* inicializar_fcb(char* nombre_archivo, uint32_t tamanio_archivo, uint32_t primer_bloque) {
-    t_FCB* fcb = malloc(sizeof(t_FCB));
-    if (!fcb) {
-        perror("Error al inicializar el FCB");
-        exit(EXIT_FAILURE);
-    }
-    memset(fcb,0, sizeof (t_FCB));
+/////////////////////////////////////////////////////// METADATA ///////////////////////////////////////////////////
 
-    fcb->nombre_archivo = strdup(nombre_archivo);
-    fcb->tamanio_archivo = tamanio_archivo;
-    fcb->primer_bloque = primer_bloque;
-    return fcb;
-}
+void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
 
-
-void persistir_fcb(t_FCB *fcb) {
-
-    char path_directory_fcb [100] ;
-    strcpy(path_directory_fcb, cfg_file_system->MOUNT_DIR);
     char file_path[100]; // Tamaño suficiente para almacenar la ruta completa del archivo
 
-    snprintf(file_path, sizeof(file_path), "%s/%s",path_directory_fcb,fcb->nombre_archivo);
-
-    t_config* file_fcb = config_create(file_path);
-    if (file_fcb == NULL) {
-        log_info(logger_file_system, "ERROR AL CREAR  CONFIG PARA PERSISTIR ARCHIVO FCB %s", file_path);
+    snprintf(file_path, sizeof(file_path), "%s/%s",path_metadata,dumped->nombre_archivo);
+    FILE* file_metadata_vacio = fopen(file_path,"w");
+    t_config* file_metadata = config_create(file_path);
+    if (file_metadata == NULL) {
+        log_info(logger_file_system, "ERROR AL CREAR  CONFIG PARA PERSISTIR ARCHIVO METADATA %s", file_path);
     }
+                            
+    char* tamanio_archivo = uint32_to_string(dumped->tamanio_archivo);
+    char* primer_bloque_char = uint32_to_string(primer_bloque);
 
-    char* tamanio_archivo = uint32_to_string(fcb->tamanio_archivo);
-    char* primer_bloque = uint32_to_string(fcb->primer_bloque);
+    config_set_value(file_metadata,"nombre_archivo", dumped->nombre_archivo );
+    log_info(logger_file_system, "PERSISTIDO PARAMETRO nombre_archivo: %s", dumped->nombre_archivo);
 
-    config_set_value(file_fcb,"nombre_archivo", fcb->nombre_archivo );
-    log_info(logger_file_system, "PERSISTIDO PARAMETRO nombre_archivo: %s", fcb->nombre_archivo);
+    config_set_value(file_metadata,"tamanio_archivo", tamanio_archivo );
+    log_info(logger_file_system, "PERSISTIDO PARAMETRO tamanio_archivo: %d", dumped->tamanio_archivo);
 
-    config_set_value(file_fcb,"tamanio_archivo", tamanio_archivo );
-    log_info(logger_file_system, "PERSISTIDO PARAMETRO tamanio_archivo: %d", fcb->tamanio_archivo);
+    config_set_value(file_metadata,"primer_bloque", primer_bloque_char );
+    log_info(logger_file_system, "PERSISTIDO PARAMETRO primer_bloque: %d",primer_bloque);
 
-    config_set_value(file_fcb,"primer_bloque", primer_bloque );
-    log_info(logger_file_system, "PERSISTIDO PARAMETRO primer_bloque: %d", fcb->primer_bloque);
-
-    if (!config_save(file_fcb)){
+    if (!config_save(file_metadata)){
         perror("Error al guardar fcb");
     };
-
-    config_destroy(file_fcb);
+    
+    config_destroy(file_metadata);
+    fclose(file_metadata_vacio);
+    
 
 }
 
@@ -221,9 +211,10 @@ void persistir_fcb(t_FCB *fcb) {
     log_info(logger_file_system, "tamanio solicitodo: %d",dumped->tamanio_archivo);
     if (hay_espacio_total_disponible(dumped->tamanio_archivo))
     {
-        t_list* lista_bloques = malloc(sizeof(t_list));
-        
-        grabar_bloques( asignar_bloques(dumped->tamanio_archivo) , dumped->contenido);
+        t_list* lista_bloques =  asignar_bloques(dumped->tamanio_archivo);
+        int primer_bloque = list_get(lista_bloques,0);
+        persistir_metadata(dumped, primer_bloque);
+        grabar_bloques(lista_bloques, dumped->contenido);
         //enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
@@ -420,4 +411,23 @@ char* uint32_to_string (uint32_t number) {
         return NULL;
     }
     return str;
+}
+
+int crear_directorio_si_no_existe(const char* path) {
+    struct stat st = {0};
+
+    // Verifica si el directorio ya existe
+    if (stat(path, &st) == -1) {
+        // Si no existe, intenta crearlo con permisos de lectura/escritura/ejecución
+        if (mkdir(path, 0777) == -1) {
+            perror("Error al crear el directorio");
+            return -1;
+        } else {
+            printf("Directorio creado: %s\n", path);
+        }
+    } else {
+        printf("El directorio ya existe: %s\n", path);
+    }
+    
+    return 0;
 }
