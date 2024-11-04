@@ -26,6 +26,7 @@ char* deserealizar_valor_memoria(t_list*  lista_paquete );
 uint32_t deserealizar_tamanio_pag(t_list*  lista_paquete );
 void atender_memoria (int *socket);
 void armar_instr(instr_t *instr, const char *input);
+void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto);
 //void *conectarConMemoria();
 //void cortar_conexiones();
 //void cerrar_servers();

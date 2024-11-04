@@ -212,6 +212,8 @@ void atender_memoria(int *socket_mr) {
                 }
             case SOLICITUD_CONTEXTO_RTA: 
                 t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
+                proceso_actual = malloc(sizeof(t_proceso));
+                deserializar_contexto_(proceso_actual,lista_paquete_contexto);
                 sem_post(&sem_valor_base_particion);
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
@@ -392,3 +394,25 @@ void free_instr(instr_t *instr) {
     if (instr->param4 != NULL) free(instr->param4);
     if (instr->param5 != NULL) free(instr->param5);
 }
+
+void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    
+   //0 pid
+   //1 tid  
+   
+    proceso->pid = *(uint32_t*)list_get(lista_contexto, 0);
+    proceso->tid = *(uint32_t*)list_get(lista_contexto, 1);
+    log_warning(logger_cpu,"program counter recibido:%s",list_get(lista_contexto, 2));
+    proceso->registros_cpu.PC = *(uint32_t*)list_get(lista_contexto, 2);
+    log_warning(logger_cpu,"program counter cargado:%d",proceso->registros_cpu.PC);
+    proceso->registros_cpu.AX = *(uint32_t*)list_get(lista_contexto, 3);
+    proceso->registros_cpu.BX = *(uint32_t*)list_get(lista_contexto, 4);
+    proceso->registros_cpu.CX = *(uint32_t*)list_get(lista_contexto, 5);
+    proceso->registros_cpu.DX = *(uint32_t*)list_get(lista_contexto, 6);
+    proceso->registros_cpu.EX = *(uint32_t*)list_get(lista_contexto, 7);
+    proceso->registros_cpu.FX = *(uint32_t*)list_get(lista_contexto, 8);
+    proceso->registros_cpu.GX = *(uint32_t*)list_get(lista_contexto, 9);
+    proceso->registros_cpu.HX = *(uint32_t*)list_get(lista_contexto, 10);
+    proceso->registros_cpu.base = *(uint32_t*)list_get(lista_contexto, 11);
+    proceso->registros_cpu.limite = *(uint32_t*)list_get(lista_contexto, 12);
+    
+}   

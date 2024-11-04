@@ -379,11 +379,13 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
 }
 
 
-void jnz(char* registro, uint32_t inst, t_proceso* proceso){
+void jnz(char* registro, char* inst_char, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
+    uint32_t inst = string_a_uint32(inst_char);
     if(valor_registro != 0){
         pthread_mutex_lock(&mutex_proceso_actual);
+        log_info(logger_cpu, "valor solcitado JNZ  %d", inst);
         proceso->registros_cpu.PC = inst;
         pthread_mutex_unlock(&mutex_proceso_actual);
     }
@@ -923,25 +925,7 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     eliminar_paquete(paquete_solicitud_contexto);
  }
 
-void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    
-   //0 pid
-   //1 tid  
-   
-    proceso->pid = *(uint32_t*)list_get(lista_contexto, 0);
-    proceso->tid = *(uint32_t*)list_get(lista_contexto, 1);
-    proceso->registros_cpu.PC = *(uint32_t*)list_get(lista_contexto, 2);
-    proceso->registros_cpu.AX = *(uint32_t*)list_get(lista_contexto, 3);
-    proceso->registros_cpu.BX = *(uint32_t*)list_get(lista_contexto, 4);
-    proceso->registros_cpu.CX = *(uint32_t*)list_get(lista_contexto, 5);
-    proceso->registros_cpu.DX = *(uint32_t*)list_get(lista_contexto, 6);
-    proceso->registros_cpu.EX = *(uint32_t*)list_get(lista_contexto, 7);
-    proceso->registros_cpu.FX = *(uint32_t*)list_get(lista_contexto, 8);
-    proceso->registros_cpu.GX = *(uint32_t*)list_get(lista_contexto, 9);
-    proceso->registros_cpu.HX = *(uint32_t*)list_get(lista_contexto, 10);
-    proceso->registros_cpu.base = *(uint32_t*)list_get(lista_contexto, 11);
-    proceso->registros_cpu.limite = *(uint32_t*)list_get(lista_contexto, 12);
-    
-}   
+
 
 void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch){
     printf("entro a paquete_solicitud_contexto\n");
@@ -953,3 +937,23 @@ void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch){
     enviar_paquete(paquete_segfault, conexion_kernel_dispatch); 
     eliminar_paquete(paquete_segfault);
 }  
+
+uint32_t string_a_uint32(const char* str) {
+    // Usa la función strtoul para convertir la cadena a un entero sin signo
+    char* endptr; // Para manejar errores de conversión
+    unsigned long result = strtoul(str, &endptr, 10); // Convertir de base 10
+
+    // Verificar si hubo un error en la conversión
+    if (*endptr != '\0') {
+        // Manejo de error: la cadena no era un número válido
+        return 0; // O manejar de otra manera según sea necesario
+    }
+
+   
+    if (result > UINT32_MAX) {
+      
+        return UINT32_MAX; // O manejar de otra manera según sea necesario
+    }
+
+    return (uint32_t)result; // Retornar el resultado como uint32_t
+}
