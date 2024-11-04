@@ -196,7 +196,7 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
         perror("Error al guardar fcb");
     };
     
-    log_info(logger_file_system,"Archivo Creado: %s - Tamaño: %d",dumped->nombre_archivo,dumped->tamanio_archivo); // LOG OBLIGATORIO
+    log_info(logger_file_system,"## Archivo Creado: %s - Tamaño: %d",dumped->nombre_archivo,dumped->tamanio_archivo); // LOG OBLIGATORIO
 
     config_destroy(file_metadata);
     fclose(file_metadata_vacio);
@@ -213,52 +213,54 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
     log_info(logger_file_system, "tamanio solicitodo: %d",dumped->tamanio_archivo);
     if (hay_espacio_total_disponible(dumped->tamanio_archivo))
     {
-        t_list* lista_bloques =  asignar_bloques(dumped->tamanio_archivo);
+        t_list* lista_bloques =  asignar_bloques(dumped->tamanio_archivo, dumped->nombre_archivo);
         int primer_bloque = list_get(lista_bloques,0);
         persistir_metadata(dumped, primer_bloque);
-        grabar_bloques(lista_bloques, dumped->contenido);
+        grabar_bloques(lista_bloques, dumped->contenido, dumped->nombre_archivo);
         //enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
         enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_ERROR,socket_cliente);
     }
-
+    log_info(logger_file_system,"## Fin de solicitud - Archivo: %s", dumped->nombre_archivo); //LOG OBLIGATORIO
 
  }
 
 
-t_list* asignar_bloques(uint32_t tamanio) {
+t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
 
     log_info(logger_file_system, "entramos en asignar bloques");
     log_info(logger_file_system, "tamanio solicitodo: %d",tamanio);
     uint32_t cant_bloques_nuevos = (tamanio / cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
     lista_punteros = malloc(sizeof(t_list));
-    int i;
+    int bloques_libres_actuales;
     log_info(logger_file_system, "CANTIDAD DE BLOQUES NECESARIOS : %d",cant_bloques_nuevos);    
 
-    for (i = 0; i < cant_bloques_nuevos; i++) {
+    for (int i = 0; i < cant_bloques_nuevos; i++) {
         uint32_t posicion_bit_libre =  encontrar_bit_libre(bitarray);
         //asignar bloques en bitmap
         bitarray_set_bit(bitarray, posicion_bit_libre);
         //colecto las posicones para luego escribir sobre ellas
         list_add(lista_punteros,posicion_bit_libre);
-        
+        sincronizar_bitmap ();
+        bloques_libres_actuales = bloques_libres();
+        log_info(logger_file_system,"## Bloque asignado: %d - Archivo: %s - Bloques Libres: %d",posicion_bit_libre, nombre_archivo, bloques_libres_actuales); //LOG OBLIGATORIO
     }
-    sincronizar_bitmap ();
+    
     return lista_punteros;
  }
 
 
- void grabar_bloques(t_list* lista_bloques, char *datos_escribir) {
+ void grabar_bloques(t_list* lista_bloques, char *datos_escribir, char* nombre_archivo) {
    int  block_size = cfg_file_system->BLOCK_SIZE;
    int datos_length = strlen(datos_escribir);
     //grabar bloque de punteros la posición de los punteros
         // el primer bloque de la lista es el bloque de punteros
-    escribir_punteros (lista_bloques);    
+    escribir_bloque_punteros (lista_bloques, nombre_archivo);    
        
     //grabar bloques de datos con los datos
-        // desde el segundo bloque
+        // desde la segunda posicion en la lista
     for (int i = 1; i < list_size(lista_bloques); i++) {
         int offset = (i - 1) * block_size; // Calcular el offset para el bloque actual
         int tamanio_fragmento;
@@ -271,12 +273,12 @@ t_list* asignar_bloques(uint32_t tamanio) {
         }
 
         // Escribir el bloque con el fragmento correspondiente
-        escribir_bloque(list_get(lista_bloques,i), tamanio_fragmento, datos_escribir + offset);
+        escribir_bloque_datos(list_get(lista_bloques,i), tamanio_fragmento, datos_escribir + offset, nombre_archivo);
     }
     fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
  }
 
-void escribir_punteros (uint32_t* lista_bloques ){
+void escribir_bloque_punteros (uint32_t* lista_bloques, char* nombre_archivo){
 
     int retardo = cfg_file_system->RETARDO_ACCESO_BLOQUE / 1000;
     sleep(retardo);
@@ -287,21 +289,14 @@ void escribir_punteros (uint32_t* lista_bloques ){
         log_info(logger_file_system,"Error al mover el puntero de archivo al bloque: %d ",posicion_bloque_punteros);
         return -1;
     }  else{
-        log_info(logger_file_system, "PUNTERO POSICIONADO EN BLOQUE: %d ",posicion_bloque_punteros );
+        log_info(logger_file_system, "## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d ",nombre_archivo, posicion_bloque_punteros); //LOG OBLIGATORIO
     };
      log_info(logger_file_system, "vamos a escribir el bloque de punteros tamaño de lista %d ",list_size(lista_bloques) );
-      log_info(logger_file_system, "contenido de lista %d ",list_get(lista_bloques,0) );
-      log_info(logger_file_system, "contenido de lista %d ",list_get(lista_bloques,1) );
-      log_info(logger_file_system, "contenido de lista %d ",list_get(lista_bloques,2) );
+  
 
-    
-    if (archivo_bloques == NULL) {
-        perror("Error al abrir el archivo");
-        return;
-    }      
     // escribe cada  puntero de tamaño 4 bytes dentro del bloque de punteros
     for (int i = 1; i < list_size(lista_bloques); i++) {
-         log_info(logger_file_system, "puntero a escribir %d ",list_get(lista_bloques,i) );
+         log_debug(logger_file_system, "puntero a escribir %d ",list_get(lista_bloques,i) );
             uint32_t puntero = list_get(lista_bloques,i);
         if (fwrite(&puntero, 4, 1, archivo_bloques)<= 0){
             log_info(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
@@ -313,7 +308,7 @@ void escribir_punteros (uint32_t* lista_bloques ){
     fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
 }
 
-void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir){
+void escribir_bloque_datos (int numero_bloque, int tamanio_escritura, char *datos_escribir, char* nombre_archivo){
 
     int retardo = cfg_file_system->RETARDO_ACCESO_BLOQUE / 1000;
     sleep(retardo);
@@ -322,7 +317,7 @@ void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escr
         log_info(logger_file_system,"Error al mover el puntero de archivo al bloque: %d ",numero_bloque);
         return -1;
     }  else{
-        log_info(logger_file_system, "PUNTERO POSICIONADO EN BLOQUE: %d ",numero_bloque );
+        log_info(logger_file_system, "## Acceso Bloque - Archivo: %s - Tipo Bloque: DATOS - Bloque File System %d ", nombre_archivo, numero_bloque); //LOG OBLIGATORIO
     };
 
     if (fwrite(datos_escribir, tamanio_escritura, 1, archivo_bloques)<= 0){
@@ -432,4 +427,14 @@ int crear_directorio_si_no_existe(const char* path) {
     }
     
     return 0;
+}
+
+int bloques_libres(){
+    int bloques_libres = 0;
+    for (int i = 0; i < bitarray_get_max_bit(bitarray); i++) {
+        if (!bitarray_test_bit(bitarray, i)) {
+            bloques_libres++;
+        }
+    }
+    return bloques_libres;
 }
