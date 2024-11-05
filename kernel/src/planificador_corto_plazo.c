@@ -136,6 +136,7 @@ void *interrupcion_quantum(void *t){
     t_tcb *tcb = (t_tcb *)t;
     usleep(config_kernel->quantum * 1000);
     enviar_interrumpir_cpu(tcb, FIN_DE_QUANTUM);
+    log_error(logger_kernel,"enviada interrupt, fin de Q de pid:%d, tid:%d",tcb->pid,tcb->tid);
     //TODO: que pasa si se interrumpe antes el tcb, por ej por IO
 
 }

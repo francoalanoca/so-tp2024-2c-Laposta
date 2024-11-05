@@ -138,10 +138,16 @@ void procesar_conexion_interrupt(void *v_args){
         switch (cop){       
             case FIN_DE_QUANTUM:
             {
+                t_list *params_fin_q = recibir_paquete(cliente_socket);
+                int pid=*((int *)list_get(params_fin_q, 0));
+                int tid=*((int *)list_get(params_fin_q, 1));    
                 log_info(logger_cpu, "## Llega interrupción al puerto Interrupt"); // LOG OBLIGATORIO
-                pthread_mutex_lock(&mutex_proceso_actual);
-                proceso_actual = NULL;               
-                pthread_mutex_unlock(&mutex_proceso_actual);
+                log_warning(logger_cpu, "INTERRUMPIENDO: PID:%d , TID: %d",pid,tid);
+                log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
+                //pthread_mutex_lock(&mutex_proceso_actual);
+                //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
+               // pthread_mutex_unlock(&mutex_proceso_actual);
+                interrupcion_kernel=true;           
                 
                 break;
             }
@@ -212,7 +218,7 @@ void atender_memoria(int *socket_mr) {
                 }
             case SOLICITUD_CONTEXTO_RTA: 
                 t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
-                proceso_actual = malloc(sizeof(t_proceso));
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
                 deserializar_contexto_(proceso_actual,lista_paquete_contexto);
                 sem_post(&sem_valor_base_particion);
             break;

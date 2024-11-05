@@ -246,7 +246,13 @@ void procesar_conexion_dispatch()
             log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
             memory_dump();
             break;
-
+        case FIN_DE_QUANTUM://Interrupcion
+            log_info(logger_kernel, "se recibio instruccion FIN_DE_QUANTUM");
+            t_list *params_fin_q = recibir_paquete(fd_conexion_cpu);
+            int pid_desalojo=*((int *)list_get(params_fin_q, 0));
+            int tid_desalojo=*((int *)list_get(params_fin_q, 1));          
+            manejar_interrupcion_fin_quantum();
+        break;
         default:
             log_info(logger_kernel," OPERACION INVALIDA RECIBIDA DE CPU ");
             
@@ -255,7 +261,15 @@ void procesar_conexion_dispatch()
         }
     }
 }
+manejar_interrupcion_fin_quantum(){
+    // Obtener el TCB del hilo que se ejecutó durante el quantum
+    t_tcb *tcb_desalojado = remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+    agregar_a_lista(tcb_desalojado,lista_ready,&(semaforos->mutex_lista_ready));
 
+    //habilito planificador y marco cpu como libre
+    sem_post(&(semaforos->contador_threads_en_ready));
+    sem_post(&(semaforos->espacio_en_cpu));
+}
 
 void mostrar_pcb(t_pcb *pcb, t_log *logger)
 {

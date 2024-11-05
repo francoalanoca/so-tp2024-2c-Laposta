@@ -200,6 +200,6 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
 void mostrar_tcbs(t_list* lista_tcb, t_log* logger);
 void memory_dump();
 void* atender_dump_memory();
-
+void manejar_interrupcion_fin_quantum();
 
 #endif /* KERNEL_H_ */
