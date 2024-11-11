@@ -201,5 +201,5 @@ void mostrar_tcbs(t_list* lista_tcb, t_log* logger);
 void memory_dump();
 void* atender_dump_memory();
 void manejar_interrupcion_fin_quantum();
-
+void enviar_respuesta_syscall_a_cpu(int respuesta);
 #endif /* KERNEL_H_ */

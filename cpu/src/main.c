@@ -33,7 +33,7 @@ pthread_mutex_t mutex_proceso_actual;
 pthread_mutex_t mutex_proceso_interrumpido_actual;
 pthread_mutex_t mutex_interrupcion_kernel;
 pthread_t hilo_atender_memoria;
-
+sem_t semaforo_respuesta_syscall;
 int socket_memoria;
 
 char *valor_registro_obtenido;
@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&mutex_proceso_interrumpido_actual, NULL);
     pthread_mutex_init(&mutex_interrupcion_kernel, NULL);
 
+    sem_init(&semaforo_respuesta_syscall,0,0);
+    
     prox_inst = malloc(sizeof(instr_t));
     printf("Creo prox_inst\n");
     

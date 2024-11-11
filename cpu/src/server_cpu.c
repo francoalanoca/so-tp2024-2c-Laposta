@@ -3,6 +3,7 @@ char* puerto_dispatch;
 char * puerto_interrupt;
 int fd_mod2 = -1;
 int fd_mod3 = -1;
+int respuesta_syscall;
 //pcb *pcb_actual;
 
 void* crear_servidor_dispatch(char* ip_cpu){
@@ -107,7 +108,6 @@ void procesar_conexion_dispatch(void *v_args){
                 printf("Codigo de operacion no identifcado\n");
                 break;
             }
-            
            
         }   
  
@@ -131,13 +131,14 @@ void procesar_conexion_interrupt(void *v_args){
 
             break;
         }
-        pthread_mutex_lock(&mutex_interrupcion_kernel);  
+        
            printf("COP:%d\n",cop);
 
 
         switch (cop){       
             case FIN_DE_QUANTUM:
             {
+                pthread_mutex_lock(&mutex_interrupcion_kernel);  
                 t_list *params_fin_q = recibir_paquete(cliente_socket);
                 int pid=*((int *)list_get(params_fin_q, 0));
                 int tid=*((int *)list_get(params_fin_q, 1));    
@@ -148,6 +149,18 @@ void procesar_conexion_interrupt(void *v_args){
                 //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
                // pthread_mutex_unlock(&mutex_proceso_actual);
                 interrupcion_kernel=true;           
+                pthread_mutex_unlock(&mutex_interrupcion_kernel);  
+                break;
+
+            }
+            case RESPUESTA_SYSCALL:
+                {
+                printf("Recibiendo respuesta syscall");
+                t_list* params_syscall= (char*)recibir_paquete(cliente_socket);
+
+                respuesta_syscall=*((int*)list_get(params_syscall,0));
+
+                sem_post(&semaforo_respuesta_syscall);
                 
                 break;
             }
@@ -160,7 +173,7 @@ void procesar_conexion_interrupt(void *v_args){
             
            
         }   
-        pthread_mutex_unlock(&mutex_interrupcion_kernel);  
+  
   
     }
 

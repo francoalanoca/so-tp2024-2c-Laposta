@@ -173,7 +173,6 @@ void check_interrupt(int conexion_kernel){
         printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
         enviar_fin_quantum_a_kernel(proceso_actual,conexion_kernel );
-   printf("ENTRO EN IF DEL  CHECK INTERRUPT luego de mutex_proceso\n");
         pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual= NULL; 
         pthread_mutex_unlock(&mutex_proceso_actual);
@@ -858,8 +857,18 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     if(es_syscall(tipo_inst)){
         enviar_contexto_a_memoria(proceso,conexion_mem);
         log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado, esperando otro...");
-        //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
+        sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
+        if(respuesta_syscall==REPLANIFICACION){
+       //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
+        pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
+        pthread_mutex_unlock(&mutex_proceso_actual);
+        
+         pthread_mutex_lock(&mutex_interrupcion_kernel);
+        interrupcion_kernel=false; 
+        pthread_mutex_unlock(&mutex_interrupcion_kernel);
+        }
+
     }
     log_info(logger_cpu, "Voy a entrar a check_interrupt");
     check_interrupt(dispatch);
