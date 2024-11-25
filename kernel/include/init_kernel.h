@@ -203,5 +203,5 @@ void* atender_dump_memory();
 void manejar_interrupcion_fin_quantum();
 void enviar_respuesta_syscall_a_cpu(int respuesta);
 void cancelar_hilos_asociados(int pid);
-void buscar_y_cancelar_tcb_asociado_a_pcb(t_list* lista,int pid,sem_t* sem);
+void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem);
 #endif /* KERNEL_H_ */
