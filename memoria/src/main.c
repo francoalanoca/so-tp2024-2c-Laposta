@@ -4,6 +4,8 @@ int main(int argc, char* argv[]) {
 
     char* path_config = argv[1];              //para correr por consola
     //char* path_config = "./memoria.config";   //para correr por vsc(debug)
+
+    char* ip_cpu = argv[2];
     
     //-------------------Configuraciones---------------------------
     if (!init(path_config) || !cargar_configuracion(path_config)) {
@@ -24,7 +26,7 @@ int main(int argc, char* argv[]) {
     log_info(logger_memoria, "Se inicio correctamente la Memoria");
 
     //-------------------Servidores------------------------
-    iniciar_servidores();
+    iniciar_servidores(ip_cpu);
     log_info(logger_memoria, "Se inicio correctamente los servidores");
 
     //saludar("memoria");

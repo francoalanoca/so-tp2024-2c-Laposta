@@ -174,7 +174,7 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
 
         //list_add(lista_particiones_dinamicas, particion); //VER
         log_info(logger_memoria, "Asiganada una particion exacta al PID - %d \n", particion->pid);
-        log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
+        //log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
     }else{
         log_info(logger_memoria, "La particion es grande para el proceso \n");
     log_info(logger_memoria, "Ajustando el tamaño a la particion");
@@ -207,7 +207,7 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     pthread_mutex_lock(&mutex_lista_particiones_dinamicas);
     list_add(lista_particiones_dinamicas, nueva_particion);
     pthread_mutex_unlock(&mutex_lista_particiones_dinamicas);
-    log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
+    //log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
     }
 
     
@@ -462,7 +462,7 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Log Obligatorio: \n");
     log_info(logger_memoria, "Destruccion de particion: \n");
-    log_info(logger_memoria, "## Proceso Destruido - PID: %d Tamanio: %d", proceso_pid, particion->tamanio);
+   // log_info(logger_memoria, "## Proceso Destruido - PID: %d Tamanio: %d", proceso_pid, particion->tamanio);
 
     particion->ocupado = false;
 

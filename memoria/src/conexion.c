@@ -4,19 +4,20 @@
 
 
 //Funcion que inicia los servidores y sockets
-void iniciar_servidores(){
+void iniciar_servidores(char* ip_memoria){
 
-    iniciar_conexiones();
+    iniciar_conexiones(ip_memoria);
     //escuchar_modulos();
 }
 
 
 
 //Funcion que inicia los socket de memoria y los demas modulos
-void iniciar_conexiones(){
+void iniciar_conexiones(char* ip_memoria){
     
     //Iniciar server de Memoria
-    socket_memoria = iniciar_servidor(logger_memoria, "Server Memoria", "127.0.0.0", cfg_memoria->PUERTO_ESCUCHA);
+    //socket_memoria = iniciar_servidor(logger_memoria, "Server Memoria", "127.0.0.0", cfg_memoria->PUERTO_ESCUCHA);
+    socket_memoria = iniciar_servidor(logger_memoria, "Server Memoria", ip_memoria, cfg_memoria->PUERTO_ESCUCHA);
     //log_info(logger_memoria,"Inicio de server Kernel exitosamente");
 
     

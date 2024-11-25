@@ -682,8 +682,11 @@ bool actualizar_contexto(t_m_contexto* contexto) {
 
 // Función que busca el miniPCB al que pertenece la dirección física
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
-    for (int i = 0; i < list_size(lista_particiones); i++) {
-        t_miniPCB* proceso = list_get(lista_particiones, i);
+    //for (int i = 0; i < list_size(lista_particiones); i++) { //CAMBIO lista_particiones por lista_miniPCBs
+    //    t_miniPCB* proceso = list_get(lista_particiones, i); //CAMBIO lista_particiones por lista_miniPCBs
+    for (int i = 0; i < list_size(lista_miniPCBs); i++) {
+        t_miniPCB* proceso = list_get(lista_miniPCBs, i);
+
         //printf("roceso->base:%d,proceso->tamanio:%d\n", proceso->base,proceso->tamanio_proceso);
         if (direccion_fisica >= proceso->base && 
             direccion_fisica < proceso->base + proceso->limite) {

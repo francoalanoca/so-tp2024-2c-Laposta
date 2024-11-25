@@ -53,6 +53,7 @@ void memoria_atender_cpu(){
 			valores = recibir_paquete(socket_cpu);
 			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
             char* instruccion = buscar_instruccion(solicitud_instruccion->pid, solicitud_instruccion->tid, solicitud_instruccion->program_counter);
+			log_info(logger_memoria, "## Obtener instrucción - (PID:TID) - (%d:%d) - Instrucción: %s\n",solicitud_instruccion->pid,solicitud_instruccion->tid,instruccion); 
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			enviar_respuesta_instruccion(instruccion, socket_cpu);    
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_INSTRUCCION_RTA \n");
@@ -69,7 +70,7 @@ void memoria_atender_cpu(){
 			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
-				log_info(logger_memoria, "“## <Escritura> - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d” \n",peticion_leer->pid,peticion_leer->tid,peticion_leer->direccion_fisica,peticion_leer->tamanio); 
+				log_info(logger_memoria, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d \n",peticion_leer->pid,peticion_leer->tid,peticion_leer->direccion_fisica,peticion_leer->tamanio); 
 				
 			}
 			else{
@@ -90,7 +91,7 @@ void memoria_atender_cpu(){
 			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
-				log_info(logger_memoria, "“## <Escritura> - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d” \n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,peticion_escribir->tamanio);
+				log_info(logger_memoria, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d\n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,peticion_escribir->tamanio);
 			}
 			else{
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -272,6 +273,9 @@ void memoria_atender_kernel(void* socket){
 			valores = recibir_paquete(fd_kernel);
 			uint32_t pid = *(uint32_t*)list_get(valores, 0);
 			uint32_t tid = *(uint32_t*)list_get(valores, 1);
+
+			log_info(logger_memoria, "## Memory Dump solicitado - (PID:TID) - (%d:%d)\n",pid,tid); 
+
 			char* nombre_archivo = generar_nombre_archivo(pid, tid);
 			uint32_t tamanio_nombre_archivo = (strlen(nombre_archivo)+1) * sizeof(char);
 
