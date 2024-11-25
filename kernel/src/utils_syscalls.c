@@ -182,7 +182,7 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
         
     return exito_eliminando_de_pcb;
  }
-
+// REVISAR: agregar la funcion utilizada en thread_cancel para ir hilo por hilo mandando a memoria y que finalice el hilo en cuestion
  //Paso un pcb y cancelo todos los tcb asociados a ese pcb en la lista en cuestion
 void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t* sem){
     sem_wait(sem);
