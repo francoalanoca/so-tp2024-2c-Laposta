@@ -234,3 +234,9 @@ void* atender_dump_memory(){
     }
     close(socket_conexion_memoria);
 }
+
+void cancelar_hilos_asociados(int pid){
+    //busca los tcb asociados al proceso en blocked y ready y lo cancela
+    buscar_y_cancelar_tcb_asociado_a_pcb(lista_ready,pid,&(semaforos->mutex_lista_ready));
+    buscar_y_cancelar_tcb_asociado_a_pcb(lista_blocked,pid,&(semaforos->mutex_lista_blocked));
+}

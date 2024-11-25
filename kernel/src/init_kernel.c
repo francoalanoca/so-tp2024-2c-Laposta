@@ -118,10 +118,14 @@ void procesar_conexion_dispatch()
         case PROCESO_SALIR:
          t_list *params_proceso_salir = recibir_paquete(fd_conexion_cpu);
                 log_info(logger_kernel, "se recibio instruccion PROCESO SALIR:");
-                //TODO: implementar la finalizacion de proceso: ELIMINACION DE HILOS RESTANTES (SI LOS HAY) 
+                //TODO: implementar la finalizacion de proceso: ELIMINACION DE HILOS RESTANTES (SI LOS HAY)
+
                 sem_wait(&(semaforos->mutex_lista_exec));
                 t_tcb *proceso_a_finalizar =(t_tcb*) list_get(lista_exec, 0);
                 sem_post(&(semaforos->mutex_lista_exec));
+
+                cancelar_hilos_asociados (proceso_a_finalizar->pid);
+
                 pasar_execute_a_exit();
                 thread_exit(proceso_a_finalizar);
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
@@ -274,6 +278,7 @@ void procesar_conexion_dispatch()
         }
     }
 }
+
 void manejar_interrupcion_fin_quantum(){
     // Obtener el TCB del hilo que se ejecutó durante el quantum
     pasar_execute_a_ready();

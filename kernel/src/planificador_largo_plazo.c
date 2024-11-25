@@ -74,10 +74,15 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
         sem_wait(sem_origen);
         t_tcb* tcb = (t_tcb*)list_remove(lista_origen, 0);
         sem_post(sem_origen);
-        sem_wait(sem_destino);
-        tcb->estado = nuevo_estado;
-        list_add(lista_destino, tcb);
-        sem_post(sem_destino);
+        if (nuevo_estado == EXIT){
+            log_trace(logger_kernel, "Hilo con TID %d movido a la lista EXIT", tcb->tid);
+            
+        }else{
+            sem_wait(sem_destino);
+            tcb->estado = nuevo_estado;
+            list_add(lista_destino, tcb);
+            sem_post(sem_destino);
+
         if (nuevo_estado == NEW) {
             log_trace(logger_kernel, "Hilo con TID %d movido a la lista NEW", tcb->tid);
         }
@@ -89,12 +94,11 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
         }
         else if(nuevo_estado == BLOCKED){
             log_trace(logger_kernel, "Hilo con TID %d movido a la lista BLOCKED", tcb->tid);
+        }else 
+            log_info(logger_kernel, "No hay hilos en la lista origen");
         }
-        else if(nuevo_estado == EXIT){
-            log_trace(logger_kernel, "Hilo con TID %d movido a la lista EXIT", tcb->tid);
         }
-    }else 
-        log_info(logger_kernel, "No hay hilos en la lista origen");
+        
 }
 
 
