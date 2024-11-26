@@ -48,17 +48,16 @@ typedef struct
 
 extern t_FCB *fcb;
 
-t_FCB* inicializar_fcb(char* nombre_archivo, uint32_t tamanio_archivo, uint32_t primer_bloque);
- 
 
 char* uint32_to_string (uint32_t number);
 
 
 ///////////////////////////////////////////////FUNCIONALIDADES//////////////////////////////////////
 void dumpear(t_dumped* dumped, int socket_cliente);
-t_list* asignar_bloques(uint32_t tamanio);
-void escribir_bloque (int numero_bloque, int tamanio_escritura, char *datos_escribir);
-void grabar_bloques(t_list* lista_bloques, char *datos_escribir);
+t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo);
+void escribir_bloque_punteros (uint32_t* lista_bloques, char* nombre_archivo);
+void escribir_bloque_datos (int numero_bloque, int tamanio_escritura, char *datos_escribir, char* nombre_archivo);
+void grabar_bloques(t_list* lista_bloques, char *datos_escribir, char* nombre_archivo);
 //Devuelve la posicion del primer bit libre que encuentra.
 uint32_t encontrar_bit_libre(t_bitarray* bitarray);
 
@@ -66,7 +65,7 @@ uint32_t encontrar_bit_libre(t_bitarray* bitarray);
 // devuelve si hay espacio disponible no importa si está contiguo
 bool hay_espacio_total_disponible(int espacio_necesario);
 
-//inicia la interfaz 
+//inicia la filesystem 
 void iniciar_fs (); 
 int crear_bitmap (char * path_archivo_bitmap);
 // sincroniza el bitarray en memoria y con el archivo fisico.
@@ -78,7 +77,7 @@ void cerrar_bitmap();
 void persistir_metadata(t_dumped *dumped, int primer_bloque ); 
 //devuelve la posicion de un bit libre en un bit array
 uint32_t encontrar_bit_libre(t_bitarray* bitarray_in); 
-
+int bloques_libres();
 void imprimir_estado_bitarray() ;
 //para liberar la memoria ocupada por un fcb
 void free_t_FCB(t_FCB* fcb); 
