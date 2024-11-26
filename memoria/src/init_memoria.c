@@ -265,6 +265,7 @@ void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
     particion_dinamica_inicial->tamanio = cfg_memoria->TAM_MEMORIA;
     particion_dinamica_inicial->ocupado = false;
     //lista_particiones_dinamicas->siguiente = NULL;
+    lista_miniPCBs = list_create();
 
     list_add(lista_particiones_dinamicas, particion_dinamica_inicial);
 }
@@ -565,14 +566,18 @@ void print_bitarray(t_bitarray *bitarray) {
 }
 
 bool existe_proceso_en_memoria(uint32_t pid){
-
-    for (int i = 0; i < list_size(lista_miniPCBs); i++) {
+    printf("ENTRA EXISTE PROCESO");
+    if(list_size(lista_miniPCBs) != 0){
+        for (int i = 0; i < list_size(lista_miniPCBs); i++) {
         t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
-
+        printf("ENTRA FOR: %d",i);
         if (proceso_actual->pid == pid) {
             return true;
+            printf("ENTRA IF FOR: %d",i);
         }
     }
+    }
+
     return false; 
 
 }

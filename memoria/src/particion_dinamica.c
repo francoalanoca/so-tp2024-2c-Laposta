@@ -3,8 +3,10 @@
 int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
     int respuesta;
+     printf("ENTRA CREAR PROCESO");
 
     if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
+        printf("ENTRA DINAMICAS");
         respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
     }else{
         if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
@@ -16,7 +18,7 @@ int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
 //Funcion que crea las estructuras del proceso
 int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
-
+    printf("ENTRA CREAR PROCESO DINAMICO");
     //log_info(logger_memoria, "Creacion del proceso dinamico PID - %i \n", proceso_pid);
     log_info(logger_memoria, "Iniciando estructura dinamica \n");
     
@@ -31,19 +33,19 @@ int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
 int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
-    t_particion_dinamica *particion_resultante;
+    t_particion_dinamica *particion_resultante = NULL;
 
 
     // Selecciona la partición según el algoritmo
-    if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "FIRST_FIT") == 0) {
+    if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "FIRST") == 0) {
         particion_resultante = buscar_first_fit(tamanio_proceso);
         log_info(logger_memoria, "Se eligio la primer particion posible \n");
 
-    } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "BEST_FIT") == 0) {
+    } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "BEST") == 0) {
         particion_resultante = buscar_best_fit(tamanio_proceso);
         log_info(logger_memoria, "Se eligio la mejor particion posible \n");
 
-    } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "WORST_FIT") == 0) {
+    } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "WORST") == 0) {
         particion_resultante = buscar_worst_fit(tamanio_proceso);
         log_info(logger_memoria, "Se eligio la peor particion posible \n");
     }
@@ -96,17 +98,18 @@ t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
 
     //iniciamos la variable mejor en Null
     t_particion_dinamica *mejor_particion = NULL;
-
+ printf("ENTRO A BUSCAR BEST\n");
     //Recorremos la lista de particiones comparando en cada iteracion
     for (int i = 0; i < list_size(lista_particiones_dinamicas); i++){
-
+        printf("ENTRO A FOR\n");
         particion = list_get(lista_particiones_dinamicas, i);
 
         //Verificamos que la particion obtenida este libre y sea >= al proceso
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
-
+            printf("ENTRO A IF PARTICION > PROCESO\n");
             //Verificamos si todavia no hay una mejor o si el tamaño particion actual es menor a la mejor actual 
             if (mejor_particion == NULL || particion->tamanio < mejor_particion->tamanio) {
+                printf("ENTRO A IF MEJOR PARTICION\n");
                 mejor_particion = particion;
             }
         }

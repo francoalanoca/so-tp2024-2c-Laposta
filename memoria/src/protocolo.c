@@ -164,17 +164,21 @@ void memoria_atender_kernel(void* socket){
             break;
 		
 		case INICIAR_PROCESO:
-			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
+			log_info(logger_memoria, "Recibí INICIAR_PROCESO:%d \n");
 			valores = recibir_paquete(fd_kernel);
 
 			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
+			printf("SALIO DE DESEREALIZACION:%d\n",iniciar_proceso->pid);
 			if(existe_proceso_en_memoria(iniciar_proceso->pid)){
+				printf("ENTRA EXISTE\n"); 
 				//Enviar rta ERROR:Ya existe
 				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_ERROR_YA_EXISTE);
 			}
 			else{
+				printf("ENTRA EXISTE FALSE\n"); 
 				//INICIO MUTEX
 				int rta_crear_proceso = crear_proceso(iniciar_proceso->pid,iniciar_proceso->tamanio_proceso);
+				printf("SALE CREAR PROCESO\n"); 
 				//FIN MUTEX
 				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
 				//inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso);
