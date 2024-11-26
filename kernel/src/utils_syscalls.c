@@ -14,7 +14,7 @@ t_pcb* crear_pcb(int tam_proceso,char* archivo_instrucciones,int prioridad_th0) 
  
     return pcb;
 }
-void añadir_tid_a_proceso(t_pcb* pcb){
+void anadir_tid_a_proceso(t_pcb* pcb){
     list_add(pcb->lista_tids,&(pcb->contador_AI_tids));
     pcb->contador_AI_tids++;
 }
