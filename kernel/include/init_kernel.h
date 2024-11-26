@@ -200,6 +200,8 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
 void mostrar_tcbs(t_list* lista_tcb, t_log* logger);
 void memory_dump();
 void* atender_dump_memory();
-
-
+void manejar_interrupcion_fin_quantum();
+void enviar_respuesta_syscall_a_cpu(int respuesta);
+void cancelar_hilos_asociados(int pid);
+void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem);
 #endif /* KERNEL_H_ */

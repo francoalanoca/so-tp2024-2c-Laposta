@@ -155,14 +155,27 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
         }
 
 }
+void enviar_fin_quantum_a_kernel(    t_proceso *proceso,int socket){
+    t_paquete* paquete_fin_quantum;
+    paquete_fin_quantum = crear_paquete(FIN_DE_QUANTUM);
+    agregar_a_paquete(paquete_fin_quantum, &(proceso->pid), sizeof(uint32_t));
+    agregar_a_paquete(paquete_fin_quantum, &(proceso->tid), sizeof(uint32_t));
+    enviar_paquete(paquete_fin_quantum, socket);
+    log_warning(logger_cpu, "TIEMPO DE QUANTUM TERMINADO - PID: %d, TID: %d", proceso->pid, proceso->tid);
+    eliminar_paquete(paquete_fin_quantum);
+}
 
 void check_interrupt(int conexion_kernel){
      printf("ENTRO EN CHECK INTERRUPT\n");    
   
     pthread_mutex_lock(&mutex_interrupcion_kernel);
     if(interrupcion_kernel){
-        proceso_actual= NULL;   
         printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
+        enviar_contexto_a_memoria(proceso_actual,socket_memoria);
+        enviar_fin_quantum_a_kernel(proceso_actual,conexion_kernel );
+        pthread_mutex_lock(&mutex_proceso_actual);
+        proceso_actual= NULL; 
+        pthread_mutex_unlock(&mutex_proceso_actual);
        
         interrupcion_kernel = false;
     }
@@ -844,11 +857,21 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     if(es_syscall(tipo_inst)){
         enviar_contexto_a_memoria(proceso,conexion_mem);
         log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado, esperando otro...");
-        free(proceso_actual);
+        sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
+        if(respuesta_syscall==REPLANIFICACION){
+       //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
+        pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
+        pthread_mutex_unlock(&mutex_proceso_actual);
+        
+         pthread_mutex_lock(&mutex_interrupcion_kernel);
+        interrupcion_kernel=false; 
+        pthread_mutex_unlock(&mutex_interrupcion_kernel);
+        }
+
     }
     log_info(logger_cpu, "Voy a entrar a check_interrupt");
-    check_interrupt(socket_dispatch);
+    check_interrupt(dispatch);
     log_info(logger_cpu, "Sale de check_interrupt");
     log_info(logger_cpu, "Termino ciclo de instrucciones");
 

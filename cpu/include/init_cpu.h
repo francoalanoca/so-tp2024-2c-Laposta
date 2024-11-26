@@ -31,7 +31,8 @@ extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
 extern int base_particion;
 
-
+extern int respuesta_syscall;
+extern sem_t semaforo_respuesta_syscall;
 typedef struct {
     t_log *log;
     int fd;

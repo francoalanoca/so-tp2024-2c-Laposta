@@ -43,7 +43,10 @@ typedef  enum
     SOLICITUD_DE_MUTEX_BLOQUEADA,
     
     SEGMENTATION_FAULT,
-
+    
+    RESPUESTA_SYSCALL,
+    CONTINUA_EJECUTANDO_HILO,
+    REPLANIFICACION,
 
 //---------------CPU-MEMORIA-------------------
     SOLICITUD_CONTEXTO,

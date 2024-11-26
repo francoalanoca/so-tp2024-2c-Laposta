@@ -76,22 +76,26 @@ void mutex_lock(char* recurso){
             log_warning(logger_kernel,"lockeando mutex: %s",mutex->recurso);
             asignar_mutex(tcb_ejecutando,mutex);
             //continua ejecutando el mismo tcb-->vuelvo a  enviar el mismo tcb a ejecutar
-            enviar_thread_a_cpu(tcb_ejecutando,config_kernel->conexion_cpu_dispatch);
+           // enviar_thread_a_cpu(tcb_ejecutando,config_kernel->conexion_cpu_dispatch);
+            enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
+
         }else{
             //se bloquea--> quito el tcb de exec y lo mando a espera de mutex y bloq
             // y marco la cpu como libre
-            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
-            
+            /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));           
+            agregar_a_lista(tcb_ejecutando,lista_blocked,&(semaforos->mutex_lista_blocked));*/
             list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);
-            
-            agregar_a_lista(tcb_ejecutando,lista_blocked,&(semaforos->mutex_lista_blocked));
-            
+            pasar_execute_a_blocked();
+            enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
             sem_post(&(semaforos->espacio_en_cpu));
 
         }   
     }else{//si no existe el mutex->mando a exit el tcb que hizo el lock y activo el planificador
-            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
-            agregar_a_lista(tcb_ejecutando,lista_exit,&(semaforos->mutex_lista_exit));
+           /* remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            agregar_a_lista(tcb_ejecutando,lista_exit,&(semaforos->mutex_lista_exit));*/
+            pasar_execute_a_exit();
+            enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
+
             sem_post(&(semaforos->espacio_en_cpu));
     }
 }
@@ -115,10 +119,13 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
         
         }
             //continua ejecutando el que hizo la syscall
-            enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
+            //enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
+            enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
+
     }else{ //no existe mutex-> mando hilo a exit y activo el planificador
             remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
+            enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
             sem_post(&(semaforos->espacio_en_cpu));
         }
 
@@ -184,13 +191,16 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
         }
          if(tcb_target!=NULL) { 
             tcb_en_exec->thread_target=tcb_target;
-            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
-            agregar_a_lista(tcb_en_exec,lista_blocked,&(semaforos->mutex_lista_blocked));
+            /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            agregar_a_lista(tcb_en_exec,lista_blocked,&(semaforos->mutex_lista_blocked));*/
+            pasar_execute_a_blocked();
+            enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
             
             }
     }else    //continua ejecutando el que hizo la syscall
-        enviar_thread_a_cpu(tcb_en_exec,config_kernel->conexion_cpu_dispatch);
+       // enviar_thread_a_cpu(tcb_en_exec,config_kernel->conexion_cpu_dispatch);
+            enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);       
 }
 
 void memory_dump()
@@ -223,4 +233,10 @@ void* atender_dump_memory(){
         agregar_a_lista(thread_en_cuestion, lista_ready, &(semaforos->mutex_lista_ready));
     }
     close(socket_conexion_memoria);
+}
+
+void cancelar_hilos_asociados(int pid){
+    //busca los tcb asociados al proceso en blocked y ready y lo cancela
+    buscar_y_cancelar_tcb_asociado_a_pcb(pid,lista_ready,&(semaforos->mutex_lista_ready));
+    buscar_y_cancelar_tcb_asociado_a_pcb(pid,lista_blocked,&(semaforos->mutex_lista_blocked));
 }

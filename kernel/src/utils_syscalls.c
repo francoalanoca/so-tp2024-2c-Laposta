@@ -182,6 +182,21 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
         
     return exito_eliminando_de_pcb;
  }
+// REVISAR: agregar la funcion utilizada en thread_cancel para ir hilo por hilo mandando a memoria y que finalice el hilo en cuestion
+ //Paso un pcb y cancelo todos los tcb asociados a ese pcb en la lista en cuestion
+void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t* sem){
+    sem_wait(sem);
+    t_tcb* tcb=NULL;
+    for(int i=0;i<list_size(lista_en_custion);i++){
+        t_tcb* tcb_aux=(t_tcb*)list_get(lista_en_custion,i);
+        if(tcb_aux->pid==pid){
+            tcb=tcb_aux;
+            list_remove(lista_en_custion,i);
+        }
+    }
+    sem_post(sem);
+}
+
 //busca un tcb en una lista por su tid y pid y lo remueve
 t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_wait(sem);
