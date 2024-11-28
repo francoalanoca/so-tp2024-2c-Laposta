@@ -144,7 +144,7 @@ void procesar_conexion_interrupt(void *v_args){
                 int tid=*((int *)list_get(params_fin_q, 1));    
                 log_info(logger_cpu, "## Llega interrupción al puerto Interrupt"); // LOG OBLIGATORIO
                 log_warning(logger_cpu, "INTERRUMPIENDO: PID:%d , TID: %d",pid,tid);
-                log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
+                //log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
                 //pthread_mutex_lock(&mutex_proceso_actual);
                 //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
                // pthread_mutex_unlock(&mutex_proceso_actual);
@@ -234,6 +234,19 @@ void atender_memoria(int *socket_mr) {
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
                 deserializar_contexto_(proceso_actual,lista_paquete_contexto);
                 sem_post(&sem_valor_base_particion);
+            break;
+            case WRITE_MEMORIA_RTA_OK: 
+                t_list* lista_paquete_memoria_ok = recibir_paquete(socket_memoria_server);
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                sem_post(&sem_esperando_read_write_mem);
+                
+            break;
+            case WRITE_MEMORIA_RTA_ERROR: 
+                t_list* lista_paquete_memoria_error = recibir_paquete(socket_memoria_server);
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                sem_post(&sem_esperando_read_write_mem);
+                log_error(logger_cpu, "Error al escribir en memoria");
+                
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);

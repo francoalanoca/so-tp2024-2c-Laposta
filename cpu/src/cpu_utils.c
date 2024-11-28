@@ -580,10 +580,10 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     printf("paso sem_valor_registro_recibido\n");
 
     log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
+
+    sem_wait(&sem_esperando_read_write_mem); //Revisar aca
+
     set(registro_datos,valor_registro_obtenido,proceso);
- 
-    
-    
 
 }
 
@@ -603,6 +603,8 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
     
     log_info(logger_cpu, "TID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->tid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
+
+    sem_wait(&sem_esperando_read_write_mem);
 
 }
 

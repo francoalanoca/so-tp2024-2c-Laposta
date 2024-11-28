@@ -29,6 +29,7 @@ sem_t sem_interrupcion_kernel;
 sem_t sem_check_interrupcion_kernel;
 sem_t sem_conexion_interrupt_iniciado;
 sem_t sem_conexion_dispatch_iniciado;
+sem_t sem_esperando_read_write_mem;
 pthread_mutex_t mutex_proceso_actual;
 pthread_mutex_t mutex_proceso_interrumpido_actual;
 pthread_mutex_t mutex_interrupcion_kernel;
@@ -58,6 +59,7 @@ int main(int argc, char *argv[])
     sem_init(&sem_check_interrupcion_kernel, 0, 0);
     sem_init(&sem_conexion_interrupt_iniciado, 0, 0);
     sem_init(&sem_conexion_dispatch_iniciado, 0, 0);
+    sem_init(&sem_esperando_read_write_mem, 0, 0);
     pthread_mutex_init(&mutex_proceso_actual, NULL);
     pthread_mutex_init(&mutex_proceso_interrumpido_actual, NULL);
     pthread_mutex_init(&mutex_interrupcion_kernel, NULL);
