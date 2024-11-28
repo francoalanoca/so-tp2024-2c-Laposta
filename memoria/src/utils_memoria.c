@@ -360,11 +360,10 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
     peticion_guardar->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 2);
     printf("Direccion fisica: %d \n", peticion_guardar->direccion_fisica);
 
-    peticion_guardar->tamanio = *(uint32_t*)list_get(lista_paquete, 3);
-    printf("Tamanio proceso: %d \n", peticion_guardar->tamanio);
-
-    peticion_guardar->valor = list_get(lista_paquete, 4);
+    peticion_guardar->valor = list_get(lista_paquete, 3);
     printf("Valor: %s \n", peticion_guardar->valor);
+
+    
 
     return peticion_guardar;
 }
