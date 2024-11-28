@@ -52,14 +52,14 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
             case READ_MEM:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: READ_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                read_mem(inst->param1,inst->param2,proceso_actual,conexion);
+                read_mem(inst->param1,inst->param2,proceso,conexion); //proceso estaba como proceso_actual, revisar esto ya que en los otros estan como proceso
                 break;
             }   
 
             case WRITE_MEM:
             {
                 log_info(logger_cpu, "TID: %u - Ejecutando: WRITE_MEM - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
-                write_mem(inst->param1,inst->param2,proceso_actual,conexion);
+                write_mem(inst->param1,inst->param2,proceso,conexion);//proceso estaba como proceso_actual, revisar esto ya que en los otros estan como proceso
                 break;
             }   
 
@@ -598,7 +598,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso->registros_cpu.base,conexion, conexion_kernel_dispatch);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso.base,conexion, conexion_kernel_dispatch);
 
     enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
     
@@ -611,7 +611,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int conexion){
         printf("entro a pedir_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
-        paquete_pedido_valor_memoria = (READ_MEMORIA); 
+        paquete_pedido_valor_memoria = crear_paquete(READ_MEMORIA); 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
         agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));            
@@ -623,7 +623,7 @@ void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int 
 void enviar_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, uint32_t valor, int conexion){
         printf("entro a enviar_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
-        paquete_pedido_valor_memoria = (WRITE_MEMORIA); 
+        paquete_pedido_valor_memoria = crear_paquete(WRITE_MEMORIA); 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
         agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));
