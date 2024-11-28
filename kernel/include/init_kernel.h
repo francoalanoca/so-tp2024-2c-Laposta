@@ -137,7 +137,7 @@ void cargar_config_kernel(char *ruta_config);
 void process_create(char* ruta_instrucciones,int tamanio_proceso,int prioridad_hilo_main);
 t_pcb* crear_pcb(int tam_proceso,char*archivo_instrucciones,int prioridad) ;
 t_tcb* crear_tcb(int prio,int pid);
-void añadir_tid_a_proceso(t_pcb* pcb);
+void anadir_tid_a_proceso(t_pcb* pcb);
 void enviar_solicitud_espacio_a_memoria(t_pcb* pcb_solicitante,int socket);
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria);
 
