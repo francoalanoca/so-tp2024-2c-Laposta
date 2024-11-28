@@ -598,7 +598,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
-    uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso.base,conexion, conexion_kernel_dispatch);
+    uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso,conexion, conexion_kernel_dispatch);
 
     enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
     
