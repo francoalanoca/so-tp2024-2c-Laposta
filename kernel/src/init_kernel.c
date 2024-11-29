@@ -113,6 +113,7 @@ void procesar_conexion_dispatch()
 
         int fd_conexion_cpu = config_kernel->conexion_cpu_dispatch;
         int operacion = recibir_operacion(fd_conexion_cpu);
+        log_info(logger_kernel, "se recibio el codigo de operacion: %d", operacion);
         switch (operacion)
         {
         case PROCESO_SALIR:

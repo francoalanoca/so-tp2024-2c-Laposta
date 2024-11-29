@@ -155,7 +155,7 @@ void procesar_conexion_interrupt(void *v_args){
             }
             case RESPUESTA_SYSCALL:
                 {
-                printf("Recibiendo respuesta syscall");
+                log_info(logger_cpu, "Recibiendo respuesta syscall");
                 t_list* params_syscall= (char*)recibir_paquete(cliente_socket);
 
                 respuesta_syscall=*((int*)list_get(params_syscall,0));

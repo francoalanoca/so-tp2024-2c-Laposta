@@ -140,6 +140,7 @@ void *interrupcion_quantum(void *t){
     //TODO: que pasa si se interrumpe antes el tcb, por ej por IO
 
 }
+
 void enviar_interrumpir_cpu(t_tcb* tcb, int motivo_interrrupt){
     t_paquete* paquete=crear_paquete(FIN_DE_QUANTUM);
     agregar_a_paquete(paquete,&(tcb->pid),sizeof(int));
