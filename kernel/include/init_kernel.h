@@ -77,6 +77,7 @@ typedef struct{
     pthread_t hilo_prioridades;
     pthread_t hilo_colas_multinivel;
     pthread_t hilo_bloqueados;//maneja io,mutex, join
+    pthread_t hilo_quantum;
     
 }t_hilos;
 
@@ -106,6 +107,7 @@ typedef struct{
     sem_t sem_io_sleep_en_uso;
     sem_t sem_io_solicitud;
     sem_t sem_sleep_io;
+    sem_t sem_finalizacion_ejecucion_cpu;
 
 
     sem_t mutex_conexion_dispatch;
@@ -169,7 +171,7 @@ void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar,int socket_dispatch);
 void ejecutar_io(int tiempo);
 void *manejar_bloqueados();
 
-void *interrupcion_quantum(void *t);
+void *interrupcion_quantum();
 t_mutex* buscar_mutex(char* recurso,int pid);
 void asignar_mutex(t_tcb * tcb, t_mutex* mutex);
 t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex);
@@ -195,7 +197,7 @@ void inicializar_hilo_intefaz_io();
 void interfaz_io();
 void hilo_sleep_io();
 int buscar_indice_de_mayor_prioridad();
-void iniciar_quantum(t_tcb* tcb);
+void iniciar_quantum();
 void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_origen, sem_t* sem_destino, t_estado nuevo_estado);
 void mostrar_tcbs(t_list* lista_tcb, t_log* logger);
 void memory_dump();
@@ -204,4 +206,6 @@ void manejar_interrupcion_fin_quantum();
 void enviar_respuesta_syscall_a_cpu(int respuesta);
 void cancelar_hilos_asociados(int pid);
 void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem);
+void inicializar_hilo_verificacion_fin_de_ejecucion();
+void verificar_fin_ejecucion_prev_quantum();
 #endif /* KERNEL_H_ */
