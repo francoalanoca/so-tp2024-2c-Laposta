@@ -116,6 +116,22 @@ void procesar_conexion_dispatch()
         log_info(logger_kernel, "se recibio el codigo de operacion: %d", operacion);
         switch (operacion)
         {
+        case SEGMENTATION_FAULT: // Sigo el mismo comportamiento que PROCESO_SALIR
+            t_list *params_proceso_seg_fault = recibir_paquete(fd_conexion_cpu);
+            log_info(logger_kernel, "se recibio instruccion SEGMENTATION_FAULT:");
+
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *proceso_a_finalizar_seg_fault = (t_tcb *)list_get(lista_exec, 0);
+            sem_post(&(semaforos->mutex_lista_exec));
+
+            cancelar_hilos_asociados(proceso_a_finalizar_seg_fault->pid);
+
+            pasar_execute_a_exit();
+
+            enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
+            sem_post(&(semaforos->espacio_en_cpu));
+
+            break;
         case PROCESO_SALIR:
          t_list *params_proceso_salir = recibir_paquete(fd_conexion_cpu);
                 log_info(logger_kernel, "se recibio instruccion PROCESO SALIR:");
@@ -128,7 +144,7 @@ void procesar_conexion_dispatch()
                 cancelar_hilos_asociados (proceso_a_finalizar->pid);
 
                 pasar_execute_a_exit();
-                thread_exit(proceso_a_finalizar);
+                thread_exit(proceso_a_finalizar); //revisar esto, parace estar de mas
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
                 sem_post(&(semaforos->espacio_en_cpu));
                 log_warning(logger_kernel, "HILOS EN EXIT");
