@@ -289,7 +289,7 @@ void hilo_sleep_io() {
 
             int tiempo = tcb_usando_io->tiempo_de_io;
             log_info(logger_kernel, "## IO en uso por %d milisegundos", tiempo);
-            sleep(tiempo);
+            usleep(tiempo);
             sem_post(&(semaforos->sem_io_sleep_en_uso));
         } else {
             sem_post(&(semaforos->mutex_lista_espera_io));
