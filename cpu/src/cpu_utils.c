@@ -396,11 +396,12 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
 void jnz(char* registro, char* inst_char, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
-    uint32_t inst = string_a_uint32(inst_char);
+    uint32_t inst = 3  ;//string_a_uint32(inst_char);
     if(valor_registro != 0){
         pthread_mutex_lock(&mutex_proceso_actual);
         log_info(logger_cpu, "valor solcitado JNZ  %d", inst);
         proceso->registros_cpu.PC = inst;
+        log_info(logger_cpu, "valor nuevo  %d", proceso->registros_cpu.PC);
         pthread_mutex_unlock(&mutex_proceso_actual);
     }
 }
