@@ -180,7 +180,7 @@ int inicializar_memoria(){
     }else{
 
         if (strcmp(cfg_memoria->ESQUEMA,"DINAMICAS") == 0){
-            inicializar_memoria_particiones_dinamicas(memoria_usuario);
+            inicializar_memoria_particiones_dinamicas(cfg_memoria->TAM_MEMORIA);
         }
         
     }
@@ -254,7 +254,7 @@ int inicializar_memoria(){
 
 
 //Funcion que inicia las variables de memoria en dinamica
-void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
+void inicializar_memoria_particiones_dinamicas(uint32_t tamanio_memoria) {
 
     lista_particiones_dinamicas = list_create();
     t_particion_dinamica* particion_dinamica_inicial = malloc(sizeof(t_particion_dinamica));
@@ -268,6 +268,8 @@ void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria) {
     lista_miniPCBs = list_create();
 
     list_add(lista_particiones_dinamicas, particion_dinamica_inicial);
+
+    memoria_usuario = malloc(tamanio_memoria);
 }
 
 
@@ -701,7 +703,7 @@ t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     return NULL; // Si no se encuentra un proceso que contenga la dirección
 }
 
-bool write_mem(uint32_t direccion_fisica, char* valor) {
+bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
    // Obtenemos el proceso correspondiente a la dirección
     t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
     //printf("Escribire el bloque correspondiente a particion %d:\n", proceso->pid);
@@ -710,6 +712,12 @@ bool write_mem(uint32_t direccion_fisica, char* valor) {
         return false;
     }
 
+    log_info(logger_memoria, "WRITE_MEM: valor: %d \n",valor);
+
+    log_info(logger_memoria, "WRITE_MEM: direccion_fisica: %d \n",direccion_fisica);
+
+    log_info(logger_memoria, "WRITE_MEM: base:%d, limite: %d \n",proceso->base,proceso->limite);
+
     // Verificamos que los bytes que queremos escribir no se pasen del espacio del proceso
     if (direccion_fisica + 4 > proceso->base + proceso->limite) {
         // No hay suficiente espacio para escribir la cadena completa
@@ -717,40 +725,70 @@ bool write_mem(uint32_t direccion_fisica, char* valor) {
     }
 
     // Calculamos la posición en la memoria a partir de la dirección física
-    uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+    uint8_t* posicion_memoria = malloc(sizeof(uint8_t*));
+    posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+    log_info(logger_memoria, "WRITE MEM: posicion_memoria: %p\n", (void*)posicion_memoria);
 
     // Escribimos la cadena en la posición calculada
-    memcpy(posicion_memoria, valor, 4);
+    memcpy(posicion_memoria, &valor, 4);
 
     return true;  // La escritura fue exitosa
 }
 
 // Función para leer 4 bytes si la dirección está dentro del proceso
-bool read_mem(uint32_t direccion_fisica, char* resultado) {
+bool read_mem(uint32_t direccion_fisica, uint32_t* resultado) {
     uint32_t longitud = 4;  // Siempre leemos 4 bytes
 
-    // Obtenemos el proceso correspondiente a la dirección
-    t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
-    //printf("Leere el bloque correspondiente a particion %d:\n", proceso->pid);
-    if (proceso == NULL) {
-        // No se encontró ningún proceso que contenga la dirección
+    // Validar que memoria_usuario esté inicializado
+    if (memoria_usuario == NULL) {
+        log_info(logger_memoria, "READ_MEM: memoria_usuario no está inicializado\n");
         return false;
     }
 
-    // Verificamos que los 4 bytes no se pasen del espacio del proceso
+    // Obtenemos el proceso correspondiente a la dirección
+    t_miniPCB* proceso = obtener_particion_proceso(direccion_fisica);
+    if (proceso == NULL) {
+        log_info(logger_memoria, "READ_MEM: NO ENCONTRO PROCESO PARA LA DIR \n");
+        return false;
+    }
+
+    log_info(logger_memoria, "READ_MEM: PROCESO: PID:%d \n", proceso->pid);
+
+    // Validar que direccion_fisica esté dentro del rango permitido
+    if (direccion_fisica < proceso->base || direccion_fisica >= proceso->base + proceso->limite) {
+        log_info(logger_memoria, "READ_MEM: direccion_fisica fuera de rango \n");
+        return false;
+    }
+
+    // Verificar que hay espacio suficiente para leer los 4 bytes completos
     if (direccion_fisica + longitud > proceso->base + proceso->limite) {
-        // No hay suficiente espacio para leer los 4 bytes
+        log_info(logger_memoria, "READ_MEM: NO HAY ESPACIO SUFICIENTE PARA LEER LOS 4 BYTES\n");
+        return false;
+    }
+
+    log_info(logger_memoria, "direccion_fisica: %d \n", direccion_fisica);
+    log_info(logger_memoria, "READ_MEM: base:%d, limite: %d \n", proceso->base, proceso->limite);
+
+    // Validar que resultado no sea NULL
+    if (resultado == NULL) {
+        log_info(logger_memoria, "READ_MEM: Puntero resultado es NULL\n");
         return false;
     }
 
     // Calculamos la posición en la memoria a partir de la dirección física
     uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+    log_info(logger_memoria, "READ_MEM: posicion_memoria: %p\n", (void*)posicion_memoria);
 
     // Leemos los 4 bytes de la posición calculada
     memcpy(resultado, posicion_memoria, longitud);
 
+    log_info(logger_memoria, "READ_MEM: HICE MEMCOPY \n");
+    log_info(logger_memoria, "READ_MEM: Leído valor 0x%X desde posición %p", *resultado, (void*)posicion_memoria);
+
     return true;  // La lectura fue exitosa
 }
+
+
 /*
 int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 

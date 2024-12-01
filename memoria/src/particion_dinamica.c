@@ -54,7 +54,7 @@ int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
     // Si es null no hay memoria
     if (particion_resultante == NULL) {
         log_error(logger_memoria, "No hay memoria \n");
-        return -1; 
+        return INICIAR_PROCESO_RTA_ERROR_SIN_ESPACIO; 
     }
 
     particion_resultante->pid = proceso_pid;

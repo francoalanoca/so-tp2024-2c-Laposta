@@ -310,7 +310,7 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete ){
 }
 
 
-void enviar_respuesta_read_memoria(uint32_t pid, void* respuesta_leer, int socket_cpu, op_code cod_ope) {
+void enviar_respuesta_read_memoria(uint32_t pid, uint32_t respuesta_leer, int socket_cpu, op_code cod_ope) {
     t_paquete* paquete_valor;
 
     // Verificar que respuesta_leer no sea NULL
@@ -320,23 +320,24 @@ void enviar_respuesta_read_memoria(uint32_t pid, void* respuesta_leer, int socke
     }
 
     // Asegurarse de que respuesta_leer está terminada en nulo
-    char* cadena = (char*) respuesta_leer;
+    /*char* cadena = (char*) respuesta_leer;
     size_t longitud = strlen(cadena);
     if (cadena[longitud] != '\0') {
         fprintf(stderr, "Error: la cadena no está correctamente terminada en nulo\n");
         return;
-    }
+    }*/
 
 
     paquete_valor = crear_paquete(cod_ope);
 
-    uint32_t tamanio_respuesta_leer = (longitud * sizeof(char)) + 1;
+    //uint32_t tamanio_respuesta_leer = (longitud * sizeof(char)) + 1;
+    uint32_t tamanio_respuesta_leer = 4;
 
     agregar_a_paquete(paquete_valor, &pid, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_valor, &tamanio_respuesta_leer, sizeof(uint32_t)); 
-    agregar_a_paquete(paquete_valor, respuesta_leer, tamanio_respuesta_leer);          
+    agregar_a_paquete(paquete_valor, &respuesta_leer, sizeof(uint32_t));          
 
-    printf("respuesta_leer: %s , tamanio %d \n", (char*) respuesta_leer, tamanio_respuesta_leer); 
+    printf("respuesta_leer: %d , tamanio %d \n", respuesta_leer, tamanio_respuesta_leer); 
     
     enviar_paquete(paquete_valor, socket_cpu);   
     printf("Se envió respuesta de lectura \n"); 
@@ -360,9 +361,9 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
     peticion_guardar->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 2);
     printf("Direccion fisica: %d \n", peticion_guardar->direccion_fisica);
 
-    peticion_guardar->valor = list_get(lista_paquete, 3);
-    printf("Valor: %s \n", peticion_guardar->valor);
-
+    peticion_guardar->valor = *(uint32_t*)list_get(lista_paquete, 3);
+    printf("Valor: %d \n", peticion_guardar->valor);
+log_info(logger_memoria, "Valor deser. WRITE: %d \n", peticion_guardar->valor);
     
 
     return peticion_guardar;

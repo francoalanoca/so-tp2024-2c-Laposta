@@ -121,7 +121,7 @@ typedef struct{
     uint32_t tid;
     uint32_t direccion_fisica;
     uint32_t tamanio; //siempre son 4 bytes?
-    char* valor;
+    uint32_t valor;
 } t_escribir_leer;
 
 
@@ -191,7 +191,7 @@ int cargar_configuracion(char *path_config);
 
 int inicializar_memoria();
 
-void inicializar_memoria_particiones_dinamicas(void *tamanio_memoria);
+void inicializar_memoria_particiones_dinamicas(uint32_t tamanio_memoria);
 
 void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_particiones, char* algoritmo);
 
@@ -241,9 +241,9 @@ bool actualizar_contexto(t_m_contexto* contexto);
 
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica);
 
-bool write_mem(uint32_t direccion_fisica, char* valor);
+bool write_mem(uint32_t direccion_fisica, uint32_t valor);
 
-bool read_mem(uint32_t direccion_fisica, char* resultado);
+bool read_mem(uint32_t direccion_fisica, uint32_t* resultado);
 
 //int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso);
 

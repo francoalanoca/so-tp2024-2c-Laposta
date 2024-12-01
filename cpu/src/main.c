@@ -49,6 +49,8 @@ int main(int argc, char *argv[])
     proceso_actual= NULL;
     lista_sockets_global = list_create();
 
+    valor_registro_obtenido = malloc(4);
+
     sem_init(&sem_valor_instruccion, 0, 0);
 
     sem_init(&sem_valor_registro_recibido, 0, 0);

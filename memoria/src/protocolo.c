@@ -64,11 +64,14 @@ void memoria_atender_cpu(){
 			valores = recibir_paquete(socket_cpu);
 			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores); 
 			uint32_t tamanio_rta = 4;    
-            char* respuesta_leer = malloc(tamanio_rta);
-			memset(respuesta_leer, 0, tamanio_rta);
+			log_info(logger_memoria, "ANTES DE MEMSET \n");
+            uint32_t respuesta_leer = -1;
+
+			log_info(logger_memoria, "ANTES DE FUNCION READ_MEM \n");
 			//INICIO MUTEX
-			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
+			if(read_mem(peticion_leer->direccion_fisica,&respuesta_leer)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				log_info(logger_memoria, "RESPUESTA READ: %d",respuesta_leer);
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
 				log_info(logger_memoria, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d \n",peticion_leer->pid,peticion_leer->tid,peticion_leer->direccion_fisica,peticion_leer->tamanio); 
 				
@@ -91,7 +94,7 @@ void memoria_atender_cpu(){
 			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor)){
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
-				log_info(logger_memoria, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d\n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,peticion_escribir->tamanio);
+				log_info(logger_memoria, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d\n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,4);
 			}
 			else{
 				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
@@ -164,7 +167,7 @@ void memoria_atender_kernel(void* socket){
             break;
 		
 		case INICIAR_PROCESO:
-			log_info(logger_memoria, "Recibí INICIAR_PROCESO:%d \n");
+			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
 			valores = recibir_paquete(fd_kernel);
 
 			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
@@ -293,8 +296,9 @@ void memoria_atender_kernel(void* socket){
 			
 			//hacer un for con la variable anterior y por cada pasada hacer un read e ir concatenandolo en una variable
 			char* contenido = malloc(tamanio_proceso);
-			char* leido_actual = malloc(4);
-			for(int i=0;i<leidas_a_hacer;i++){
+			uint32_t leido_actual;
+
+			/*for(int i=0;i<leidas_a_hacer;i++){
         	if(read_mem(base_proceso,leido_actual)){
 				//concateno lo leido con lo que ya habia leido antes
 				strcat(contenido, leido_actual);
@@ -303,11 +307,27 @@ void memoria_atender_kernel(void* socket){
 				printf("Ocurrio un error al leer el contenido del proceso\n");
 			}
         	
-    		}
+    		}*/
+
+			    for (uint32_t i = 0; i < leidas_a_hacer; i++) {
+        uint32_t direccion_lectura = base_proceso + (i * 4);  // Calcula la dirección actual
+
+        if (read_mem(direccion_lectura, &leido_actual)) {
+            // Copiar los 4 bytes leídos en el buffer correspondiente
+            memcpy(contenido + (i * 4), &leido_actual, 4);
+        } else {
+            log_error(logger_memoria, "Error al leer la memoria en la dirección: %d", direccion_lectura);
+            free(contenido);
+            return;
+        }
+    }
 
 			//ver el tamanio real de lo leído
-			uint32_t tamanio_contenido = strlen(contenido) + 1; //no hace falta multiplicar por sizeof(char) ya que este siempre vale 1 byte
-
+			//uint32_t tamanio_contenido = strlen(contenido) + 1; //no hace falta multiplicar por sizeof(char) ya que este siempre vale 1 byte
+			
+			// Calcular el tamaño real de lo leído (siempre será igual a tamanio_proceso)
+    		uint32_t tamanio_contenido = tamanio_proceso;
+			
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//preparo la informacion para pasarsela al nuevo hilo
 			t_peticion_dump_fs* peticion_fs = malloc(sizeof(t_peticion_dump_fs));
