@@ -53,6 +53,7 @@ void* planificar_procesos(){
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
                 remover_de_lista(lista_new,0,&(semaforos->mutex_lista_new));
                 agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_new));
+                log_info(logger_kernel, "nuevo proceso con pid %d y tid %d",tcb->pid,tcb->tid);
                 t_tcb* prueba_tcb=(t_tcb*)list_get(lista_ready,0);
 
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
@@ -75,7 +76,7 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
         t_tcb* tcb = (t_tcb*)list_remove(lista_origen, 0);
         sem_post(sem_origen);
         if (nuevo_estado == EXIT){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista EXIT", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista EXIT", tcb->tid, tcb->pid);
             //aca deberia mandar a memoria la eliminacion del hilo
             pthread_t hilo_manejo_exit;
             pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
@@ -88,16 +89,16 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
             sem_post(sem_destino);
 
         if (nuevo_estado == NEW) {
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista NEW", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista NEW", tcb->tid, tcb->pid);
         }
         else if(nuevo_estado == READY){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista READY", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista READY", tcb->tid, tcb->pid);
         }
         else if(nuevo_estado == EXEC){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista EXEC", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista EXEC", tcb->tid, tcb->pid);
         }
         else if(nuevo_estado == BLOCKED){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista BLOCKED", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista BLOCKED", tcb->tid, tcb->pid);
         }else 
             log_info(logger_kernel, "No hay hilos en la lista origen");
         }

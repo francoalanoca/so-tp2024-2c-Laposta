@@ -12,6 +12,8 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
          list_add(lista_new,pcb_nuevo);
     sem_post(&(semaforos->mutex_lista_new));
 
+    log_info(logger_kernel, "nuevo proceso con pid %d y prioridad %d",pcb_nuevo->pid,pcb_nuevo->prioridad_th_main);
+
     sem_post(&(semaforos->sem_procesos_new));
     
     log_info(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
@@ -58,6 +60,14 @@ void ejecutar_io(int tiempo){
     //agrego a io
     agregar_a_lista(tcb,lista_espera_io,&(semaforos->mutex_lista_espera_io));
     log_info(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
+
+    //muestro el tcb agregado a la lista de espera de io
+    sem_wait(&(semaforos->mutex_lista_espera_io));
+    t_tcb* tcb_io=list_get(lista_espera_io,0);
+    sem_post(&(semaforos->mutex_lista_espera_io));
+    
+    log_info(logger_kernel,"tcb en io: pid: %d tid: %d",tcb_io->pid,tcb_io->tid);
+
     sem_post(&(semaforos->sem_io_solicitud));
     
 }

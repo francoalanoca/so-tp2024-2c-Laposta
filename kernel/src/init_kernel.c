@@ -60,7 +60,7 @@ void inicializar_semaforos()
     sem_init(&(semaforos->contador_threads_en_ready), 0, 0);
     //sem_init(&(semaforos->mutex_interfaz_io), 0, 1);
     //sem_init(&(semaforos->contador_tcb_en_io),0,0);
-    sem_init(&(semaforos->sem_io_sleep_en_uso),0,1); //revisar aca si empieza con 1 0 0
+    sem_init(&(semaforos->sem_io_sleep_en_uso),0,0); //revisar aca si empieza con 1 0 0
     sem_init(&(semaforos->sem_io_solicitud),0,0);
     sem_init(&(semaforos->sem_sleep_io),0,0);
     sem_init(&(semaforos->sem_finalizacion_ejecucion_cpu),0,0);
@@ -214,10 +214,11 @@ void procesar_conexion_dispatch()
 
             break;
         case IO_EJECUTAR: // PID, TID, tiempo de io en milisegundos
+            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             log_info(logger_kernel, "se recibio instruccion IO");
             t_list *params_io = recibir_paquete(fd_conexion_cpu);
 
-            int tiempo_io = *((int *)list_get(params_io, 1));
+            int tiempo_io = *((int *)list_get(params_io, 2));
             ejecutar_io(tiempo_io);
             //la respuesta a la syscall es enviar otro hilo a cpu-->replanificar
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);

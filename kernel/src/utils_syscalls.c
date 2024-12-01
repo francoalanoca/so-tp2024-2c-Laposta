@@ -266,6 +266,9 @@ void interfaz_io(){
         sem_wait(&(semaforos->mutex_lista_espera_io));
         t_tcb* tcb_io = list_get (lista_espera_io,0);
         sem_post(&(semaforos->mutex_lista_espera_io));
+
+        log_info(logger_kernel,"TCB OBTENIDO de la lista de espera de io: %d", tcb_io->tid);
+
         sem_post(&(semaforos->sem_sleep_io));
 
         sem_wait(&(semaforos->sem_io_sleep_en_uso)); 
@@ -275,16 +278,26 @@ void interfaz_io(){
     }
 }
 
-void hilo_sleep_io(){
-    while(1){
+void hilo_sleep_io() {
+    while (1) {
         sem_wait(&(semaforos->sem_sleep_io));
-        t_tcb* tcb_usando_io = list_get (lista_espera_io,0);
-        int tiempo = tcb_usando_io->tiempo_de_io;
-        log_info(logger_kernel,"## IO en uso por %d milisegundos",tiempo);
-        sleep(tiempo);
-        sem_post(&(semaforos->sem_io_sleep_en_uso));
+        
+        sem_wait(&(semaforos->mutex_lista_espera_io));
+        if (list_size(lista_espera_io) > 0) {
+            t_tcb* tcb_usando_io = list_get(lista_espera_io, 0);
+            sem_post(&(semaforos->mutex_lista_espera_io));
+
+            int tiempo = tcb_usando_io->tiempo_de_io;
+            log_info(logger_kernel, "## IO en uso por %d milisegundos", tiempo);
+            sleep(tiempo);
+            sem_post(&(semaforos->sem_io_sleep_en_uso));
+        } else {
+            sem_post(&(semaforos->mutex_lista_espera_io));
+            log_error(logger_kernel, "Lista de espera IO vacía en hilo_sleep_io.");
+        }
     }
 }
+
 
 
 //TODO: FIXME: controlar semaforos
