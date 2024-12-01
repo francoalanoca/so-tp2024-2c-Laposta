@@ -104,7 +104,7 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
 
     nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
 
-    nuevo_proceso->limite = tamanio_proceso;
+    nuevo_proceso->limite = nuevo_proceso->base + tamanio_proceso;
 
     //list_add(nuevo_proceso->hilos,nuevo_hilo);
     pthread_mutex_lock(&mutex_lista_miniPCBs);

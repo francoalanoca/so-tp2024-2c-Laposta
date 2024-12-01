@@ -160,6 +160,7 @@ void enviar_fin_quantum_a_kernel(    t_proceso *proceso,int socket){
     paquete_fin_quantum = crear_paquete(FIN_DE_QUANTUM);
     agregar_a_paquete(paquete_fin_quantum, &(proceso->pid), sizeof(uint32_t));
     agregar_a_paquete(paquete_fin_quantum, &(proceso->tid), sizeof(uint32_t));
+    proceso_actual= NULL;
     enviar_paquete(paquete_fin_quantum, socket);
     log_warning(logger_cpu, "TIEMPO DE QUANTUM TERMINADO - PID: %d, TID: %d", proceso->pid, proceso->tid);
     eliminar_paquete(paquete_fin_quantum);
@@ -174,7 +175,7 @@ void check_interrupt(int conexion_kernel){
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
         enviar_fin_quantum_a_kernel(proceso_actual,conexion_kernel );
         pthread_mutex_lock(&mutex_proceso_actual);
-        proceso_actual= NULL; 
+        //proceso_actual= NULL; 
         pthread_mutex_unlock(&mutex_proceso_actual);
        
         interrupcion_kernel = false;
@@ -430,8 +431,9 @@ void limpiarCadena(char* cadena) {
 
 
 registros identificarRegistro(char* registro){
-     printf("ENTRO A IDENTIFICAR_REGISTRO: %s\n",registro); 
-     limpiarCadena(registro);
+    printf("ENTRO A IDENTIFICAR_REGISTRO: %s\n",registro); 
+    log_info(logger_cpu, "Identificar Registro: %s", registro);
+    limpiarCadena(registro);
     if(strcmp(registro,"PC") == 0){
         
         return PC;
@@ -538,23 +540,28 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
 
 
 
-uint32_t mmu(uint32_t direccion_logica, t_proceso*  proceso, int conexion, int conexion_kernel_dispatch){
+uint32_t mmu(uint32_t direccion_logica, t_proceso* proceso, int conexion, int conexion_kernel_dispatch) {
     uint32_t direccion_fisica_resultado;
     uint32_t desplazamiento = direccion_logica;
-   
-    
-    //validacion de limites de particion
-    if (proceso->registros_cpu.base + desplazamiento < proceso->registros_cpu.limite ){
-        direccion_fisica_resultado = proceso->registros_cpu.base +desplazamiento ;         
+
+    log_info(logger_cpu, "MMU: Inicio - Dirección Lógica: %u, Base: %u, Límite: %u",
+             direccion_logica, proceso->registros_cpu.base, proceso->registros_cpu.limite);
+
+    // Validación de límites de partición
+    if (proceso->registros_cpu.base + desplazamiento <= proceso->registros_cpu.limite) {
+        direccion_fisica_resultado = proceso->registros_cpu.base + desplazamiento;
+        log_info(logger_cpu, "MMU: Dirección Física válida - Dirección Física: %u", direccion_fisica_resultado);
         return direccion_fisica_resultado;
-    }else{
-        //segmentation fault
+    } else {
+        // SEG_FAULT
+        log_error(logger_cpu, "MMU: SEG_FAULT - Dirección Lógica: %u, Dirección Física Calculada: %u, Límite: %u",
+                  direccion_logica, proceso->registros_cpu.base + desplazamiento, proceso->registros_cpu.limite);
+
         enviar_contexto_a_memoria(proceso, conexion);
-        enviar_segfault_a_kernel(proceso,conexion_kernel_dispatch);
-    }            
-
-
+        enviar_segfault_a_kernel(proceso, conexion_kernel_dispatch);
+    }
 }
+
 
 
 
@@ -567,7 +574,12 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
     uint32_t dir_fisica_result;
-    dir_fisica_result = mmu(valor_registro_direccion,base,conexion, conexion_kernel_dispatch);
+
+    log_info(logger_cpu, "READ_MEM: id registro Dirección=%u", id_registro_direccion);
+    log_info(logger_cpu, "READ_MEM: valor registro Dirección=%u", valor_registro_direccion);
+    log_info(logger_cpu, "READ_MEM: valor registro datos=%s", registro_datos);
+
+    dir_fisica_result = mmu(valor_registro_direccion,proceso,conexion, conexion_kernel_dispatch);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
     
@@ -581,12 +593,13 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
 
     log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
 
-    sem_wait(&sem_esperando_read_write_mem); //Revisar aca
+    //sem_wait(&sem_esperando_read_write_mem); //Revisar aca
 
     set(registro_datos,valor_registro_obtenido,proceso);
 
 }
 
+//write_mem(inst->param1,inst->param2,proceso,conexion);
 void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
@@ -598,7 +611,12 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
 
+    log_info(logger_cpu, "WRITE_MEM: Registro Dirección=%s, Registro Datos=%s", registro_direccion, registro_datos);
+    log_info(logger_cpu, "WRITE_MEM: Valor Dirección=%u, Valor Datos=%u", valor_registro_direccion, valor_registro_datos);
+
+
     uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso,conexion, conexion_kernel_dispatch);
+
 
     enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
     

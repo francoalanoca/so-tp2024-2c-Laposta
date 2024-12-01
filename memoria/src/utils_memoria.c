@@ -303,8 +303,8 @@ t_escribir_leer* deserializar_read_memoria(t_list*  lista_paquete ){
     peticion_valor->direccion_fisica = *(uint32_t*)list_get(lista_paquete, 2);
     printf("Direccion fisica: %d \n", peticion_valor->direccion_fisica);
 
-    peticion_valor->tamanio = *(uint32_t*)list_get(lista_paquete, 3);
-    printf("Tamanio proceso: %d \n", peticion_valor->tamanio);
+    //peticion_valor->tamanio = *(uint32_t*)list_get(lista_paquete, 3);
+    //printf("Tamanio proceso: %d \n", peticion_valor->tamanio);
 
     return peticion_valor;
 }

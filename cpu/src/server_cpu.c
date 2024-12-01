@@ -246,7 +246,21 @@ void atender_memoria(int *socket_mr) {
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
                 sem_post(&sem_esperando_read_write_mem);
                 log_error(logger_cpu, "Error al escribir en memoria");
+            break;
+            case READ_MEMORIA_RTA_OK: 
+                t_list* lista_paquete_memoria_leer_ok = recibir_paquete(socket_memoria_server);
+                valor_registro_obtenido = list_get(lista_paquete_memoria_leer_ok,2);
+                log_info (logger_cpu, "Valor obtenido de memoria: %s",valor_registro_obtenido);
+                sem_post(&sem_valor_registro_recibido);
+                //sem_post(&sem_esperando_read_write_mem);
                 
+            break;
+            case READ_MEMORIA_RTA_ERROR: 
+                t_list* lista_paquete_memoria_leer_error = recibir_paquete(socket_memoria_server);
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                sem_post(&sem_esperando_read_write_mem);
+                log_error(logger_cpu, "Error al leer en memoria");
+            
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
