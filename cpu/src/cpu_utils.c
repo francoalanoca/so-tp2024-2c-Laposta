@@ -396,7 +396,8 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
 void jnz(char* registro, char* inst_char, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
-    uint32_t inst = 3  ;//string_a_uint32(inst_char);
+    int inst =  atoi(inst_char)  ;//string_a_uint32(inst_char);
+    inst--;
     if(valor_registro != 0){
         pthread_mutex_lock(&mutex_proceso_actual);
         log_info(logger_cpu, "valor solcitado JNZ  %d", inst);
@@ -848,7 +849,7 @@ bool es_syscall(tipo_instruccion tipo_instru){
  
 
 void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
-{   log_info(logger_cpu, "Entro al ciclo");
+{  
     int conexion_mem = *conexion_mer;
     int dispatch = *socket_dispatch;
     int interrupt = *socket_interrupt;
@@ -870,7 +871,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     
     //TODO: FIXME: CUANDO SE EJECUTA UNA SYSCALL SE PONE PROCESO_ACTUAL EN NULL-->luego de EXECUTE NO SE PUEDE HACER PROCESO_ACTUAL->PC+=1;
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
-    if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT ) 
+    if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT) 
     {
         proceso->registros_cpu.PC += 1;
     }
