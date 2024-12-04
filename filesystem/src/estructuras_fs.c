@@ -361,16 +361,18 @@ void sincronizar_bitmap (){
 
 
 bool hay_espacio_total_disponible(int espacio_necesario){
-    int espacio_disponible = 0;
+    int bloques_libres = 0;
+    int bloques_necesarios = 0;
     for (int i = 0; i < bitarray_get_max_bit(bitarray); i++) {
         if (!bitarray_test_bit(bitarray, i)) {
-            espacio_disponible++;
+            bloques_libres++;
         }
     }
+    bloques_necesarios =  dividir_redondear_hacia_arriba(espacio_necesario , cfg_file_system->BLOCK_SIZE)+1; // agrego el tamaño del bloque de punteros
     log_info(logger_file_system,"Cantidad de bits %d:",  bitarray_get_max_bit(bitarray));
-    log_info(logger_file_system,"Bloques/bits libres %d:",  espacio_disponible);
-    log_info(logger_file_system,"Espacio total disponible %d:",  espacio_disponible*cfg_file_system->BLOCK_SIZE);
-return espacio_disponible*cfg_file_system->BLOCK_SIZE >= espacio_necesario+cfg_file_system->BLOCK_SIZE; // agrego el tamaño del bloque de punteros
+    log_info(logger_file_system,"Bloques/bits libres %d:",  bloques_libres);
+    log_info(logger_file_system,"Espacio total disponible %d:",  bloques_libres*cfg_file_system->BLOCK_SIZE);
+return bloques_libres >= bloques_necesarios; 
 }   
 
 
