@@ -231,7 +231,7 @@ t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
 
     log_info(logger_file_system, "entramos en asignar bloques");
     log_info(logger_file_system, "tamanio solicitodo: %d",tamanio);
-    uint32_t cant_bloques_nuevos = (tamanio / cfg_file_system->BLOCK_SIZE)+1;
+    uint32_t cant_bloques_nuevos = dividir_redondear_hacia_arriba(tamanio , cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
     lista_punteros = malloc(sizeof(t_list));
     int bloques_libres_actuales;
@@ -437,4 +437,8 @@ int bloques_libres(){
         }
     }
     return bloques_libres;
+}
+
+uint32_t dividir_redondear_hacia_arriba(uint32_t numerador, uint32_t denominador) {
+    return (numerador + denominador - 1) / denominador;
 }
