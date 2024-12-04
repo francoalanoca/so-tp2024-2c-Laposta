@@ -173,6 +173,7 @@ void procesar_conexion_dispatch()
                 //thread_exit(proceso_a_finalizar); //revisar esto, parace estar de mas
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
                 sem_post(&(semaforos->espacio_en_cpu));
+                sem_post(&(semaforos->sem_espacio_liberado_por_proceso));
         	break;
         case HILO_CREAR:
             log_info(logger_kernel, "se recibio instruccion INICIAR HILO");
