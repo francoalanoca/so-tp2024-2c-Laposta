@@ -220,6 +220,7 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
         //enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
+        log_warning(logger_file_system,"No hay espacio disponible enviado error a memoria"); //LOG OBLIGATORIO
         enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_ERROR,socket_cliente);
     }
     log_info(logger_file_system,"## Fin de solicitud - Archivo: %s", dumped->nombre_archivo); //LOG OBLIGATORIO
