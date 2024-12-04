@@ -882,7 +882,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         enviar_contexto_a_memoria(proceso,conexion_mem);
         log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado, esperando otro...");
         sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
-        if(respuesta_syscall==REPLANIFICACION){
+        if(respuesta_syscall==REPLANIFICACION){  // ISSUE: 4396
        //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
         pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
