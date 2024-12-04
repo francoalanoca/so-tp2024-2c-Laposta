@@ -17,8 +17,9 @@ void inicializar_listas() {
     lista_procesos_global=list_create();
     lista_espera_io = list_create();
 }
-void  inicializar_hilos_largo_plazo(){
+void inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
+    pthread_create(&(hilos->hilo_finalizacion_procesos_memoria),NULL,manejo_liberacion_memoria,NULL);))
 
 }
 
@@ -59,14 +60,21 @@ void* planificar_procesos(){
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{
-                log_info(logger_kernel, "esperando liberacion de memoria \n");
+                log_info(logger_kernel, "No hay espacio en memoria, se esperara liberacion por parte de otro proceso \n");
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
-                 sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             }
                  
         }
     }
     return NULL; 
+}
+
+void manejo_liberacion_memoria(){
+    while(1){
+        sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
+        log_info(logger_kernel,"Se libero espacio en memoria");
+        sem_post(&(semaforos->sem_procesos_new));
+    }
 }
 
 

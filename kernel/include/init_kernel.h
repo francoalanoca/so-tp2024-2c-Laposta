@@ -78,6 +78,7 @@ typedef struct{
     pthread_t hilo_colas_multinivel;
     pthread_t hilo_bloqueados;//maneja io,mutex, join
     pthread_t hilo_quantum;
+    pthread_t hilo_finalizacion_procesos_memoria;
     
 }t_hilos;
 
@@ -208,4 +209,5 @@ void cancelar_hilos_asociados(int pid);
 void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem);
 void inicializar_hilo_verificacion_fin_de_ejecucion();
 void verificar_fin_ejecucion_prev_quantum();
+void manejo_liberacion_memoria();
 #endif /* KERNEL_H_ */

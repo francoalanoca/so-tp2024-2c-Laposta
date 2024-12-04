@@ -169,12 +169,10 @@ void procesar_conexion_dispatch()
 
                 cancelar_hilos_asociados (proceso_a_finalizar->pid);
 
-                pasar_execute_a_exit();
+                pasar_execute_a_exit(); //Se autocancela
                 //thread_exit(proceso_a_finalizar); //revisar esto, parace estar de mas
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
                 sem_post(&(semaforos->espacio_en_cpu));
-                log_warning(logger_kernel, "HILOS EN EXIT");
-                mostrar_tcbs(lista_exit,logger_kernel);
         	break;
         case HILO_CREAR:
             log_info(logger_kernel, "se recibio instruccion INICIAR HILO");
@@ -267,10 +265,22 @@ void procesar_conexion_dispatch()
             t_tcb *thread_saliente = (t_tcb *)list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
             thread_exit(thread_saliente);
-            pasar_execute_a_exit();
+
+            ///hacemos unicamente la eliminacion de la list
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *tid_en_exec = list_remove(lista_exec, 0);
+            sem_post(&(semaforos->mutex_lista_exec));
+            log_info(logger_kernel, "Hilo con PID:%d y TID:%d salio de EXEC", tid_en_exec->pid, tid_en_exec->tid);
+            //pasar_execute_a_exit(); este pasaje puede estar de mas, en thread exit ya se libera la memoria
 
         //  log_info(logger_kernel, "HILO EN EXEC luego de desalojar...");
         //  mostrar_tcbs(lista_exec,logger_kernel);
+            
+            log_warning(logger_kernel, "HILOS PENDIENTES EN READY");
+            mostrar_tcbs(lista_ready,logger_kernel);
+            log_warning(logger_kernel, "HILOS PENDIENTES EN BLOCKED");
+            mostrar_tcbs(lista_blocked,logger_kernel);
+            
             // marca la cpu como libre
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);                        
             sem_post(&(semaforos->espacio_en_cpu));
