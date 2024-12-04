@@ -238,10 +238,10 @@ void procesar_conexion_dispatch()
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             log_info(logger_kernel, "se recibio instruccion MUTEX_UNLOCK");
             t_list *params_unlock = recibir_paquete(fd_conexion_cpu);
-            char *recurso_unlok = (char*)list_get(params_unlock, 0);
+            char *recurso_unlok = (char*)list_get(params_unlock, 2);
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *th_unlock = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
             mutex_unlock(recurso_unlok,th_unlock);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
@@ -281,7 +281,7 @@ void procesar_conexion_dispatch()
             mostrar_tcbs(lista_ready,logger_kernel);
             log_warning(logger_kernel, "HILOS PENDIENTES EN BLOCKED");
             mostrar_tcbs(lista_blocked,logger_kernel);
-            
+
             // marca la cpu como libre
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);                        
             sem_post(&(semaforos->espacio_en_cpu));
