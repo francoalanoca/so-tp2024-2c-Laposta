@@ -72,6 +72,7 @@ void* planificar_procesos(){
 void manejo_liberacion_memoria(){
     while(1){
         if(list_is_empty(lista_new)){
+            sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             log_info(logger_kernel,"No hay procesos en memoria para liberar \n");
         }else{
             sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
