@@ -79,6 +79,7 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque );
 uint32_t encontrar_bit_libre(t_bitarray* bitarray_in); 
 int bloques_libres();
 void imprimir_estado_bitarray() ;
+uint32_t dividir_redondear_hacia_arriba(uint32_t numerador, uint32_t denominador);
 //para liberar la memoria ocupada por un fcb
 void free_t_FCB(t_FCB* fcb); 
 void enviar_resultado_memoria(op_code codigo_operacion, int socket_memoria);
