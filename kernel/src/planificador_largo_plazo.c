@@ -19,7 +19,7 @@ void inicializar_listas() {
 }
 void inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
-    pthread_create(&(hilos->hilo_finalizacion_procesos_memoria),NULL,manejo_liberacion_memoria,NULL);))
+    pthread_create(&(hilos->hilo_finalizacion_procesos_memoria),NULL,manejo_liberacion_memoria,NULL);
 
 }
 
@@ -71,9 +71,13 @@ void* planificar_procesos(){
 
 void manejo_liberacion_memoria(){
     while(1){
-        sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
-        log_info(logger_kernel,"Se libero espacio en memoria");
-        sem_post(&(semaforos->sem_procesos_new));
+        if(list_is_empty(lista_new)){
+            log_info(logger_kernel,"No hay procesos en memoria para liberar \n");
+        }else{
+            sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
+            log_info(logger_kernel,"Se libero espacio en memoria");
+            sem_post(&(semaforos->sem_procesos_new));
+        }
     }
 }
 
