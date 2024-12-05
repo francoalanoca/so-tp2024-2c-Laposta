@@ -259,6 +259,6 @@ void* atender_dump_memory(){
 
 void cancelar_hilos_asociados(int pid){
     //busca los tcb asociados al proceso en blocked y ready y lo cancela
-    buscar_y_cancelar_tcb_asociado_a_pcb(pid,lista_ready,&(semaforos->mutex_lista_ready));
-    buscar_y_cancelar_tcb_asociado_a_pcb(pid,lista_blocked,&(semaforos->mutex_lista_blocked));
+    buscar_y_cancelar_tcb_asociado_a_pcb(pid,lista_ready,&(semaforos->mutex_lista_ready),READY);
+    buscar_y_cancelar_tcb_asociado_a_pcb(pid,lista_blocked,&(semaforos->mutex_lista_blocked),BLOCKED);
 }

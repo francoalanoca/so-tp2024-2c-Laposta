@@ -206,7 +206,7 @@ void* atender_dump_memory();
 void manejar_interrupcion_fin_quantum();
 void enviar_respuesta_syscall_a_cpu(int respuesta);
 void cancelar_hilos_asociados(int pid);
-void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem);
+void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem,t_estado estado_lista);
 void inicializar_hilo_verificacion_fin_de_ejecucion();
 void verificar_fin_ejecucion_prev_quantum();
 void manejo_liberacion_memoria();

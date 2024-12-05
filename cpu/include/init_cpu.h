@@ -35,6 +35,9 @@ extern int base_particion;
 
 extern int respuesta_syscall;
 extern sem_t semaforo_respuesta_syscall;
+extern bool fin_ciclo;
+extern sem_t semaforo_binario_iniciar_ciclo;
+extern sem_t semaforo_binario_nuevo_proceso;
 typedef struct {
     t_log *log;
     int fd;

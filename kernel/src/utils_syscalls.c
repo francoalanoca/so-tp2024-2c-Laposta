@@ -186,7 +186,7 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
  }
 // REVISAR: agregar la funcion utilizada en thread_cancel para ir hilo por hilo mandando a memoria y que finalice el hilo en cuestion. Ya esta
  //Paso un pcb y cancelo todos los tcb asociados a ese pcb en la lista en cuestion
-void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t* sem){
+void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t* sem,t_estado lista_estado){
     sem_wait(sem);
     t_tcb* tcb=NULL;
     for(int i=0;i<list_size(lista_en_custion);i){
@@ -197,6 +197,9 @@ void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t
             pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
             pthread_detach(hilo_manejo_exit);
             list_remove(lista_en_custion,i);
+            if(lista_estado==READY){
+                sem_wait(&(semaforos->contador_threads_en_ready));
+            }
         }else{
             i++;
         }

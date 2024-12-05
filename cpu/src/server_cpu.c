@@ -88,18 +88,27 @@ void procesar_conexion_dispatch(void *v_args){
     
             case PROCESO_EJECUTAR:
             {
+                sem_wait(&semaforo_binario_nuevo_proceso);
                 printf("Ejecutando procesoo\n");
-                sem_wait(&sem_cpu_termino_ciclo);
+               // sem_wait(&sem_cpu_termino_ciclo);
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
                 log_info(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
-                pthread_mutex_lock(&mutex_proceso_actual);
-                proceso_actual = proceso; //Agregar a lista de procesos?               
-                //TODO: AGrego aca solicitud contexto para cualquier instruccion
+                //reinicio cpu para ejecutar otro proceso
+                pthread_mutex_lock(&mutex_interrupcion_kernel);  
+                interrupcion_kernel=false;
+                respuesta_syscall=-1;
+                fin_ciclo=false;
+                proceso_actual=NULL;
+                pthread_mutex_unlock(&mutex_interrupcion_kernel);  
+
+                pthread_mutex_lock(&mutex_proceso_actual);//asigno proceso nuevo para ejecutar
+                proceso_actual = proceso;           
                 solicitar_contexto_a_memoria(proceso,socket_memoria);
                 sem_wait(&sem_valor_base_particion);
                 pthread_mutex_unlock(&mutex_proceso_actual);
 
+                sem_post(&semaforo_binario_iniciar_ciclo);
                 //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
                 //free(proceso);
                 
@@ -144,8 +153,8 @@ void procesar_conexion_interrupt(void *v_args){
                 t_list *params_fin_q = recibir_paquete(cliente_socket);
                 int pid=*((int *)list_get(params_fin_q, 0));
                 int tid=*((int *)list_get(params_fin_q, 1));    
-                log_info(logger_cpu, "## Llega interrupción al puerto Interrupt"); // LOG OBLIGATORIO
-                log_warning(logger_cpu, "INTERRUMPIENDO: PID:%d , TID: %d",pid,tid);
+                log_error(logger_cpu, "## Llega interrupción al puerto Interrupt para pid:%d tid:%d",pid, tid); // LOG OBLIGATORIO
+
                 //log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
                 //pthread_mutex_lock(&mutex_proceso_actual);
                 //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
