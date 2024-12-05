@@ -174,9 +174,9 @@ void check_interrupt(int conexion_kernel){
         printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
         enviar_fin_quantum_a_kernel(proceso_actual,conexion_kernel );
-        pthread_mutex_lock(&mutex_proceso_actual);
-        //proceso_actual= NULL; 
-        pthread_mutex_unlock(&mutex_proceso_actual);
+       
+        proceso_actual= NULL; 
+      
        
         interrupcion_kernel = false;
     }
@@ -888,23 +888,17 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         proceso_actual=NULL;
         pthread_mutex_unlock(&mutex_proceso_actual);
         
-         pthread_mutex_lock(&mutex_interrupcion_kernel);
-        interrupcion_kernel=false; 
-        pthread_mutex_unlock(&mutex_interrupcion_kernel);
-
+    
         //che kernel, ya termine de 
         }
+    }
+    
 
-    }
-    if(respuesta_syscall==REPLANIFICACION){
-        printf ("Se replanifico\n");
-        respuesta_syscall = -1; //se deberia consumir
-    }else{
-        log_info(logger_cpu, "Voy a entrar a check_interrupt");
-        check_interrupt(dispatch);
-        log_info(logger_cpu, "Sale de check_interrupt");
-        log_info(logger_cpu, "Termino ciclo de instrucciones");
-    }
+    log_info(logger_cpu, "Voy a entrar a check_interrupt");
+    check_interrupt(dispatch);
+    log_info(logger_cpu, "Sale de check_interrupt");
+    log_info(logger_cpu, "Termino ciclo de instrucciones");   
+    
 
     // interrupcion_kernel = false;
 
