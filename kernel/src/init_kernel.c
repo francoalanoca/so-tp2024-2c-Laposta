@@ -225,7 +225,6 @@ void procesar_conexion_dispatch()
  
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
-            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             t_list *params_lock = recibir_paquete(fd_conexion_cpu);
             char *recurso = list_get(params_lock, 0);
             
@@ -235,7 +234,6 @@ void procesar_conexion_dispatch()
 
             break;
         case MUTEX_DESBLOQUEAR://recurso. CPU me devuleve el control-> debo mandar algo a ejecutar
-            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             log_info(logger_kernel, "se recibio instruccion MUTEX_UNLOCK");
             t_list *params_unlock = recibir_paquete(fd_conexion_cpu);
             char *recurso_unlok = (char*)list_get(params_unlock, 2);
@@ -245,7 +243,6 @@ void procesar_conexion_dispatch()
             mutex_unlock(recurso_unlok,th_unlock);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
-            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             t_list *params_juntar = recibir_paquete(fd_conexion_cpu);
             int tid_target = *((int *)list_get(params_juntar, 0));
              sem_wait(&(semaforos->mutex_lista_exec));

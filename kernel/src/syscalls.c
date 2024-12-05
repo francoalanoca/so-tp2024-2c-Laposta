@@ -90,6 +90,7 @@ void mutex_lock(char* recurso){
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
 
         }else{
+            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             //se bloquea--> quito el tcb de exec y lo mando a espera de mutex y bloq
             // y marco la cpu como libre
             /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));           
@@ -100,10 +101,13 @@ void mutex_lock(char* recurso){
             sem_post(&(semaforos->espacio_en_cpu));
 
         }   
-    }else{//si no existe el mutex->mando a exit el tcb que hizo el lock y activo el planificador
-           /* remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+    }else{
+            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
+            //si no existe el mutex->mando a exit el tcb que hizo el lock y activo el planificador
+            /* remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb_ejecutando,lista_exit,&(semaforos->mutex_lista_exit));*/
-            pasar_execute_a_exit();
+            thread_exit(tcb_ejecutando);
+            //pasar_execute_a_exit();
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
 
             sem_post(&(semaforos->espacio_en_cpu));
@@ -132,7 +136,9 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
             //enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
 
-    }else{ //no existe mutex-> mando hilo a exit y activo el planificador
+    }else{ 
+            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
+            //no existe mutex-> mando hilo a exit y activo el planificador
             //remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             //agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
             thread_exit(tcb);
@@ -201,6 +207,7 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
             tcb_target=(t_tcb*)buscar_en_lista_tcb(lista_blocked,tid_target,pcb->pid,&(semaforos->mutex_lista_blocked));
         }
          if(tcb_target!=NULL) { 
+            sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             tcb_en_exec->thread_target=tcb_target;
             /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb_en_exec,lista_blocked,&(semaforos->mutex_lista_blocked));*/
