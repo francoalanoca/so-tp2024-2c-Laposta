@@ -280,7 +280,8 @@ void procesar_conexion_dispatch()
             mostrar_tcbs(lista_blocked,logger_kernel);
 
             // marca la cpu como libre
-            enviar_respuesta_syscall_a_cpu(REPLANIFICACION);                        
+            enviar_respuesta_syscall_a_cpu(REPLANIFICACION); 
+            //RTA A REPLANIFICACION        ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               
             sem_post(&(semaforos->espacio_en_cpu));
             
             break;
