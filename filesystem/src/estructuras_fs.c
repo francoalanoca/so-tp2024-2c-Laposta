@@ -220,6 +220,7 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
         //enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
+        log_warning(logger_file_system,"No hay espacio disponible enviado error a memoria"); //LOG OBLIGATORIO
         enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_ERROR,socket_cliente);
     }
     log_info(logger_file_system,"## Fin de solicitud - Archivo: %s", dumped->nombre_archivo); //LOG OBLIGATORIO
@@ -231,7 +232,7 @@ t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
 
     log_info(logger_file_system, "entramos en asignar bloques");
     log_info(logger_file_system, "tamanio solicitodo: %d",tamanio);
-    uint32_t cant_bloques_nuevos = (tamanio / cfg_file_system->BLOCK_SIZE)+1;
+    uint32_t cant_bloques_nuevos = dividir_redondear_hacia_arriba(tamanio , cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
     lista_punteros = malloc(sizeof(t_list));
     int bloques_libres_actuales;
@@ -361,16 +362,18 @@ void sincronizar_bitmap (){
 
 
 bool hay_espacio_total_disponible(int espacio_necesario){
-    int espacio_disponible = 0;
+    int bloques_libres = 0;
+    int bloques_necesarios = 0;
     for (int i = 0; i < bitarray_get_max_bit(bitarray); i++) {
         if (!bitarray_test_bit(bitarray, i)) {
-            espacio_disponible++;
+            bloques_libres++;
         }
     }
+    bloques_necesarios =  dividir_redondear_hacia_arriba(espacio_necesario , cfg_file_system->BLOCK_SIZE)+1; // agrego el tamaño del bloque de punteros
     log_info(logger_file_system,"Cantidad de bits %d:",  bitarray_get_max_bit(bitarray));
-    log_info(logger_file_system,"Bloques/bits libres %d:",  espacio_disponible);
-    log_info(logger_file_system,"Espacio total disponible %d:",  espacio_disponible*cfg_file_system->BLOCK_SIZE);
-return espacio_disponible*cfg_file_system->BLOCK_SIZE >= espacio_necesario+cfg_file_system->BLOCK_SIZE; // agrego el tamaño del bloque de punteros
+    log_info(logger_file_system,"Bloques/bits libres %d:",  bloques_libres);
+    log_info(logger_file_system,"Espacio total disponible %d:",  bloques_libres*cfg_file_system->BLOCK_SIZE);
+return bloques_libres >= bloques_necesarios; 
 }   
 
 
@@ -437,4 +440,8 @@ int bloques_libres(){
         }
     }
     return bloques_libres;
+}
+
+uint32_t dividir_redondear_hacia_arriba(uint32_t numerador, uint32_t denominador) {
+    return (numerador + denominador - 1) / denominador;
 }

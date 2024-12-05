@@ -139,9 +139,11 @@ void* enviar_a_memoria_thread_saliente(void* t){
     int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
     if(rta==FINALIZAR_HILO_RTA_OK){
         log_info(logger_kernel, "## (<%d>:<%d>) Finaliza el hilo",tcb->pid,tcb->tid);
+        //sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); EStO ACA NO
     }
-    else
-         log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+    else{
+        log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+    }
     close(fd_memoria); 
     eliminar_paquete(paquete);
 }

@@ -169,12 +169,11 @@ void procesar_conexion_dispatch()
 
                 cancelar_hilos_asociados (proceso_a_finalizar->pid);
 
-                pasar_execute_a_exit();
+                pasar_execute_a_exit(); //Se autocancela
                 //thread_exit(proceso_a_finalizar); //revisar esto, parace estar de mas
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
                 sem_post(&(semaforos->espacio_en_cpu));
-                log_warning(logger_kernel, "HILOS EN EXIT");
-                mostrar_tcbs(lista_exit,logger_kernel);
+                sem_post(&(semaforos->sem_espacio_liberado_por_proceso));
         	break;
         case HILO_CREAR:
             log_info(logger_kernel, "se recibio instruccion INICIAR HILO");
@@ -239,10 +238,10 @@ void procesar_conexion_dispatch()
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             log_info(logger_kernel, "se recibio instruccion MUTEX_UNLOCK");
             t_list *params_unlock = recibir_paquete(fd_conexion_cpu);
-            char *recurso_unlok = (char*)list_get(params_unlock, 0);
+            char *recurso_unlok = (char*)list_get(params_unlock, 2);
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *th_unlock = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
             mutex_unlock(recurso_unlok,th_unlock);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
@@ -267,10 +266,22 @@ void procesar_conexion_dispatch()
             t_tcb *thread_saliente = (t_tcb *)list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
             thread_exit(thread_saliente);
-            pasar_execute_a_exit();
+
+            ///hacemos unicamente la eliminacion de la list
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *tid_en_exec = list_remove(lista_exec, 0);
+            sem_post(&(semaforos->mutex_lista_exec));
+            log_info(logger_kernel, "Hilo con PID:%d y TID:%d salio de EXEC", tid_en_exec->pid, tid_en_exec->tid);
+            //pasar_execute_a_exit(); este pasaje puede estar de mas, en thread exit ya se libera la memoria
 
         //  log_info(logger_kernel, "HILO EN EXEC luego de desalojar...");
         //  mostrar_tcbs(lista_exec,logger_kernel);
+            
+            log_warning(logger_kernel, "HILOS PENDIENTES EN READY");
+            mostrar_tcbs(lista_ready,logger_kernel);
+            log_warning(logger_kernel, "HILOS PENDIENTES EN BLOCKED");
+            mostrar_tcbs(lista_blocked,logger_kernel);
+
             // marca la cpu como libre
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);                        
             sem_post(&(semaforos->espacio_en_cpu));

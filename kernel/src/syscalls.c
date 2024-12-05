@@ -124,7 +124,7 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
         //desbloqueo tcb_con_mutex porque ya se le asigno el mutex 
             buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
         //envio el tcb con mutex a ready
-             agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+             agregar_a_lista(tcb_con_mutex,lista_ready,&(semaforos->mutex_lista_ready));
              sem_post(&(semaforos->contador_threads_en_ready));
         
         }
@@ -133,8 +133,9 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
 
     }else{ //no existe mutex-> mando hilo a exit y activo el planificador
-            remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
-            agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
+            //remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
+            //agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
+            thread_exit(tcb);
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
             sem_post(&(semaforos->espacio_en_cpu));
         }

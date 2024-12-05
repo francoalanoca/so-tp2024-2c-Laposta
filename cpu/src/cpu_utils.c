@@ -396,15 +396,17 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
 void jnz(char* registro, char* inst_char, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
-    int inst =  atoi(inst_char)  ;//string_a_uint32(inst_char);
-    inst--;
+    int inst =  atoi(inst_char)  ;//string_a_uint32(inst_char);  
     if(valor_registro != 0){
         pthread_mutex_lock(&mutex_proceso_actual);
         log_info(logger_cpu, "valor solcitado JNZ  %d", inst);
         proceso->registros_cpu.PC = inst;
         log_info(logger_cpu, "valor nuevo  %d", proceso->registros_cpu.PC);
         pthread_mutex_unlock(&mutex_proceso_actual);
+    }else{
+        proceso->registros_cpu.PC += 1; // continuo en la siguiente instrucción
     }
+
 }
 
 void loguear(char* registro){
@@ -871,7 +873,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     
     //TODO: FIXME: CUANDO SE EJECUTA UNA SYSCALL SE PONE PROCESO_ACTUAL EN NULL-->luego de EXECUTE NO SE PUEDE HACER PROCESO_ACTUAL->PC+=1;
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
-    if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT) 
+    if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT && tipo_inst != JNZ) 
     {
         proceso->registros_cpu.PC += 1;
     }
@@ -880,7 +882,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         enviar_contexto_a_memoria(proceso,conexion_mem);
         log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado, esperando otro...");
         sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
-        if(respuesta_syscall==REPLANIFICACION){
+        if(respuesta_syscall==REPLANIFICACION){  // ISSUE: 4396
        //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
         pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
