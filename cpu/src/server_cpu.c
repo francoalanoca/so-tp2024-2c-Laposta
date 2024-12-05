@@ -91,7 +91,7 @@ void procesar_conexion_dispatch(void *v_args){
                 printf("Ejecutando procesoo\n");
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
-                log_ingo(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
+                log_info(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
                 pthread_mutex_lock(&mutex_proceso_actual);
                 proceso_actual = proceso; //Agregar a lista de procesos?               
                 //TODO: AGrego aca solicitud contexto para cualquier instruccion
