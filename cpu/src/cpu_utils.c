@@ -849,11 +849,7 @@ bool es_syscall(tipo_instruccion tipo_instru){
         tipo_instru==MUTEX_UNLOCK ||
         tipo_instru==THREAD_JOIN;
 }
-
-
- 
-
-void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
+bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
 {  
     int conexion_mem = *conexion_mer;
     int dispatch = *socket_dispatch;
@@ -873,8 +869,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     
     tipo_inst= decode(inst, conexion_mem);
     log_info(logger_cpu, "Voy a entrar a execute");
-    
-    //TODO: FIXME: CUANDO SE EJECUTA UNA SYSCALL SE PONE PROCESO_ACTUAL EN NULL-->luego de EXECUTE NO SE PUEDE HACER PROCESO_ACTUAL->PC+=1;
+
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
     if (tipo_inst != PROCESS_EXIT && tipo_inst != THREAD_EXIT && tipo_inst != JNZ) 
     {
@@ -883,27 +878,32 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     
     if(es_syscall(tipo_inst)){
         enviar_contexto_a_memoria(proceso,conexion_mem);
-        log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado, esperando otro...");
         sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
         if(respuesta_syscall==REPLANIFICACION){  // ISSUE: 4396
+        log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado por syscall, esperando otro...");
        //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
         pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
         pthread_mutex_unlock(&mutex_proceso_actual);
         
-    
+        return true;
         //che kernel, ya termine de 
         }
     }
     
 
     log_info(logger_cpu, "Voy a entrar a check_interrupt");
-    check_interrupt(dispatch);
-    log_info(logger_cpu, "Sale de check_interrupt");
-    log_info(logger_cpu, "Termino ciclo de instrucciones");   
-    
-
-    // interrupcion_kernel = false;
+   // check_interrupt(dispatch);
+    pthread_mutex_lock(&mutex_interrupcion_kernel);
+    if(interrupcion_kernel && proceso_actual != NULL){
+        log_info(logger_cpu,"ENTRO EN IF DEL  CHECK INTERRUPT\n");
+        enviar_contexto_a_memoria(proceso_actual,socket_memoria);
+        enviar_fin_quantum_a_kernel(proceso_actual,dispatch );
+        interrupcion_kernel = false;
+        pthread_mutex_unlock(&mutex_interrupcion_kernel);
+        return true;
+    }
+    pthread_mutex_unlock(&mutex_interrupcion_kernel);
 
     free(inst->param1);
     free(inst->param2);
@@ -911,6 +911,8 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     free(inst->param4);
     free(inst->param5);
     free(inst);
+    log_info(logger_cpu, "Termino ciclo de instrucciones");   
+    return false;//continuara con el siguiente ciclo
 }
 
 tipo_instruccion str_to_tipo_instruccion(const char *str) {
