@@ -5,7 +5,7 @@ t_log *logger_kernel;
 t_semaforos *semaforos;
 t_hilos *hilos;
 int pid_AI_global;
-
+int contador_id_quantums;
 //t_io *interfaz_io;
 int socket_cpu;
 void iniciar_modulo(char *ruta_config)
@@ -13,6 +13,7 @@ void iniciar_modulo(char *ruta_config)
     logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
     cargar_config_kernel(ruta_config);
     pid_AI_global = 0;
+    contador_id_quantums = 0;
     semaforos = malloc(sizeof(t_semaforos));
     hilos = malloc(sizeof(t_hilos));
     inicializar_listas();
@@ -110,7 +111,7 @@ void enviar_respuesta_syscall_a_cpu(int respuesta){
     log_info(logger_kernel,"enviada respuesat de syscall");
     t_paquete *paquete=crear_paquete(RESPUESTA_SYSCALL);
     agregar_a_paquete(paquete, &respuesta,sizeof(int) );
-    enviar_paquete(paquete,config_kernel->conexion_cpu_interrupt);
+    enviar_paquete(paquete,config_kernel->conexion_cpu_dispatch);
     eliminar_paquete(paquete);
 }
 void procesar_conexion_dispatch()
@@ -118,7 +119,7 @@ void procesar_conexion_dispatch()
     // TODO: operaciones a ejecutar
     while (1)
     {
-
+    
         int fd_conexion_cpu = config_kernel->conexion_cpu_dispatch;
         int operacion = recibir_operacion(fd_conexion_cpu);
         log_info(logger_kernel, "se recibio el codigo de operacion: %d", operacion);
@@ -150,9 +151,9 @@ void procesar_conexion_dispatch()
 
             process_create(ruta_codigo, tamanio_proceso, prioridad_main);
 
-            sem_wait(&(semaforos->mutex_lista_exec));
-            t_tcb* sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
-            sem_post(&(semaforos->mutex_lista_exec));
+            // sem_wait(&(semaforos->mutex_lista_exec));
+            // t_tcb* sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
+            // sem_post(&(semaforos->mutex_lista_exec));
             
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
@@ -205,9 +206,9 @@ void procesar_conexion_dispatch()
            
             mutex_create(nombre_mutex, pid_mutex);
             
-            sem_wait(&(semaforos->mutex_lista_exec));
-            sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
-            sem_post(&(semaforos->mutex_lista_exec));
+            // sem_wait(&(semaforos->mutex_lista_exec));
+            // sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
+            // sem_post(&(semaforos->mutex_lista_exec));
 
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
@@ -238,10 +239,10 @@ void procesar_conexion_dispatch()
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             log_info(logger_kernel, "se recibio instruccion MUTEX_UNLOCK");
             t_list *params_unlock = recibir_paquete(fd_conexion_cpu);
-            char *recurso_unlok = (char*)list_get(params_unlock, 0);
+            char *recurso_unlok = (char*)list_get(params_unlock, 2);
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *th_unlock = (t_tcb *)list_get(lista_exec, 0);
-            sem_wait(&(semaforos->mutex_lista_exec));
+            sem_post(&(semaforos->mutex_lista_exec));
             mutex_unlock(recurso_unlok,th_unlock);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar

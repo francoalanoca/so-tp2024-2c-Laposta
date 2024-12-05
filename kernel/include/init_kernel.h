@@ -28,6 +28,7 @@ extern t_config_kernel *config_kernel;
 extern t_log *logger_kernel;
 extern int pid_AI_global;//contador de pids de procesos
 extern int socket_cpu;
+extern int contador_id_quantums;
 typedef enum estado{
     NEW,
     READY,

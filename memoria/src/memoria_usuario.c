@@ -73,7 +73,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 
 
 
-void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
+void inicializar_proceso(uint32_t pid, uint32_t tamanio){
     t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
     //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
@@ -98,13 +98,11 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
  
     uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
 
-    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
-
     t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
 
     nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
 
-    nuevo_proceso->limite = nuevo_proceso->base + tamanio_proceso;
+    nuevo_proceso->limite = nuevo_proceso->base +tamanio;
 
     //list_add(nuevo_proceso->hilos,nuevo_hilo);
     pthread_mutex_lock(&mutex_lista_miniPCBs);
@@ -117,7 +115,6 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
 int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint32_t pid) {
     printf("Entro crear proceso\n");
     printf("tam_proceso:%d,pid:%d,algoritmo_alocacion:%s\n",tam_proceso,pid,algoritmo_alocacion);
-    printf("Tamanio lista de particiones:%d\n", list_size(lista_de_particiones));
     //encontrar hueco libre y marcar bitmap, si no encuentra tira error
     uint32_t tamanio_bloque_actual = 0;
     bool bloque_libre_encontrado = false;
@@ -127,10 +124,8 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
     }
     else{
         if (strcmp(algoritmo_alocacion, "FIRST") == 0) {
-            printf("Entro FIRST\n");
 
             for (int i = 0; i < list_size(lista_de_particiones); i++) {
-                printf("Entro loop %d\n", i);
 
                 // Obtiene el puntero a char* desde la lista
                 char* tamanio_bloque_str = (char*)list_get(lista_de_particiones, i);
@@ -143,11 +138,9 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
 
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
-                printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
 
                 if (tam_proceso <= tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
                     bloque_libre_encontrado = true;
-                    printf("Elijo bloque %d\n", i);
 
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     bitarray_set_bit(bitmap_particiones, i);
@@ -159,7 +152,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
                     pthread_mutex_unlock(&mutex_pids_por_bloque);
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
+                    inicializar_proceso(pid, tamanio_bloque_actual); //VER UBICACION
                     return INICIAR_PROCESO_RTA_OK;
                 }
             }
@@ -200,7 +193,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 return -1;
             }
             else {
-                printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
+            
                 pthread_mutex_lock(&mutex_bitmap_particiones);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
                 pthread_mutex_unlock(&mutex_bitmap_particiones);
@@ -211,9 +204,8 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
                     pthread_mutex_unlock(&mutex_pids_por_bloque);
-                    printf("Se agrego a lista. Estado actual:\n");
                     print_lista_pid_por_bloque(pids_por_bloque);
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
+                    inicializar_proceso(pid, tamanio_ultimo_bloque_best_fit); //VER UBICACION
                      return INICIAR_PROCESO_RTA_OK; 
             }
         }
@@ -235,7 +227,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
 
                 // Convierte el char* a uint32_t
                 tamanio_bloque_actual = (uint32_t)atoi(tamanio_bloque_str);
-                printf("El tamanio del bloque %d es: %d\n", i, tamanio_bloque_actual);
+        
                 if(tam_proceso<=tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)){ //El proceso entra en el bloque actual
                     if(tamanio_ultimo_bloque_worst_fit == 0 || (tamanio_bloque_actual>tamanio_ultimo_bloque_worst_fit)){
                         tamanio_ultimo_bloque_worst_fit = tamanio_bloque_actual;
@@ -262,7 +254,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
                     pthread_mutex_unlock(&mutex_pids_por_bloque);
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
+                    inicializar_proceso(pid, tamanio_ultimo_bloque_worst_fit); //VER UBICACION
                 
                 return INICIAR_PROCESO_RTA_OK;
             }
@@ -278,8 +270,6 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
 
 void finalizar_proceso_fijas(uint32_t pid){
     uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
-
-    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
 
     t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
     printf("bloque_x_pid: %d\n",bloque_x_pid->bloque);

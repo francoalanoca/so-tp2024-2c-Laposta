@@ -645,35 +645,31 @@ t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid) {
 
 // Función que actualiza los registros del hilo con el tid correspondiente dentro del miniPCB con el pid correspondiente
 bool actualizar_contexto(t_m_contexto* contexto) {
-    printf("Entro a actualizar_contexto\n");
+    log_warning(logger_memoria,"actualizando contexto");
     // Verificamos si el contexto es válido
     if (contexto == NULL) {
         return false;
     }
-    printf("contexto no esnull\n");
+
     // Iteramos sobre la lista de miniPCBs
     uint32_t cantidad_miniPCBs = list_size(lista_miniPCBs);
-     printf("Vamos a iterar %d veces\n",cantidad_miniPCBs);
+
     for (uint32_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
-        printf("Obtengo miniPCB con pid:%d\n",miniPCB->pid);
-        printf("El pid del contexto ingresado es:%d\n",contexto->pid);
+
 
         // Verificamos si el pid coincide
         if (miniPCB->pid == contexto->pid) {
             // Ahora iteramos sobre la lista de hilos dentro de este miniPCB
             uint32_t cantidad_hilos = list_size(miniPCB->hilos);
-            printf("La cantidad de hilos del miniPCB es:%d\n",cantidad_hilos);
+
             for (uint32_t j = 0; j < cantidad_hilos; j++) {
                 t_hilo* hilo = list_get(miniPCB->hilos, j);
-
-                printf("Tid del hilo:%d\n",hilo->tid);
-                printf("Tid del contexto:%d\n",contexto->tid);
-
                 // Verificamos si el tid coincide
                 if (hilo->tid == contexto->tid) {
                     // Actualizamos los registros del hilo con los del contexto
                     hilo->registros = contexto->registros;
+   
                     return true;  // Retornamos true para indicar que se actualizó correctamente
                 }
             }

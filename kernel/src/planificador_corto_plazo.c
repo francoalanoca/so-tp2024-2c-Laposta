@@ -52,14 +52,12 @@ void *planificar_fifo()
         sem_wait(&(semaforos->contador_threads_en_ready));
         sem_wait(&(semaforos->espacio_en_cpu));
         // saco de ready
-        sem_wait(&(semaforos->mutex_lista_ready));
+
         t_tcb *tcb = NULL;
-        tcb = list_remove(lista_ready, 0);
-        sem_post(&(semaforos->mutex_lista_ready));
+        tcb = remover_de_lista(lista_ready,0,&(semaforos->mutex_lista_ready));
+
         // agrego a exec
-        sem_wait(&(semaforos->mutex_lista_exec));
-        list_add(lista_exec, tcb);
-        sem_post(&(semaforos->mutex_lista_exec));
+        agregar_a_lista(tcb,lista_exec,&(semaforos->mutex_lista_exec));
 
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
@@ -78,11 +76,7 @@ void *planificar_prioridades()
         tcb = list_remove(lista_ready, indice_del_prioritario);
         sem_post(&(semaforos->mutex_lista_ready));
         // agrego a exec
-        sem_wait(&(semaforos->mutex_lista_exec));
-        list_add(lista_exec, tcb);
-        sem_post(&(semaforos->mutex_lista_exec));
-        log_info(logger_kernel,"Paso a exec el tcb con pid:%d y tid:%d",tcb->pid,tcb->tid);
-
+        agregar_a_lista(tcb,lista_exec,&(semaforos->mutex_lista_exec));
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
 }
@@ -117,15 +111,16 @@ void *planificar_colas_multinivel()
         sem_wait(&(semaforos->mutex_lista_ready));
         t_tcb *tcb = NULL;
         int indice_del_prioritario = buscar_indice_de_mayor_prioridad();
+
         tcb = list_remove(lista_ready, indice_del_prioritario);
+        
         sem_post(&(semaforos->mutex_lista_ready));
         // agrego a exec
-        sem_wait(&(semaforos->mutex_lista_exec));
-        list_add(lista_exec, tcb);
-        sem_post(&(semaforos->mutex_lista_exec));
-        log_info(logger_kernel,"Paso a exec el tcb con pid:%d y tid:%d",tcb->pid,tcb->tid);
+        agregar_a_lista(tcb,lista_exec,&(semaforos->mutex_lista_exec));
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
-        iniciar_quantum();//se inicia el contador de tiempo RR en un hilo
+        pthread_t hilo_quantum;
+        pthread_create(&hilo_quantum, NULL, interrupcion_quantum, (void*)tcb);
+        pthread_detach(hilo_quantum);
     }
 }
  // -----------------------------------------------------------------------------------------
@@ -135,25 +130,30 @@ void verificar_fin_ejecucion_prev_quantum(){
     while(1){
         sem_wait(&(semaforos->sem_finalizacion_ejecucion_cpu));
         //Destruir hilo de quantum
-        pthread_cancel(hilos->hilo_quantum);
-        log_info(logger_kernel,"Se finalizo el hilo de quantum");
+       // pthread_cancel(hilos->hilo_quantum);
+       // log_info(logger_kernel,"Se finalizo el hilo de quantum");
     }
 }
 void iniciar_quantum()
 {
-    //pthread_t hilo_quantum;
-    pthread_create(&(hilos->hilo_quantum), NULL, interrupcion_quantum, NULL);
-    pthread_detach(hilos->hilo_quantum);
+    pthread_t hilo_quantum;
+    pthread_create(&hilo_quantum, NULL, interrupcion_quantum, NULL);
+    pthread_detach(hilo_quantum);
 }
-void *interrupcion_quantum(){
+void *interrupcion_quantum(void* tcb_v){
+    t_tcb* tcb_ant=(t_tcb*)tcb_v;
     sem_wait(&(semaforos->mutex_lista_exec));
     t_tcb *tcb = list_get(lista_exec, 0);
     sem_post(&(semaforos->mutex_lista_exec));
     usleep(config_kernel->quantum * 1000);
+    if(tcb->pid==tcb_ant->pid &&tcb->tid==tcb_ant->tid){
+    log_error(logger_kernel,"enviada interrupt, fin de Q de pid:%d, tid:%d , id_quantum=%d",tcb->pid,tcb->tid,contador_id_quantums);
     enviar_interrumpir_cpu(tcb, FIN_DE_QUANTUM);
-    log_error(logger_kernel,"enviada interrupt, fin de Q de pid:%d, tid:%d",tcb->pid,tcb->tid);
-    //TODO: que pasa si se interrumpe antes el tcb, por ej por IO
 
+    }
+     contador_id_quantums++;
+    //TODO: que pasa si se interrumpe antes el tcb, por ej por IO
+    return NULL;
 }
 // -----------------------------------------------------------------------------------------
 
@@ -161,6 +161,7 @@ void enviar_interrumpir_cpu(t_tcb* tcb, int motivo_interrrupt){
     t_paquete* paquete=crear_paquete(FIN_DE_QUANTUM);
     agregar_a_paquete(paquete,&(tcb->pid),sizeof(int));
     agregar_a_paquete(paquete,&(tcb->tid),sizeof(int));
+    agregar_a_paquete(paquete,&contador_id_quantums,sizeof(int));
     enviar_paquete(paquete,config_kernel->conexion_cpu_interrupt);
     eliminar_paquete(paquete);
 }

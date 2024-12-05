@@ -9,7 +9,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-extern bool interrupcion_kernel;
+
 extern t_list* lista_sockets_global;
 extern int conexion_kernel_dispatch;
 extern int conexion_kernel_interrupt;
@@ -40,7 +40,13 @@ typedef struct {
     char *server_name;
 } t_procesar_conexion_args;
 
-
+typedef struct{
+    uint32_t id_quantum;
+    uint32_t tid_fin;
+    uint32_t pid_fin;
+    bool interrupcion;
+}t_interrupcion;
+extern t_interrupcion* interrupcion;
 typedef struct 
 {
     uint32_t PC;
@@ -59,9 +65,10 @@ typedef struct {
     uint32_t pid; 
     uint32_t tid;
     t_registros_CPU registros_cpu;
+    int id_quantum;
 } t_proceso;
 extern t_proceso* proceso_actual;
-
+extern t_proceso* proceso_aux_actual;
 typedef enum
 {
     SET,

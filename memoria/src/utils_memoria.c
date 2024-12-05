@@ -34,9 +34,8 @@ void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int sock
     // agregar_a_paquete(paquete_crear_proceso, &crear_proceso->pid,  sizeof(uint32_t));
      
     enviar_paquete(paquete_crear_proceso, socket_kernel);   
-    printf("Proceso enviado: %i\n", crear_proceso->pid); 
     eliminar_paquete(paquete_crear_proceso);
-    printf("PAQUETE ELIMINADO\n"); 
+
 }
 
 t_m_crear_hilo* deserializar_iniciar_hilo(t_list*  lista_paquete ){
@@ -362,7 +361,7 @@ t_escribir_leer* deserializar_write_memoria(t_list*  lista_paquete){
 
     peticion_guardar->valor = list_get(lista_paquete, 3);
     printf("Valor: %s \n", peticion_guardar->valor);
-
+    peticion_guardar->tamanio=4;
     
 
     return peticion_guardar;

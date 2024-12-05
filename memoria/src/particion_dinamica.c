@@ -101,15 +101,15 @@ t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
  printf("ENTRO A BUSCAR BEST\n");
     //Recorremos la lista de particiones comparando en cada iteracion
     for (int i = 0; i < list_size(lista_particiones_dinamicas); i++){
-        printf("ENTRO A FOR\n");
+    
         particion = list_get(lista_particiones_dinamicas, i);
 
         //Verificamos que la particion obtenida este libre y sea >= al proceso
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
-            printf("ENTRO A IF PARTICION > PROCESO\n");
+
             //Verificamos si todavia no hay una mejor o si el tamaño particion actual es menor a la mejor actual 
             if (mejor_particion == NULL || particion->tamanio < mejor_particion->tamanio) {
-                printf("ENTRO A IF MEJOR PARTICION\n");
+    
                 mejor_particion = particion;
             }
         }
@@ -323,7 +323,7 @@ int busco_indice_particion_dinamica_por_PID(uint32_t proceso_pid){
 
 t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid){
 
-    log_trace(logger_memoria, "Buscando la particion por PID");
+
 
     t_particion_dinamica *particion;
 

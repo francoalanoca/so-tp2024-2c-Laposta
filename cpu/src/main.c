@@ -13,7 +13,8 @@ char *ip_cpu;
 
 
 
-bool interrupcion_kernel;
+//bool interrupcion_kernel;
+t_interrupcion *interrupcion;
 instr_t *prox_inst;
 t_list* lista_sockets_global;
 int conexion_kernel_dispatch = -1;
@@ -39,7 +40,6 @@ int socket_memoria;
 
 char *valor_registro_obtenido;
 int rta_resize;
-
 int main(int argc, char *argv[])
 {
 
@@ -47,6 +47,8 @@ int main(int argc, char *argv[])
     path_config = argv[1];
     ip_cpu = argv[2];
     proceso_actual= NULL;
+    proceso_aux_actual=NULL;
+    interrupcion=malloc(sizeof(t_interrupcion));
     lista_sockets_global = list_create();
 
     sem_init(&sem_valor_instruccion, 0, 0);
@@ -144,8 +146,7 @@ void ejecutar_ciclo() {
        
         if (proceso_actual != NULL) {
             pthread_mutex_unlock(&mutex_proceso_actual);
-            t_proceso* proceso_aux_para_evitar_problemas_con_syscalls_al_porner_el_actual_en_null=proceso_actual;
-            ciclo_de_instrucciones( &socket_memoria, proceso_aux_para_evitar_problemas_con_syscalls_al_porner_el_actual_en_null, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
+            ciclo_de_instrucciones( &socket_memoria, proceso_actual, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
         } else {
             pthread_mutex_unlock(&mutex_proceso_actual);
                       

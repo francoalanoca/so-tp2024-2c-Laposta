@@ -85,7 +85,7 @@ void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
 
     //creamos una variable que guarda el archivo
     FILE* archivo = fopen(path_total, "r");		
-    log_info(logger_memoria, "leyendo archivo abierto: %s", nombre_archivo);
+
 
 	//Si no se puede abrir el archivo marca error
 	if (!archivo){
@@ -130,7 +130,6 @@ int contador=0;
         } 
         contador++;
 	}
-     log_warning(logger_memoria,"cantidad de instruc leidas: %d",list_size(hilo->lista_de_instrucciones));
 
     free(path_total);
     free(linea);
@@ -161,9 +160,6 @@ char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_co
 
 		//Verificamos que sea igual al proceso buscado
         if (miniPCB->pid == proceso_pid){
-
-         log_info(logger_memoria,"pid encontrado para buscar instruccion: %d",miniPCB->pid);
-
             //Buscamos el hilo
             //Recorremos segun el tamaño de la lista de hilos
             for (int j = 0; j < list_size(miniPCB->hilos); j++){
@@ -172,7 +168,6 @@ char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_co
             
                 //Verificamos que sea igual al hilo buscado
                 if (hilo_proceso->tid == hilo_tid){
-                 log_info(logger_memoria,"tamanio lista_instruciones: %d",list_size(hilo_proceso->lista_de_instrucciones));
                     //Guardamos valor y lo retornamos
                     char *valor = list_get(hilo_proceso->lista_de_instrucciones, program_counter);
                     return valor;

@@ -52,9 +52,8 @@ void* planificar_procesos(){
                 // pasar_new_a_ready();  TODO: no se puede usar por que en NEW hay procesos y en READY hay hilos
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
                 remover_de_lista(lista_new,0,&(semaforos->mutex_lista_new));
-                agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_new));
-                t_tcb* prueba_tcb=(t_tcb*)list_get(lista_ready,0);
-
+                agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+                
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{

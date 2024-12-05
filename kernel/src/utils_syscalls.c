@@ -91,6 +91,7 @@ void enviar_thread_a_cpu(t_tcb* tcb_a_ejetucar,int socket_dispatch){
     uint32_t valor_tid=(uint32_t)(tcb_a_ejetucar->tid);
     agregar_a_paquete(paquete,&valor_pid,sizeof(uint32_t));
     agregar_a_paquete(paquete,&valor_tid,sizeof(uint32_t));
+    agregar_a_paquete(paquete,&contador_id_quantums,sizeof(uint32_t));
     sem_wait(&(semaforos->mutex_conexion_dispatch));
     enviar_paquete(paquete,socket_dispatch);
     sem_post(&(semaforos->mutex_conexion_dispatch));
@@ -140,8 +141,9 @@ void* enviar_a_memoria_thread_saliente(void* t){
     if(rta==FINALIZAR_HILO_RTA_OK){
         log_info(logger_kernel, "## (<%d>:<%d>) Finaliza el hilo",tcb->pid,tcb->tid);
     }
-    else
+    else{
          log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+    }
     close(fd_memoria); 
     eliminar_paquete(paquete);
 }
@@ -234,6 +236,7 @@ t_mutex* quitar_mutex_a_thread(char* recurso,t_tcb* tcb){
          mutex=(t_mutex*)list_get(tcb->mutex_asignados,i);
         if(strcmp(recurso,mutex->recurso)==0){
             list_remove(tcb->mutex_asignados,i);
+            log_error(logger_kernel,"quitando mutex a pid:%d , tid:%d, mutex: %s ",tcb->pid,tcb->tid,mutex->recurso);
             return mutex;
         }
     }
@@ -246,6 +249,8 @@ t_tcb* asignar_mutex_al_siguiente_thread(t_mutex* mutex){
     tcb=(t_tcb*)list_remove(mutex->lista_threads_bloquedos,0);
         asignar_mutex(tcb,mutex);
         mutex->thread_asignado=tcb;
+    log_error(logger_kernel,"asignado mutex a pid:%d , tid:%d, mutex: %s ",tcb->pid,tcb->tid,mutex->recurso);
+
     }
     return tcb;
 }

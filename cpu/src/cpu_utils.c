@@ -3,7 +3,8 @@
 int tamanioParams;
 int tamanioInterfaces;
 t_proceso* proceso_actual;
-
+t_proceso* proceso_aux_actual;
+// int id_quantum_interrupt;
 instr_t* fetch(int conexion, t_proceso* proceso){
     
     pedir_instruccion(proceso, conexion); 
@@ -160,25 +161,30 @@ void enviar_fin_quantum_a_kernel(    t_proceso *proceso,int socket){
     paquete_fin_quantum = crear_paquete(FIN_DE_QUANTUM);
     agregar_a_paquete(paquete_fin_quantum, &(proceso->pid), sizeof(uint32_t));
     agregar_a_paquete(paquete_fin_quantum, &(proceso->tid), sizeof(uint32_t));
-    proceso_actual= NULL;
     enviar_paquete(paquete_fin_quantum, socket);
-    log_warning(logger_cpu, "TIEMPO DE QUANTUM TERMINADO - PID: %d, TID: %d", proceso->pid, proceso->tid);
     eliminar_paquete(paquete_fin_quantum);
 }
 
-void check_interrupt(int conexion_kernel){
-     printf("ENTRO EN CHECK INTERRUPT\n");    
+void check_interrupt(int conexion_kernel){  
   
     pthread_mutex_lock(&mutex_interrupcion_kernel);
-    if(interrupcion_kernel){
-        printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
+    if(interrupcion->interrupcion && proceso_actual->id_quantum==interrupcion->id_quantum &&proceso_actual->pid==interrupcion->pid_fin &&proceso_actual->tid==interrupcion->tid_fin ){
+    log_warning(logger_cpu, "TIEMPO DE QUANTUM TERMINADO para - PID: %d, TID: %d id_fin_q:%d", proceso_actual->pid, proceso_actual->tid,proceso_actual->id_quantum);
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
         enviar_fin_quantum_a_kernel(proceso_actual,conexion_kernel );
         pthread_mutex_lock(&mutex_proceso_actual);
-        //proceso_actual= NULL; 
+        proceso_actual= NULL; 
         pthread_mutex_unlock(&mutex_proceso_actual);
-       
-        interrupcion_kernel = false;
+        interrupcion->id_quantum=-1;
+        interrupcion->interrupcion = false;
+        interrupcion->pid_fin=-1;
+        interrupcion->tid_fin=-1;
+    }else{
+        log_info(logger_cpu,"interrupcion descartada: pid:%d , tid:%d , id_fin_q=%d ", interrupcion->pid_fin,interrupcion->tid_fin,interrupcion->id_quantum);
+        interrupcion->id_quantum=-1;
+        interrupcion->interrupcion = false;
+        interrupcion->pid_fin=-1;
+        interrupcion->tid_fin=-1;
     }
     pthread_mutex_unlock(&mutex_interrupcion_kernel);
     
@@ -188,7 +194,6 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
     
     t_paquete* paquete_pedido_instruccion;
     paquete_pedido_instruccion = crear_paquete(SOLICITUD_INSTRUCCION);
-    log_warning(logger_cpu,"SOLICITANDO INSTRUCICON A MEM: PID=%d, TID:%d",proceso->pid,proceso->tid) ;  
     agregar_a_paquete(paquete_pedido_instruccion,  &(proceso->pid),  sizeof(uint32_t));
     agregar_a_paquete(paquete_pedido_instruccion, &(proceso->tid),  sizeof(uint32_t));
     agregar_a_paquete(paquete_pedido_instruccion,  &(proceso->registros_cpu.PC),  sizeof(uint32_t));  
@@ -202,7 +207,7 @@ void set(char* registro, char* valor_char, t_proceso* proceso){
     char *endptr;     
     registros registro_elegido = identificarRegistro(registro);
     uint32_t valor = (uint32_t)strtoul(valor_char, &endptr, 10);// Convertir la cadena a uint32_t
-    //pthread_mutex_lock(&mutex_proceso_actual);
+    pthread_mutex_lock(&mutex_proceso_actual);
     switch(registro_elegido){
         case PC:
         {
@@ -262,8 +267,9 @@ void set(char* registro, char* valor_char, t_proceso* proceso){
         
         default:
         log_info(logger_cpu, "El registro no existe");
+        break;
     }
-   // pthread_mutex_unlock(&mutex_proceso_actual);
+    pthread_mutex_unlock(&mutex_proceso_actual);
 
     //proceso->pcb->registros_cpu.AX;
    // registro = valor;
@@ -325,6 +331,7 @@ void sum(char* registro_destino, char* registro_origen, t_proceso* proceso){
         
         default:
         log_info(logger_cpu, "El registro no existe");
+        break;
     }
     pthread_mutex_unlock(&mutex_proceso_actual);
 
@@ -336,9 +343,9 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
     registros id_registro_destino = identificarRegistro(registro_destino);
     registros id_registro_origen = identificarRegistro(registro_origen);
 
+    pthread_mutex_lock(&mutex_proceso_actual);
     uint32_t valor_reg_destino = obtenerValorActualRegistro(id_registro_destino,proceso);
     uint32_t valor_reg_origen = obtenerValorActualRegistro(id_registro_origen,proceso);
-    pthread_mutex_lock(&mutex_proceso_actual);
     switch(id_registro_destino){
         case PC:
         {
@@ -358,6 +365,7 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
         case CX:
         {
            proceso->registros_cpu.CX = valor_reg_destino - valor_reg_origen;
+           log_warning(logger_cpu,"restando cx= %d menos ",proceso->registros_cpu.CX);
             break;
         }
         case DX:
@@ -387,6 +395,7 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
         }        
         default:
         log_info(logger_cpu, "El registro no existe");
+        break;
     }
     pthread_mutex_unlock(&mutex_proceso_actual);
   
@@ -396,12 +405,18 @@ void sub(char* registro_destino, char* registro_origen, t_proceso* proceso){
 void jnz(char* registro, char* inst_char, t_proceso* proceso){
     registros id_registro = identificarRegistro(registro);
     uint32_t valor_registro = obtenerValorActualRegistro(id_registro,proceso);
-    uint32_t inst = string_a_uint32(inst_char);
+    uint32_t nuevo_pc = (uint32_t)strtoul(inst_char, NULL, 10); 
     if(valor_registro != 0){
-        pthread_mutex_lock(&mutex_proceso_actual);
-        log_info(logger_cpu, "valor solcitado JNZ  %d", inst);
-        proceso->registros_cpu.PC = inst;
+        
+        pthread_mutex_lock(&mutex_proceso_actual); 
         pthread_mutex_unlock(&mutex_proceso_actual);
+        
+        proceso->registros_cpu.PC=nuevo_pc-1;
+        if(nuevo_pc-1<0){
+        proceso->registros_cpu.PC=0;
+        
+        }
+        log_warning(logger_cpu, "valor de PC luego de JNZ, pc=%d", proceso->registros_cpu.PC );
     }
 }
 
@@ -431,8 +446,7 @@ void limpiarCadena(char* cadena) {
 
 
 registros identificarRegistro(char* registro){
-    printf("ENTRO A IDENTIFICAR_REGISTRO: %s\n",registro); 
-    log_info(logger_cpu, "Identificar Registro: %s", registro);
+
     limpiarCadena(registro);
     if(strcmp(registro,"PC") == 0){
         
@@ -534,6 +548,7 @@ uint32_t obtenerValorActualRegistro(registros id_registro, t_proceso* proceso){
       
         default:
         log_info(logger_cpu, "El registro no existe");
+        break;
     }
 }
 
@@ -575,21 +590,15 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
 
     uint32_t dir_fisica_result;
 
-    log_info(logger_cpu, "READ_MEM: id registro Dirección=%u", id_registro_direccion);
-    log_info(logger_cpu, "READ_MEM: valor registro Dirección=%u", valor_registro_direccion);
-    log_info(logger_cpu, "READ_MEM: valor registro datos=%s", registro_datos);
-
     dir_fisica_result = mmu(valor_registro_direccion,proceso,conexion, conexion_kernel_dispatch);
 
     registros id_registro_datos = identificarRegistro(registro_datos);
     
 
     pedir_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,conexion);
-    int valor_sem;
-    sem_getvalue(&sem_valor_registro_recibido, &valor_sem);
-    printf("valor sem_valor_registro_recibido:%d\n", valor_sem);
+   
     sem_wait(&sem_valor_registro_recibido);
-    printf("paso sem_valor_registro_recibido\n");
+   
 
     log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
 
@@ -603,17 +612,13 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
 void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proceso, int conexion){
     // Lee el valor del Registro Datos y lo escribe en la dirección física de
     // memoria obtenida a partir de la Dirección Lógica almacenada en el Registro Dirección.
-    printf("registro: %s\n",registro_datos);
+
     registros id_registro_datos = identificarRegistro(registro_datos);
-    printf("registro: %d\n",id_registro_datos);
+
     uint32_t valor_registro_datos = obtenerValorActualRegistro(id_registro_datos,proceso);
-    printf("manda %d a guardar en mem\n",valor_registro_datos);
+
     registros id_registro_direccion = identificarRegistro(registro_direccion);
     uint32_t valor_registro_direccion = obtenerValorActualRegistro(id_registro_direccion,proceso);
-
-    log_info(logger_cpu, "WRITE_MEM: Registro Dirección=%s, Registro Datos=%s", registro_direccion, registro_datos);
-    log_info(logger_cpu, "WRITE_MEM: Valor Dirección=%u, Valor Datos=%u", valor_registro_direccion, valor_registro_datos);
-
 
     uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso,conexion, conexion_kernel_dispatch);
 
@@ -784,7 +789,6 @@ void enviar_mutex_unlock_a_kernel(char* recurso, int conexion_kernel){
     t_paquete* paquete_unlock_kernel;   
     paquete_unlock_kernel = crear_paquete(MUTEX_DESBLOQUEAR); 
     int tamanio_recurso = strlen(recurso)+1;
-
     agregar_a_paquete(paquete_unlock_kernel,  &proceso_actual->pid,  sizeof(uint32_t));   
     agregar_a_paquete(paquete_unlock_kernel,  &tamanio_recurso,  sizeof(uint32_t));       
     agregar_a_paquete(paquete_unlock_kernel,  recurso,  tamanio_recurso);      
@@ -855,17 +859,15 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     //free(conexion_mer);
     //free(socket_dispatch);
     //free(socket_interrupt);
-    
-    log_info(logger_cpu, "Entro al ciclo");
 
     instr_t *inst = malloc(sizeof(instr_t));
-    log_info(logger_cpu, "Voy a entrar a fetch");
+
     inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
-    log_info(logger_cpu, "Voy a entrar a decode");
+
     
     tipo_inst= decode(inst, conexion_mem);
-    log_info(logger_cpu, "Voy a entrar a execute");
+
     
     //TODO: FIXME: CUANDO SE EJECUTA UNA SYSCALL SE PONE PROCESO_ACTUAL EN NULL-->luego de EXECUTE NO SE PUEDE HACER PROCESO_ACTUAL->PC+=1;
     execute(inst, tipo_inst, proceso, conexion_mem, dispatch, interrupt);
@@ -876,24 +878,27 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     
     if(es_syscall(tipo_inst)){
         enviar_contexto_a_memoria(proceso,conexion_mem);
-        log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado, esperando otro...");
         sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
-        if(respuesta_syscall==REPLANIFICACION){
+        if(respuesta_syscall==REPLANIFICACION){//kernel automaticamente enviar otro proceso/hilo para ejecutar
        //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
         pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
         pthread_mutex_unlock(&mutex_proceso_actual);
         
          pthread_mutex_lock(&mutex_interrupcion_kernel);
-        interrupcion_kernel=false; 
+
+        interrupcion->interrupcion=false;
+        interrupcion->id_quantum=-1;
+        interrupcion->pid_fin=-1;
+        interrupcion->tid_fin=-1;
+            log_info(logger_cpu, " ATENDIO UNA SYSCALL Y REPLANIFICA, op_syscall=%d", tipo_inst);
         pthread_mutex_unlock(&mutex_interrupcion_kernel);
         }
+        respuesta_syscall=-1; 
 
     }
-    log_info(logger_cpu, "Voy a entrar a check_interrupt");
-    check_interrupt(dispatch);
-    log_info(logger_cpu, "Sale de check_interrupt");
     log_info(logger_cpu, "Termino ciclo de instrucciones");
+    check_interrupt(dispatch);
 
     // interrupcion_kernel = false;
 
@@ -907,7 +912,7 @@ void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
 
 tipo_instruccion str_to_tipo_instruccion(const char *str) {
 
-    printf("Entro al funcion a testear \n");
+
     tipo_instruccion instruccion_a_devolver = -1;
     if (strcmp(str, "SET") == 0) instruccion_a_devolver = SET;
     else if (strcmp(str, "READ_MEM") == 0) instruccion_a_devolver = READ_MEM;
@@ -928,8 +933,7 @@ tipo_instruccion str_to_tipo_instruccion(const char *str) {
     else if (strcmp(str, "THREAD_EXIT") == 0) instruccion_a_devolver = THREAD_EXIT;
     else if (strcmp(str, "PROCESS_EXIT") == 0) instruccion_a_devolver = PROCESS_EXIT;
     else printf("Entro en el default de str_to_tipo_instruccion \n");
-    printf("imprimo instruccion_a_devolver: %d \n", instruccion_a_devolver);
-    printf("Saliendo de la funcion a testear \n");
+
     return instruccion_a_devolver;
 }
 
@@ -947,23 +951,21 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.DX, sizeof(uint32_t)); 
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.EX, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.FX, sizeof(uint32_t));
-    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.HX, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.GX, sizeof(uint32_t));
+    agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.HX, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.base, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.limite, sizeof(uint32_t));
     enviar_paquete(paquete_devolucion_contexto, conexion); 
     eliminar_paquete(paquete_devolucion_contexto);
     log_info(logger_cpu,"## TID: %d- Actualizo Contexto Ejecución", proceso->tid); // LOG OBLIGATORIO
+
  }
 
- void solicitar_contexto_a_memoria(t_proceso* proceso, int conexion){
-    printf("entro a paquete_solicitud_contexto\n");
+ void solicitar_contexto_a_memoria(int conexion){   
     t_paquete* paquete_solicitud_contexto;
-
     paquete_solicitud_contexto = crear_paquete(SOLICITUD_CONTEXTO); 
-    log_warning(logger_cpu,"pidiendo contexto a memoria pid:%d, tid:%d",proceso->pid,proceso->tid);
-    agregar_a_paquete(paquete_solicitud_contexto, &proceso->pid,  sizeof(uint32_t));         
-    agregar_a_paquete(paquete_solicitud_contexto, &proceso->tid,  sizeof(uint32_t));
+    agregar_a_paquete(paquete_solicitud_contexto, &proceso_aux_actual->pid,  sizeof(uint32_t));         
+    agregar_a_paquete(paquete_solicitud_contexto, &proceso_aux_actual->tid,  sizeof(uint32_t));
     enviar_paquete(paquete_solicitud_contexto, conexion); 
     eliminar_paquete(paquete_solicitud_contexto);
  }
@@ -971,9 +973,7 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
 
 
 void enviar_segfault_a_kernel(t_proceso* proceso,int conexion_kernel_dispatch){
-    printf("entro a paquete_solicitud_contexto\n");
     t_paquete* paquete_segfault;
-
     paquete_segfault = crear_paquete(SEGMENTATION_FAULT); 
     agregar_a_paquete(paquete_segfault, &proceso->pid,  sizeof(uint32_t));         
     agregar_a_paquete(paquete_segfault, &proceso->tid,  sizeof(uint32_t));
