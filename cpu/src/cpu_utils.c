@@ -160,24 +160,27 @@ void enviar_fin_quantum_a_kernel(    t_proceso *proceso,int socket){
     paquete_fin_quantum = crear_paquete(FIN_DE_QUANTUM);
     agregar_a_paquete(paquete_fin_quantum, &(proceso->pid), sizeof(uint32_t));
     agregar_a_paquete(paquete_fin_quantum, &(proceso->tid), sizeof(uint32_t));
-    proceso_actual= NULL;
+  
     enviar_paquete(paquete_fin_quantum, socket);
     log_warning(logger_cpu, "TIEMPO DE QUANTUM TERMINADO - PID: %d, TID: %d", proceso->pid, proceso->tid);
     eliminar_paquete(paquete_fin_quantum);
+    pthread_mutex_lock(&mutex_proceso_actual);
+    proceso_actual= NULL; 
+    log_warning(logger_cpu, "proceso desalojado");
+    
+    pthread_mutex_unlock(&mutex_proceso_actual);
 }
 
 void check_interrupt(int conexion_kernel){
-     printf("ENTRO EN CHECK INTERRUPT\n");    
+    log_info(logger_cpu,"ENTRO EN CHECK INTERRUPT\n");    
   
     pthread_mutex_lock(&mutex_interrupcion_kernel);
-    if(interrupcion_kernel){
-        printf("ENTRO EN IF DEL  CHECK INTERRUPT\n");
+    
+    if(interrupcion_kernel && proceso_actual != NULL){
+        log_info(logger_cpu,"ENTRO EN IF DEL  CHECK INTERRUPT\n");
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
         enviar_fin_quantum_a_kernel(proceso_actual,conexion_kernel );
-       
-        proceso_actual= NULL; 
       
-       
         interrupcion_kernel = false;
     }
     pthread_mutex_unlock(&mutex_interrupcion_kernel);

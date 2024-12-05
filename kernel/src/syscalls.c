@@ -121,7 +121,7 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
     t_mutex* mutex_existe=buscar_mutex(recurso,tcb->pid);
     if(mutex_existe!=NULL){
         mutex_a_desbloquear=quitar_mutex_a_thread(recurso,tcb);
-            
+        log_info(logger_kernel,"Entre en MUTEX UNLOCK y existe recurso");
         if(mutex_a_desbloquear!=NULL){//si lo tenia asignado
         //asgino al primero que esperaba el mutex
             t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
@@ -141,7 +141,9 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
             //no existe mutex-> mando hilo a exit y activo el planificador
             //remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             //agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
+            log_info(logger_kernel,"Entre en MUTEX UNLOCK y existe recurso");
             thread_exit(tcb);
+
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
             sem_post(&(semaforos->espacio_en_cpu));
         }

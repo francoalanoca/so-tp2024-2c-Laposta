@@ -89,6 +89,7 @@ void procesar_conexion_dispatch(void *v_args){
             case PROCESO_EJECUTAR:
             {
                 printf("Ejecutando procesoo\n");
+                sem_wait(&sem_cpu_termino_ciclo);
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
                 log_info(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
@@ -101,7 +102,7 @@ void procesar_conexion_dispatch(void *v_args){
 
                 //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
                 //free(proceso);
-                printf("pase free proceso\n"); 
+                
                 break;
             }
             default:

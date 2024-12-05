@@ -30,6 +30,7 @@ sem_t sem_check_interrupcion_kernel;
 sem_t sem_conexion_interrupt_iniciado;
 sem_t sem_conexion_dispatch_iniciado;
 sem_t sem_esperando_read_write_mem;
+sem_t sem_cpu_termino_ciclo;
 pthread_mutex_t mutex_proceso_actual;
 pthread_mutex_t mutex_proceso_interrumpido_actual;
 pthread_mutex_t mutex_interrupcion_kernel;
@@ -62,6 +63,8 @@ int main(int argc, char *argv[])
     sem_init(&sem_conexion_interrupt_iniciado, 0, 0);
     sem_init(&sem_conexion_dispatch_iniciado, 0, 0);
     sem_init(&sem_esperando_read_write_mem, 0, 0);
+    sem_init(&sem_esperando_read_write_mem, 0, 0);
+    sem_init(&sem_cpu_termino_ciclo, 0, 1);
     pthread_mutex_init(&mutex_proceso_actual, NULL);
     pthread_mutex_init(&mutex_proceso_interrumpido_actual, NULL);
     pthread_mutex_init(&mutex_interrupcion_kernel, NULL);
@@ -152,7 +155,8 @@ void ejecutar_ciclo() {
             pthread_mutex_unlock(&mutex_proceso_actual);
                       
         }
-    }
+       sem_post( &sem_cpu_termino_ciclo);
+ }
 
     
 }
