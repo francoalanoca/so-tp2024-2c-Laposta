@@ -30,12 +30,12 @@ void memoria_atender_cpu(){
             break;
 		
 		case SOLICITUD_CONTEXTO:
+			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí SOLICITUD_CONTEXTO \n");
 			valores = recibir_paquete(socket_cpu);
 			uint32_t pid = *(uint32_t*)list_get(valores, 0);
 			uint32_t tid = *(uint32_t*)list_get(valores, 1);
 			t_m_contexto* contexto_encontrado = buscar_contexto_en_lista(pid,tid);
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			contexto_encontrado->pid = pid;
 			contexto_encontrado->tid = tid;
 			log_warning(logger_memoria,"contexto encontrado: registros");
@@ -49,17 +49,19 @@ void memoria_atender_cpu(){
 
 		case SOLICITUD_INSTRUCCION:
 			//sleep(8);
+			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí SOLICITUD_INSTRUCCION \n");
 			valores = recibir_paquete(socket_cpu);
 			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
             char* instruccion = buscar_instruccion(solicitud_instruccion->pid, solicitud_instruccion->tid, solicitud_instruccion->program_counter);
 			log_info(logger_memoria, "## Obtener instrucción - (PID:TID) - (%d:%d) - Instrucción: %s\n",solicitud_instruccion->pid,solicitud_instruccion->tid,instruccion); 
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			
 			enviar_respuesta_instruccion(instruccion, socket_cpu);    
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_INSTRUCCION_RTA \n");
 			break;
 
 		case READ_MEMORIA:
+			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí READ_MEMORIA \n");
 			valores = recibir_paquete(socket_cpu);
 			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores); 
@@ -70,14 +72,13 @@ void memoria_atender_cpu(){
 			log_info(logger_memoria, "ANTES DE FUNCION READ_MEM \n");
 			//INICIO MUTEX
 			if(read_mem(peticion_leer->direccion_fisica,&respuesta_leer)){
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				log_info(logger_memoria, "RESPUESTA READ: %d",respuesta_leer);
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_OK);
 				log_info(logger_memoria, "## Lectura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d \n",peticion_leer->pid,peticion_leer->tid,peticion_leer->direccion_fisica,peticion_leer->tamanio); 
 				
 			}
 			else{
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+
 				enviar_respuesta_read_memoria(peticion_leer->pid,respuesta_leer, socket_cpu,READ_MEMORIA_RTA_ERROR);
 			}
 			//FIN MUTEX
@@ -87,17 +88,17 @@ void memoria_atender_cpu(){
 			break;
 
 		case WRITE_MEMORIA:
+			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí WRITE_MEMORIA \n");
 			valores = recibir_paquete(socket_cpu);
 			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);  
 			//INICIO MUTEX 
 			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor)){
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_OK);
 				log_info(logger_memoria, "## Escritura - (PID:TID) - (%d:%d) - Dir. Física: %d - Tamaño: %d\n",peticion_escribir->pid,peticion_escribir->tid,peticion_escribir->direccion_fisica,4);
 			}
 			else{
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_write_memoria(peticion_escribir->pid, socket_cpu,WRITE_MEMORIA_RTA_ERROR);
 			}
 			//FIN MUTEX
@@ -108,6 +109,7 @@ void memoria_atender_cpu(){
 			break;
 		
 		case DEVOLUCION_CONTEXTO:
+			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí DEVOLUCION_CONTEXTO \n");
 			valores = recibir_paquete(socket_cpu);
 			t_m_contexto* contexto_actualizado = malloc(sizeof(t_m_contexto));
@@ -123,7 +125,7 @@ void memoria_atender_cpu(){
 				printf("No se encontro el pid/tid\n");
 				enviar_respuesta_actualizar_contexto(contexto_actualizado,socket_cpu,DEVOLUCION_CONTEXTO_RTA_ERROR);
 			}
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de DEVOLUCION_CONTEXTO_RTA \n");
 			break;
 
@@ -153,7 +155,7 @@ void memoria_atender_kernel(void* socket){
 		op_code response;
 		t_list* valores;
 		//pthread_t
-		sleep(5);
+		//sleep(5);
 		switch (cod_op) {
 		case HANDSHAKE:
 			//pthread_create(&hilo_kernel, NULL, (void*) memoria_atender_kernel, NULL));
@@ -186,14 +188,14 @@ void memoria_atender_kernel(void* socket){
 				if(rta_crear_proceso == INICIAR_PROCESO_RTA_OK){
 				//inicializar_proceso(iniciar_proceso->pid, iniciar_proceso->tamanio_proceso);
 				//enviar rta OK
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,INICIAR_PROCESO_RTA_OK);
 				log_info(logger_memoria, "## Proceso Creado- PID: %d Tamaño: %d\n",iniciar_proceso->pid,iniciar_proceso->tamanio_proceso);
 				log_info(logger_memoria, "enviada respuesta OK hay espacio \n");
 				}
 				else{
 					//enviar rta con error:no hay espacio en memoria
-					usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+					//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 					enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel,rta_crear_proceso);
 						log_info(logger_memoria, "enviada respuesta no hay espacio \n");
 				}
@@ -219,7 +221,7 @@ void memoria_atender_kernel(void* socket){
 				finalizar_proceso(pid_proceso_a_finalizar);
 				//FIN MUTEX
 				//Elimino de lista miniPBCs
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_OK);
 				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
 				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
@@ -244,7 +246,7 @@ void memoria_atender_kernel(void* socket){
 				//INICIO MUTEX
 				inicializar_hilo(iniciar_hilo->pid, iniciar_hilo->tid, iniciar_hilo->archivo_pseudocodigo);
 				//FIN MUTEX
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Creado- (PID:TID)- (%d:%d)\n",iniciar_hilo->pid,iniciar_hilo->tid);
 			// }
@@ -266,7 +268,7 @@ void memoria_atender_kernel(void* socket){
 				//INICIO MUTEX
 				eliminar_hilo_de_lista(lista_miniPCBs,pid_hilo,tid_hilo);
 				//FIN MUTEX
-				usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+				//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 				enviar_respuesta_finalizar_hilo(pid_hilo,tid_hilo, fd_kernel,FINALIZAR_HILO_RTA_OK);
 				log_info(logger_memoria, "## Hilo Destruido- (PID:TID)- (%d:%d)\n",pid_hilo,tid_hilo);
 			}
@@ -328,7 +330,7 @@ void memoria_atender_kernel(void* socket){
 			// Calcular el tamaño real de lo leído (siempre será igual a tamanio_proceso)
     		uint32_t tamanio_contenido = tamanio_proceso;
 			
-			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//preparo la informacion para pasarsela al nuevo hilo
 			t_peticion_dump_fs* peticion_fs = malloc(sizeof(t_peticion_dump_fs));
 			peticion_fs->tamanio_nombre_archivo = tamanio_nombre_archivo;
