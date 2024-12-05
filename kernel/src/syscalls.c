@@ -126,18 +126,13 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
         //asgino al primero que esperaba el mutex
             t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
         //desbloqueo tcb_con_mutex porque ya se le asigno el mutex 
-        log_info(logger_kernel,"tcb con mutex pid: %d, tid: %d ",tcb_con_mutex->tid,tcb_con_mutex->pid);
-        int valor_actual;
-        if (sem_getvalue(&(semaforos->mutex_lista_blocked), &valor_actual) == 0) {
-            log_info(logger_kernel,"El valor actual del semáforo es: %d\n", valor_actual);
-            } else {
-             log_warning(logger_kernel,"Error al obtener el valor del semáforo");
+
+            if(tcb_con_mutex !=NULL){
+                buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
+                //envio el tcb con mutex a ready
+                agregar_a_lista(tcb_con_mutex,lista_ready,&(semaforos->mutex_lista_ready));
+                sem_post(&(semaforos->contador_threads_en_ready));
             }
-            buscar_en_lista_y_cancelar(lista_blocked,tcb_con_mutex->tid,tcb_con_mutex->pid,&(semaforos->mutex_lista_blocked));
-        //envio el tcb con mutex a ready
-             agregar_a_lista(tcb_con_mutex,lista_ready,&(semaforos->mutex_lista_ready));
-             sem_post(&(semaforos->contador_threads_en_ready));
-        
         }
             //continua ejecutando el que hizo la syscall
             //enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
