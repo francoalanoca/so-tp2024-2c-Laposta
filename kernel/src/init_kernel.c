@@ -302,6 +302,7 @@ void procesar_conexion_dispatch()
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             memory_dump();
             // marca la cpu como libre
+            printf("Mande el DUMP Y SIGO\n");
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
             break;

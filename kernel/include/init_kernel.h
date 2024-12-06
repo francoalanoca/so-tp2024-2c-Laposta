@@ -210,4 +210,5 @@ void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista,sem_t* sem,t_est
 void inicializar_hilo_verificacion_fin_de_ejecucion();
 void verificar_fin_ejecucion_prev_quantum();
 void manejo_liberacion_memoria();
+void enviar_a_memoria_memory_dump(int pid, int tid, int socket_conexion_memoria);
 #endif /* KERNEL_H_ */

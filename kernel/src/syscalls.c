@@ -229,7 +229,7 @@ void memory_dump()
 {
     pthread_t hilo_dump; 
     pthread_create(&hilo_dump,NULL,atender_dump_memory,NULL);
-    pthread_detach(hilo_dump);
+    pthread_join(hilo_dump,NULL);
 }
 
 void* atender_dump_memory(){
@@ -243,12 +243,13 @@ void* atender_dump_memory(){
     int pid_actual = thread_dump->pid;
 
     int socket_conexion_memoria = conectar_a_memoria();
+    enviar_a_memoria_memory_dump(pid_actual, tid_actual, socket_conexion_memoria);
    // falta esta funcion  enviar_dump_a_memoria(socket_conexion_memoria);
     int respuesta = recibir_operacion(socket_conexion_memoria);
     if (respuesta == PEDIDO_MEMORY_DUMP_RTA_ERROR){
         //Paso a exit el hilo en blocked en caso de error del dump
         t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
-        agregar_a_lista(thread_en_cuestion, lista_exit, &(semaforos->mutex_lista_exit));
+        thread_exit(thread_en_cuestion);
     }
     else if (respuesta == PEDIDO_MEMORY_DUMP_RTA_OK){
         //Paso a ready el hilo en ready en caso de exito del dump para continuar con la ejecucion del mismo
@@ -257,6 +258,16 @@ void* atender_dump_memory(){
     }
     close(socket_conexion_memoria);
 }
+
+void enviar_a_memoria_memory_dump(int pid, int tid, int socket_conexion_memoria){
+    t_paquete *paquete_dump = crear_paquete(PEDIDO_MEMORY_DUMP);
+    agregar_a_paquete(paquete_dump,&(pid),sizeof(uint32_t));
+    agregar_a_paquete(paquete_dump,&(tid),sizeof(uint32_t));
+    enviar_paquete(paquete_dump,socket_conexion_memoria);
+    log_info(logger_kernel,"Se envio el pedido de dump a memoria");
+    eliminar_paquete(paquete_dump);
+}
+
 
 void cancelar_hilos_asociados(int pid){
     //busca los tcb asociados al proceso en blocked y ready y lo cancela
