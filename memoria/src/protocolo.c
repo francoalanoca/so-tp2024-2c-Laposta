@@ -293,50 +293,35 @@ void memoria_atender_kernel(void* socket){
 			uint32_t base_proceso = proceso_a_leer->base;
 			uint32_t tamanio_proceso = proceso_a_leer->limite;
 
-			//crear variable que diga cuantas leídas debo hacer en base al tamanio del proceso
-			uint32_t leidas_a_hacer = tamanio_proceso / 4; //siempre se lee de a 4 bytes
+			
 			
 			//hacer un for con la variable anterior y por cada pasada hacer un read e ir concatenandolo en una variable
-			char* contenido = malloc(tamanio_proceso);
-			uint32_t leido_actual;
-
-			/*for(int i=0;i<leidas_a_hacer;i++){
-        	if(read_mem(base_proceso,leido_actual)){
-				//concateno lo leido con lo que ya habia leido antes
-				strcat(contenido, leido_actual);
-			}
-			else{
-				printf("Ocurrio un error al leer el contenido del proceso\n");
-			}
-        	
-    		}*/
-
-			    for (uint32_t i = 0; i < leidas_a_hacer; i++) {
-        uint32_t direccion_lectura = base_proceso + (i * 4);  // Calcula la dirección actual
-
-        if (read_mem(direccion_lectura, &leido_actual)) {
-            // Copiar los 4 bytes leídos en el buffer correspondiente
-            memcpy(contenido + (i * 4), &leido_actual, 4);
-        } else {
-            log_error(logger_memoria, "Error al leer la memoria en la dirección: %d", direccion_lectura);
-            free(contenido);
-            return;
-        }
-    }
-
-			//ver el tamanio real de lo leído
-			//uint32_t tamanio_contenido = strlen(contenido) + 1; //no hace falta multiplicar por sizeof(char) ya que este siempre vale 1 byte
-			
+			char* contenido_leido = malloc(tamanio_proceso+1);	
+			 for (int i = 0; i < tamanio_proceso; i++) {
+        		memcpy(contenido_leido+i, memoria_usuario+base_proceso+i, 1); 
+				//printf("%s ", contenido_leido[i]);
+    		};
+			contenido_leido[tamanio_proceso]='\0'; 
+				                        
+            //log_error(logger_memoria, "Error al leer la memoria en la dirección: %d", direccion_lectura);
+            //free(contenido_leido);
+           
+      
+    	 	log_info(logger_memoria, "Contenido para dump: %d", contenido_leido);
+		 	log_info(logger_memoria, "Contenido para dump: %s", contenido_leido);
+			log_info(logger_memoria, "Contenido para dump: %x", contenido_leido);	
 			// Calcular el tamaño real de lo leído (siempre será igual a tamanio_proceso)
     		uint32_t tamanio_contenido = tamanio_proceso;
 			
-			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
+			
 			//preparo la informacion para pasarsela al nuevo hilo
 			t_peticion_dump_fs* peticion_fs = malloc(sizeof(t_peticion_dump_fs));
 			peticion_fs->tamanio_nombre_archivo = tamanio_nombre_archivo;
 			peticion_fs->nombre_archivo = nombre_archivo;
 			peticion_fs->tamanio_contenido = tamanio_contenido;
-			peticion_fs->contenido = contenido;
+			peticion_fs->contenido= malloc(tamanio_proceso+1);
+			strcpy(peticion_fs->contenido,contenido_leido); ////////
+			log_info(logger_memoria, "Contenido para dump: %s", peticion_fs->contenido);
 			peticion_fs->fd_kernel = fd_kernel;
 
 			//creamos hilo para creacion de nueva conexion con fs
@@ -344,9 +329,6 @@ void memoria_atender_kernel(void* socket){
     		pthread_create(&hilo_dump_fs, NULL, (void *)atender_dump_memory_fs, peticion_fs);
     		pthread_detach(hilo_dump_fs); //va el & o no? si lo pongo me tira un warning
 			
-
-			//enviar_creacion_memory_dump(tamanio_nombre_archivo,nombre_archivo,tamanio_contenido, contenido,socket_filesystem); //TODO: ver como se consigue socket_filesystem
-			//log_info(logger_memoria, "enviada respuesta de PEDIDO_MEMORY_DUMP_RTA \n");
 			break;
 
 		case -1:
