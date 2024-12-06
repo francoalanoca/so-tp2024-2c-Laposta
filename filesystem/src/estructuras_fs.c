@@ -231,7 +231,7 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
 t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
 
     log_info(logger_file_system, "entramos en asignar bloques");
-    log_info(logger_file_system, "tamanio solicitodo: %d",tamanio);
+    log_info(logger_file_system, "tamanio solicitado: %d",tamanio);
     uint32_t cant_bloques_nuevos = dividir_redondear_hacia_arriba(tamanio , cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
     lista_punteros = malloc(sizeof(t_list));
