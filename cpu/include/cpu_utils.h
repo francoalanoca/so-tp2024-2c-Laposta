@@ -77,7 +77,7 @@ uint32_t string_a_uint32(const char* str);
 
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int conexion);
 
-
+tipo_instruccion str_to_tipo_instruccion(const char *str);
 
 
 

@@ -666,7 +666,7 @@ void enviar_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, uin
 void enviar_dump_memory_a_kernel(int socket_dispatch){
     printf("entro a enviar_dump_memory_a_kernel\n");
     t_paquete* paquete_dump_memory;   
-    paquete_dump_memory = crear_paquete(DUMP_MEMORY);     
+    paquete_dump_memory = crear_paquete(PEDIDO_MEMORY_DUMP);     
     
     agregar_a_paquete(paquete_dump_memory, &proceso_actual->pid,  sizeof(uint32_t));
     agregar_a_paquete(paquete_dump_memory, &proceso_actual->tid,  sizeof(uint32_t));
@@ -847,6 +847,8 @@ bool es_syscall(tipo_instruccion tipo_instru){
         tipo_instru==MUTEX_CREATE||
         tipo_instru==MUTEX_LOCK||
         tipo_instru==MUTEX_UNLOCK ||
+        tipo_instru==IO ||
+        tipo_instru==DUMP_MEMORY ||
         tipo_instru==THREAD_JOIN;
 }
 bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch, int *socket_interrupt)
@@ -916,8 +918,7 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
 }
 
 tipo_instruccion str_to_tipo_instruccion(const char *str) {
-
-    printf("Entro al funcion a testear \n");
+    trim_newline(str);
     tipo_instruccion instruccion_a_devolver = -1;
     if (strcmp(str, "SET") == 0) instruccion_a_devolver = SET;
     else if (strcmp(str, "READ_MEM") == 0) instruccion_a_devolver = READ_MEM;
@@ -937,10 +938,17 @@ tipo_instruccion str_to_tipo_instruccion(const char *str) {
     else if (strcmp(str, "MUTEX_UNLOCK") == 0) instruccion_a_devolver = MUTEX_UNLOCK;
     else if (strcmp(str, "THREAD_EXIT") == 0) instruccion_a_devolver = THREAD_EXIT;
     else if (strcmp(str, "PROCESS_EXIT") == 0) instruccion_a_devolver = PROCESS_EXIT;
-    else printf("Entro en el default de str_to_tipo_instruccion \n");
+    else log_warning(logger_cpu, "Entro en el default de str_to_tipo_instruccion ");
     printf("imprimo instruccion_a_devolver: %d \n", instruccion_a_devolver);
-    printf("Saliendo de la funcion a testear \n");
+ 
     return instruccion_a_devolver;
+}
+
+void trim_newline(char *str) {
+    char *end = str + strlen(str) - 1;
+    if (*end == '\n') {
+        *end = '\0';  // Reemplaza el '\n' con un terminador nulo
+    }
 }
 
 void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){

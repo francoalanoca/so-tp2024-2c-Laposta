@@ -243,6 +243,7 @@ void* atender_dump_memory(){
     int pid_actual = thread_dump->pid;
 
     int socket_conexion_memoria = conectar_a_memoria();
+   // falta esta funcion  enviar_dump_a_memoria(socket_conexion_memoria);
     int respuesta = recibir_operacion(socket_conexion_memoria);
     if (respuesta == PEDIDO_MEMORY_DUMP_RTA_ERROR){
         //Paso a exit el hilo en blocked en caso de error del dump
