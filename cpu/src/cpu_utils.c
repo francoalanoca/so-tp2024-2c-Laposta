@@ -625,7 +625,7 @@ void write_mem(char* registro_direccion, char* registro_datos, t_proceso* proces
     uint32_t dir_fisica_result = mmu(valor_registro_direccion,proceso,conexion, conexion_kernel_dispatch);
 
 
-    enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_direccion,conexion);
+    enviar_valor_a_memoria(dir_fisica_result,proceso->pid,proceso->tid,valor_registro_datos,conexion);
     
     log_info(logger_cpu, "TID: %u - Acción: ESCRIBIR - Dirección Física: %u - Valor: %u", proceso_actual->tid,dir_fisica_result,valor_registro_datos); //LOG OBLIGATORIO
 
@@ -651,6 +651,7 @@ void enviar_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, uin
         printf("entro a enviar_valor_a_memoria\n");
         t_paquete* paquete_pedido_valor_memoria;
         paquete_pedido_valor_memoria = crear_paquete(WRITE_MEMORIA); 
+        log_info(logger_cpu, "direccion fisica a enviar: %d valor: %d \n", dir_fisica, valor);
         agregar_a_paquete(paquete_pedido_valor_memoria,  &pid,  sizeof(uint32_t)); 
         agregar_a_paquete(paquete_pedido_valor_memoria,  &tid,  sizeof(uint32_t));      
         agregar_a_paquete(paquete_pedido_valor_memoria,  &dir_fisica,  sizeof(uint32_t));
