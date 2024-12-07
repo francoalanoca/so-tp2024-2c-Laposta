@@ -970,6 +970,13 @@ void enviar_contexto_a_memoria(t_proceso* proceso, int conexion){
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.GX, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.base, sizeof(uint32_t));
     agregar_a_paquete(paquete_devolucion_contexto, &proceso->registros_cpu.limite, sizeof(uint32_t));
+    log_info(logger_cpu,"## PC:%d", proceso->registros_cpu.PC);
+    log_info(logger_cpu,"## AX:%d", proceso->registros_cpu.AX);
+    log_info(logger_cpu,"## BX:%d", proceso->registros_cpu.BX);
+    log_info(logger_cpu,"## CD:%d", proceso->registros_cpu.CX);
+    log_info(logger_cpu,"## DX:%d", proceso->registros_cpu.DX);
+
+
     enviar_paquete(paquete_devolucion_contexto, conexion); 
     eliminar_paquete(paquete_devolucion_contexto);
     log_info(logger_cpu,"## TID: %d- Actualizo Contexto Ejecución", proceso->tid); // LOG OBLIGATORIO

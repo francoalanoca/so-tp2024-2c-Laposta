@@ -168,7 +168,7 @@ void procesar_conexion_dispatch()
                 sem_post(&(semaforos->mutex_lista_exec));
 
                 cancelar_hilos_asociados (proceso_a_finalizar->pid);
-
+                
                 pasar_execute_a_exit(); //Se autocancela
                 //thread_exit(proceso_a_finalizar); //revisar esto, parace estar de mas
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);

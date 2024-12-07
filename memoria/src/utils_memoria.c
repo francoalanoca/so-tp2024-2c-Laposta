@@ -314,8 +314,8 @@ void enviar_respuesta_read_memoria(uint32_t pid, uint32_t respuesta_leer, int so
     t_paquete* paquete_valor;
 
     // Verificar que respuesta_leer no sea NULL
-    if (respuesta_leer == NULL) {
-        fprintf(stderr, "Error: respuesta_leer es NULL\n");
+    if (respuesta_leer == -1) {
+        fprintf(stderr, "Error: respuesta_leer es -1\n");
         return;
     }
 

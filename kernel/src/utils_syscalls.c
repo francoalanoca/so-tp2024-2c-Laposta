@@ -127,7 +127,7 @@ void asignar_mutex(t_tcb * tcb, t_mutex* mutex){
 
 void* enviar_a_memoria_thread_saliente(void* t){
     t_tcb* tcb=(t_tcb*)t;
-    t_paquete *paquete=crear_paquete(FINALIZAR_PROCESO);
+    t_paquete *paquete=crear_paquete(FINALIZAR_HILO);
     agregar_a_paquete(paquete,&(tcb->pid),sizeof(int));
     agregar_a_paquete(paquete,&(tcb->tid),sizeof(int));
     int fd_memoria=conectar_a_memoria();
@@ -143,6 +143,28 @@ void* enviar_a_memoria_thread_saliente(void* t){
     }
     else{
         log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+    }
+    close(fd_memoria); 
+    eliminar_paquete(paquete);
+}
+
+void* enviar_a_memoria_proceso_saliente(void* t){
+    t_tcb* tcb=(t_tcb*)t;
+    t_paquete *paquete=crear_paquete(FINALIZAR_PROCESO);
+    agregar_a_paquete(paquete,&(tcb->pid),sizeof(uint32_t));
+    int fd_memoria=conectar_a_memoria();
+    enviar_paquete(paquete,fd_memoria);
+   
+    
+    //espero respuesta de memoria;
+
+    int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
+    if(rta==FINALIZAR_PROCESO_RTA_OK){
+        log_info(logger_kernel, "## Finaliza el proceso %d",tcb->pid);
+        sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); //EStO ACA NO
+    }
+    else{
+        log_info(logger_kernel, "## MEMORIA no logro Finalizar el proceso %d",tcb->pid);
     }
     close(fd_memoria); 
     eliminar_paquete(paquete);

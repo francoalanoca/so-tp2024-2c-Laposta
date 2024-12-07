@@ -92,7 +92,7 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
             log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista EXIT", tcb->tid, tcb->pid);
             //aca deberia mandar a memoria la eliminacion del hilo
             pthread_t hilo_manejo_exit;
-            pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
+            pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_proceso_saliente,(void*)tcb);
             pthread_detach(hilo_manejo_exit);
             
         }else{

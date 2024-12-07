@@ -619,16 +619,17 @@ uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
 // Función que busca un miniPCB con el pid y un hilo con el tid y devuelve el contexto asociado
 t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid) {
     size_t cantidad_miniPCBs = list_size(lista_miniPCBs);
-
+log_info(logger_memoria, "Entro buscar_contexto_en_lista\n");
+log_info(logger_memoria, "Cantidad Procesos:%d\n",cantidad_miniPCBs);
     for (size_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
-
+log_info(logger_memoria, "PID:%d\n",miniPCB->pid);
         if (miniPCB->pid == pid) {
             size_t cantidad_hilos = list_size(miniPCB->hilos);
 
             for (size_t j = 0; j < cantidad_hilos; j++) {
                 t_hilo* hilo = list_get(miniPCB->hilos, j);
-
+            log_info(logger_memoria, "RECORRO LISTA PROCESOS E HILOS, PID:%d, TID:%d\n",miniPCB->pid,hilo->tid);
                 if (hilo->tid == tid) {
                     t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
                     contexto->registros = hilo->registros;  

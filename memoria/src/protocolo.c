@@ -36,12 +36,23 @@ void memoria_atender_cpu(){
 			uint32_t pid = *(uint32_t*)list_get(valores, 0);
 			uint32_t tid = *(uint32_t*)list_get(valores, 1);
 			t_m_contexto* contexto_encontrado = buscar_contexto_en_lista(pid,tid);
+			if(contexto_encontrado == NULL){
+				log_info(logger_memoria, "NO SE ENCONTRO EL CONTEXTO\n");
+			}
 			contexto_encontrado->pid = pid;
 			contexto_encontrado->tid = tid;
 			log_warning(logger_memoria,"contexto encontrado: registros");
 			log_warning(logger_memoria,"PC=%d",contexto_encontrado->registros.PC);
 			log_warning(logger_memoria,"AX=%d",contexto_encontrado->registros.AX);
 			log_warning(logger_memoria,"BX=%d",contexto_encontrado->registros.BX);
+			log_warning(logger_memoria,"CX=%d",contexto_encontrado->registros.CX);
+			log_warning(logger_memoria,"DX=%d",contexto_encontrado->registros.DX);
+			log_warning(logger_memoria,"EX=%d",contexto_encontrado->registros.EX);
+			log_warning(logger_memoria,"FX=%d",contexto_encontrado->registros.FX);
+			log_warning(logger_memoria,"GX=%d",contexto_encontrado->registros.GX);
+			log_warning(logger_memoria,"HX=%d",contexto_encontrado->registros.HX);
+			log_warning(logger_memoria,"Base=%d",contexto_encontrado->base);
+			log_warning(logger_memoria,"Limite=%d",contexto_encontrado->limite);
 			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
 			log_info(logger_memoria, "## Contexto Solicitado - (PID:TID) - (%d:%d)\n",pid,tid);
 			free(contexto_encontrado);
@@ -115,6 +126,17 @@ void memoria_atender_cpu(){
 			t_m_contexto* contexto_actualizado = malloc(sizeof(t_m_contexto));
 			//t_m_contexto* contexto_actualizado = deserializar_contexto(valores);
 			deserializar_contexto(contexto_actualizado,valores);
+			log_warning(logger_memoria,"PC=%d",contexto_actualizado->registros.PC);
+			log_warning(logger_memoria,"AX=%d",contexto_actualizado->registros.AX);
+			log_warning(logger_memoria,"BX=%d",contexto_actualizado->registros.BX);
+			log_warning(logger_memoria,"CX=%d",contexto_actualizado->registros.CX);
+			log_warning(logger_memoria,"DX=%d",contexto_actualizado->registros.DX);
+			log_warning(logger_memoria,"EX=%d",contexto_actualizado->registros.EX);
+			log_warning(logger_memoria,"FX=%d",contexto_actualizado->registros.FX);
+			log_warning(logger_memoria,"GX=%d",contexto_actualizado->registros.GX);
+			log_warning(logger_memoria,"HX=%d",contexto_actualizado->registros.HX);
+			log_warning(logger_memoria,"Base=%d",contexto_actualizado->base);
+			log_warning(logger_memoria,"Limite=%d",contexto_actualizado->limite);
 			printf("Entrare a actualizar_contexto\n");
 			printf("Pid contexto_actualizado:%d\n",contexto_actualizado->pid);
 			if(actualizar_contexto(contexto_actualizado)){
@@ -218,12 +240,13 @@ void memoria_atender_kernel(void* socket){
 			}
 			else{
 				//INICIO MUTEX
+				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
 				finalizar_proceso(pid_proceso_a_finalizar);
 				//FIN MUTEX
 				//Elimino de lista miniPBCs
 				//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_HILO_RTA_OK);
-				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
+				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_OK);
+				
 				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
 				
 			}
