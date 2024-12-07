@@ -87,7 +87,7 @@ void procesar_conexion(void *v_args){
                 dumpear(dumped, cliente_socket);
                 pthread_mutex_unlock(&mtx_file_system);
                 //liberar_t_dumped(dumped);
-                list_destroy_and_destroy_elements(lista_paquete, free);
+                //list_destroy_and_destroy_elements(lista_paquete, free);
                 break;  
             }
             default:

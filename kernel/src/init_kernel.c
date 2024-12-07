@@ -66,6 +66,7 @@ void inicializar_semaforos()
     sem_init(&(semaforos->sem_finalizacion_ejecucion_cpu),0,0);
 
     sem_init(&(semaforos->mutex_conexion_dispatch),0,1);
+    sem_init(&(semaforos->conexion_memoria_dump),0,0);
 }
 
 int conectar_a_memoria()
@@ -301,6 +302,7 @@ void procesar_conexion_dispatch()
             log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             memory_dump();
+            sem_wait(&(semaforos->conexion_memoria_dump));
             // marca la cpu como libre
             printf("Mande el DUMP Y SIGO\n");
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);

@@ -112,6 +112,7 @@ typedef struct{
 
 
     sem_t mutex_conexion_dispatch;
+    sem_t conexion_memoria_dump;
 }t_semaforos;
 extern t_semaforos* semaforos;
 
