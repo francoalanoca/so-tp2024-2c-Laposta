@@ -210,7 +210,7 @@ void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t
 //busca un tcb en una lista por su tid y pid y lo remueve
 t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_wait(sem);
-    log_info(logger_kernel,"Entre en buscar lista y cancelar para tid :%d ", tid);
+    log_info(logger_kernel,"Entre en buscar lista y cancelar para pid: %d tid :%d ",pid, tid );
     for(int i=0;i<list_size(lista);i++){
         t_tcb* tcb=(t_tcb*)list_get(lista,i);
         if(tcb->tid==tid && tcb->pid==pid){

@@ -184,13 +184,13 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
     char* primer_bloque_char = uint32_to_string(primer_bloque);
 
     config_set_value(file_metadata,"nombre_archivo", dumped->nombre_archivo );
-    log_info(logger_file_system, "PERSISTIDO PARAMETRO nombre_archivo: %s", dumped->nombre_archivo);
+    //log_info(logger_file_system, "PERSISTIDO PARAMETRO nombre_archivo: %s", dumped->nombre_archivo);
 
     config_set_value(file_metadata,"tamanio_archivo", tamanio_archivo );
-    log_info(logger_file_system, "PERSISTIDO PARAMETRO tamanio_archivo: %d", dumped->tamanio_archivo);
+   // log_info(logger_file_system, "PERSISTIDO PARAMETRO tamanio_archivo: %d", dumped->tamanio_archivo);
 
     config_set_value(file_metadata,"primer_bloque", primer_bloque_char );
-    log_info(logger_file_system, "PERSISTIDO PARAMETRO primer_bloque: %d",primer_bloque);
+    //log_info(logger_file_system, "PERSISTIDO PARAMETRO primer_bloque: %d",primer_bloque);
 
     if (!config_save(file_metadata)){
         perror("Error al guardar fcb");
@@ -208,9 +208,9 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
 /////////////////////////////////////////// FUNCIONALIDADES /////////////////////////////////////////////////////////////////
 
  void dumpear(t_dumped* dumped, int socket_cliente){
-    log_info(logger_file_system, "Nombre de archivo recibido: %s",dumped->nombre_archivo);
-    log_info(logger_file_system, "Contenido de archivo: %s",dumped->contenido);
-    log_info(logger_file_system, "tamanio solicitodo: %d",dumped->tamanio_archivo);
+    //log_info(logger_file_system, "Nombre de archivo recibido: %s",dumped->nombre_archivo);
+    //log_info(logger_file_system, "Contenido de archivo: %s",dumped->contenido);
+    //log_info(logger_file_system, "tamanio solicitodo: %d",dumped->tamanio_archivo);
     if (hay_espacio_total_disponible(dumped->tamanio_archivo))
     {
         t_list* lista_bloques =  asignar_bloques(dumped->tamanio_archivo, dumped->nombre_archivo);
@@ -230,8 +230,7 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
 
 t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
 
-    log_info(logger_file_system, "entramos en asignar bloques");
-    log_info(logger_file_system, "tamanio solicitado: %d",tamanio);
+   
     uint32_t cant_bloques_nuevos = dividir_redondear_hacia_arriba(tamanio , cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
     lista_punteros = malloc(sizeof(t_list));
@@ -292,7 +291,7 @@ void escribir_bloque_punteros (uint32_t* lista_bloques, char* nombre_archivo){
     }  else{
         log_info(logger_file_system, "## Acceso Bloque - Archivo: %s - Tipo Bloque: ÍNDICE - Bloque File System %d ",nombre_archivo, posicion_bloque_punteros); //LOG OBLIGATORIO
     };
-     log_info(logger_file_system, "vamos a escribir el bloque de punteros tamaño de lista %d ",list_size(lista_bloques) );
+     //log_info(logger_file_system, "vamos a escribir el bloque de punteros tamaño de lista %d ",list_size(lista_bloques) );
   
 
     // escribe cada  puntero de tamaño 4 bytes dentro del bloque de punteros
@@ -303,7 +302,7 @@ void escribir_bloque_punteros (uint32_t* lista_bloques, char* nombre_archivo){
             log_info(logger_file_system,"Error al escribir el bloque: %d ",posicion_bloque_punteros);
             return -1;
         }  else{
-            log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
+            //log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %d",posicion_bloque_punteros, list_get(lista_bloques,i));
         };
     };
     fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
@@ -325,7 +324,7 @@ void escribir_bloque_datos (int numero_bloque, int tamanio_escritura, char *dato
         log_info(logger_file_system,"Error al escribir el bloque: %d ",numero_bloque);
         return -1;
     }  else{
-        log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %s",numero_bloque, datos_escribir);
+        //log_info(logger_file_system, "BLOQUE: %d ESCRITO con valor %s",numero_bloque, datos_escribir);
     };
     fflush(archivo_bloques); //agrego esto para "garantizar" que se escriba el archivo de bloques si no tengo que esperar un fclose
 }
@@ -336,7 +335,7 @@ void escribir_bloque_datos (int numero_bloque, int tamanio_escritura, char *dato
 
 uint32_t encontrar_bit_libre(t_bitarray* bitarray_in) {
 
-    log_info(logger_file_system, "tamaño del bitarray %d %d",bitarray_get_max_bit(bitarray_in), bitarray_test_bit(&bitarray_in, 0));
+    //log_info(logger_file_system, "tamaño del bitarray %d %d",bitarray_get_max_bit(bitarray_in), bitarray_test_bit(&bitarray_in, 0));
     uint32_t i;
     for (i = 0; i < bitarray_get_max_bit(bitarray_in); i++) {
         if (!bitarray_test_bit(bitarray_in, i)) {
