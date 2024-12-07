@@ -222,7 +222,7 @@ void memoria_atender_kernel(void* socket){
 				//FIN MUTEX
 				//Elimino de lista miniPBCs
 				//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
-				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_PROCESO_RTA_OK);
+				enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel,FINALIZAR_HILO_RTA_OK);
 				uint32_t tamanio_proceso = buscar_tamanio_proceso_por_pid(pid_proceso_a_finalizar);
 				log_info(logger_memoria, "## Proceso Destruido- PID: %d Tamaño: %d\n",pid_proceso_a_finalizar,tamanio_proceso);
 				
