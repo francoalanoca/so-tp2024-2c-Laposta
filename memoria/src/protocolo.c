@@ -296,12 +296,22 @@ void memoria_atender_kernel(void* socket){
 			
 			
 			//hacer un for con la variable anterior y por cada pasada hacer un read e ir concatenandolo en una variable
-			char* contenido_leido = malloc(tamanio_proceso+1);	
-			 for (int i = 0; i < tamanio_proceso; i++) {
-        		memcpy(contenido_leido+i, memoria_usuario+base_proceso+i, 1); 
-				//printf("%s ", contenido_leido[i]);
-    		};
-			contenido_leido[tamanio_proceso]='\0'; 
+			char* contenido_leido = malloc(tamanio_proceso);
+			if (contenido_leido == NULL) {
+				log_warning(logger_memoria,"Error al asignar memoria para contenido_leido");
+				return;
+			}
+
+			// Validar que memoria_usuario no sea NULL
+			if (memoria_usuario == NULL) {
+				log_warning(logger_memoria,"Error: memoria_usuario es NULL");
+				free(contenido_leido);
+				return;
+			}
+
+			// Copiar el bloque de datos
+			memcpy(contenido_leido, memoria_usuario + base_proceso, tamanio_proceso);
+			log_info(logger_memoria, "tamaño a enviar: %d", strlen(contenido_leido));
 				                        
             //log_error(logger_memoria, "Error al leer la memoria en la dirección: %d", direccion_lectura);
             //free(contenido_leido);
@@ -311,16 +321,18 @@ void memoria_atender_kernel(void* socket){
 		 	log_info(logger_memoria, "Contenido para dump: %s", contenido_leido);
 			log_info(logger_memoria, "Contenido para dump: %x", contenido_leido);	
 			// Calcular el tamaño real de lo leído (siempre será igual a tamanio_proceso)
-    		uint32_t tamanio_contenido = tamanio_proceso;
+    		uint32_t tamanio_contenido = sizeof(contenido_leido);
 			
 			
 			//preparo la informacion para pasarsela al nuevo hilo
 			t_peticion_dump_fs* peticion_fs = malloc(sizeof(t_peticion_dump_fs));
 			peticion_fs->tamanio_nombre_archivo = tamanio_nombre_archivo;
 			peticion_fs->nombre_archivo = nombre_archivo;
-			peticion_fs->tamanio_contenido = tamanio_contenido;
-			peticion_fs->contenido= malloc(tamanio_proceso+1);
-			strcpy(peticion_fs->contenido,contenido_leido); ////////
+			//peticion_fs->tamanio_contenido = tamanio_contenido;
+			//peticion_fs->contenido= malloc(sizeof(contenido_leido));
+			//strcpy(peticion_fs->contenido,contenido_leido); ////////
+			peticion_fs->tamanio_contenido =tamanio_proceso;			
+			peticion_fs->contenido=contenido_leido;
 			log_info(logger_memoria, "Contenido para dump: %s", peticion_fs->contenido);
 			peticion_fs->fd_kernel = fd_kernel;
 
