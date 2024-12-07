@@ -57,7 +57,7 @@ void dumpear(t_dumped* dumped, int socket_cliente);
 t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo);
 void escribir_bloque_punteros (uint32_t* lista_bloques, char* nombre_archivo);
 void escribir_bloque_datos (int numero_bloque, int tamanio_escritura, char *datos_escribir, char* nombre_archivo);
-void grabar_bloques(t_list* lista_bloques, char *datos_escribir, char* nombre_archivo);
+void grabar_bloques(t_list* lista_bloques, char *datos_escribir, char* nombre_archivo ,int tamanio_archivo);
 //Devuelve la posicion del primer bit libre que encuentra.
 uint32_t encontrar_bit_libre(t_bitarray* bitarray);
 

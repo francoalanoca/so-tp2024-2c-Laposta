@@ -5,12 +5,13 @@ t_dumped* dumped_deserializar(t_list* lista) {
     t_dumped* dumped = malloc(sizeof(t_dumped));
      
     dumped->nombre_archivo = list_get(lista, 0);    
-     printf("el tamaño es:  %s\n",list_get(lista, 1));
+     printf("el tamaño es:  %d\n",*(uint32_t*)list_get(lista, 1));
     dumped->tamanio_archivo = *(uint32_t*)list_get(lista, 1);
     
-    printf("stringlen del contenido %d:\n",strlen(list_get(lista, 2)));
-    printf("el contenido del archivo es %d:\n",list_get(lista, 2));
-    dumped->contenido = list_get(lista, 2);
+    printf("size del lo recibido: %d\n",sizeof(list_get(lista, 2)));
+    printf("el contenido del archivo en numero es: %d\n",*(uint32_t*)list_get(lista, 2));
+    printf("el contenido del archivo en string es: %s\n",(char*)list_get(lista, 2));
+    dumped->contenido = (char*)list_get(lista, 2);
     return dumped;
 
 }

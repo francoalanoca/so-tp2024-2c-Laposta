@@ -216,8 +216,8 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
         t_list* lista_bloques =  asignar_bloques(dumped->tamanio_archivo, dumped->nombre_archivo);
         int primer_bloque = list_get(lista_bloques,0);
         persistir_metadata(dumped, primer_bloque);
-        grabar_bloques(lista_bloques, dumped->contenido, dumped->nombre_archivo);
-        //enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
+        grabar_bloques(lista_bloques, dumped->contenido, dumped->nombre_archivo, dumped->tamanio_archivo);
+        enviar_resultado_memoria(PEDIDO_MEMORY_DUMP_RTA_OK,socket_cliente);
         list_destroy(lista_bloques);
     }else {
         log_warning(logger_file_system,"No hay espacio disponible enviado error a memoria"); //LOG OBLIGATORIO
@@ -253,9 +253,9 @@ t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
  }
 
 
- void grabar_bloques(t_list* lista_bloques, char *datos_escribir, char* nombre_archivo) {
+ void grabar_bloques(t_list* lista_bloques, char *datos_escribir, char* nombre_archivo ,int tamanio_archivo) {
    int  block_size = cfg_file_system->BLOCK_SIZE;
-   int datos_length = strlen(datos_escribir);
+   int datos_length = tamanio_archivo;
     //grabar bloque de punteros la posición de los punteros
         // el primer bloque de la lista es el bloque de punteros
     escribir_bloque_punteros (lista_bloques, nombre_archivo);    
@@ -340,11 +340,12 @@ uint32_t encontrar_bit_libre(t_bitarray* bitarray_in) {
     uint32_t i;
     for (i = 0; i < bitarray_get_max_bit(bitarray_in); i++) {
         if (!bitarray_test_bit(bitarray_in, i)) {
-            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: libre", i); 
+           // log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: libre", i); 
             return i;
-        }else {
-            log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: ocupado", i); 
-        }
+        }//else {
+          //  log_info(logger_file_system, "Acceso a Bitmap - Bloque: %d - Estado: ocupado", i); 
+
+       // }
     }
     return -1; // Retorna -1 si no se encuentra ningún bit en 0
 }
