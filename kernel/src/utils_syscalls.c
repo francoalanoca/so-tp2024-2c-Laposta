@@ -127,7 +127,7 @@ void asignar_mutex(t_tcb * tcb, t_mutex* mutex){
 
 void* enviar_a_memoria_thread_saliente(void* t){
     t_tcb* tcb=(t_tcb*)t;
-    t_paquete *paquete=crear_paquete(FINALIZAR_HILO);
+    t_paquete *paquete=crear_paquete(FINALIZAR_PROCESO);
     agregar_a_paquete(paquete,&(tcb->pid),sizeof(int));
     agregar_a_paquete(paquete,&(tcb->tid),sizeof(int));
     int fd_memoria=conectar_a_memoria();
@@ -139,7 +139,7 @@ void* enviar_a_memoria_thread_saliente(void* t){
     int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
     if(rta==FINALIZAR_HILO_RTA_OK){
         log_info(logger_kernel, "## (<%d>:<%d>) Finaliza el hilo",tcb->pid,tcb->tid);
-        //sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); EStO ACA NO
+        sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); //EStO ACA NO
     }
     else{
         log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
@@ -281,6 +281,7 @@ void interfaz_io(){
         t_tcb* tcb_usando_io = list_remove (lista_espera_io,0);
         agregar_a_lista(tcb_usando_io,lista_ready,&(semaforos->mutex_lista_ready));
         buscar_en_lista_y_cancelar(lista_blocked,tcb_usando_io->tid,tcb_usando_io->pid,&(semaforos->mutex_lista_blocked));
+        sem_post(&(semaforos->contador_threads_en_ready));
     }
 }
 
@@ -293,9 +294,9 @@ void hilo_sleep_io() {
             t_tcb* tcb_usando_io = list_get(lista_espera_io, 0);
             sem_post(&(semaforos->mutex_lista_espera_io));
 
-            int tiempo = tcb_usando_io->tiempo_de_io;
+            int tiempo = tcb_usando_io->tiempo_de_io / 1000;
             log_info(logger_kernel, "## IO en uso por %d milisegundos", tiempo);
-            usleep(tiempo);
+            sleep(tiempo);
             sem_post(&(semaforos->sem_io_sleep_en_uso));
         } else {
             sem_post(&(semaforos->mutex_lista_espera_io));

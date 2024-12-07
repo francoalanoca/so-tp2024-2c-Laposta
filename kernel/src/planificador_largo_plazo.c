@@ -60,7 +60,8 @@ void* planificar_procesos(){
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{
-                log_info(logger_kernel, "No hay espacio en memoria, se esperara liberacion por parte de otro proceso \n");
+                log_info(logger_kernel, "No hay espacio en memoria para proc PCB:%d, se esperara liberacion por parte de otro proceso \n", un_pcb->pid);
+                log_info(logger_kernel, "Codigo de op recibido: %d", respuesta);
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
             }
                  
