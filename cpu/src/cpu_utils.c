@@ -204,7 +204,8 @@ void pedir_instruccion(t_proceso* proceso,int conexion){
 void set(char* registro, char* valor_char, t_proceso* proceso){
     char *endptr;     
     registros registro_elegido = identificarRegistro(registro);
-    uint32_t valor = (uint32_t)strtoul(valor_char, &endptr, 10);// Convertir la cadena a uint32_t
+    //uint32_t valor = strtoul(valor_char, &endptr, 10);// Convertir la cadena a uint32_t
+    uint32_t valor = atoi(valor_char);
     //pthread_mutex_lock(&mutex_proceso_actual);
     switch(registro_elegido){
         case PC:
@@ -598,11 +599,70 @@ void read_mem(char* registro_datos, char* registro_direccion, t_proceso* proceso
     sem_wait(&sem_valor_registro_recibido);
     printf("paso sem_valor_registro_recibido\n");
 
-    log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %s", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
-
+    log_info(logger_cpu, "TID: %u - Acción: LEER - Dirección Física: %u - Valor: %d", proceso_actual->tid,dir_fisica_result,valor_registro_obtenido); //LOG OBLIGATORIO
     //sem_wait(&sem_esperando_read_write_mem); //Revisar aca
-
-    set(registro_datos,valor_registro_obtenido,proceso);
+    registros registro_elegido = identificarRegistro(registro_datos);
+switch(registro_elegido){
+        case PC:
+        {
+          proceso->registros_cpu.PC = valor_registro_obtenido;
+            break;
+        }
+        case AX:
+        {
+          proceso->registros_cpu.AX = valor_registro_obtenido;
+            break;
+        }
+        case BX:
+        {
+          proceso->registros_cpu.BX = valor_registro_obtenido;
+            break;
+        }
+        case CX:
+        {
+          proceso->registros_cpu.CX = valor_registro_obtenido;
+            break;
+        }
+        case DX:
+        {
+          proceso->registros_cpu.DX = valor_registro_obtenido;
+            break;
+        }
+        case EX:
+        {
+          proceso->registros_cpu.EX = valor_registro_obtenido;
+            break;
+        }
+        case FX: 
+        {
+          proceso->registros_cpu.FX = valor_registro_obtenido;
+            break;
+        }
+        case GX:
+        {
+          proceso->registros_cpu.GX = valor_registro_obtenido;
+            break;
+        }
+        case HX:
+        {
+          proceso->registros_cpu.HX = valor_registro_obtenido;
+            break;
+        }
+        case base:
+        {
+          proceso->registros_cpu.base = valor_registro_obtenido;
+            break;
+        }
+        case limite:
+        {
+          proceso->registros_cpu.limite = valor_registro_obtenido;
+            break;
+        }
+        
+        default:
+        log_info(logger_cpu, "El registro no existe");
+    }
+    //set(registro_datos,valor_registro_obtenido,proceso);
 
 }
 
