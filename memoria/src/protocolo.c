@@ -314,7 +314,7 @@ void memoria_atender_kernel(void* socket){
 			t_miniPCB* proceso_a_leer = busco_proceso_por_PID(pid);
 			//obtener base y tamanio del proceso asociado al pid
 			uint32_t base_proceso = proceso_a_leer->base;
-			uint32_t tamanio_proceso = proceso_a_leer->limite;
+			uint32_t tamanio_proceso = proceso_a_leer->limite-proceso_a_leer->base;
 
 			
 			

@@ -131,14 +131,14 @@ void *planificar_colas_multinivel()
  // -----------------------------------------------------------------------------------------
 
 
-void verificar_fin_ejecucion_prev_quantum(){
-    while(1){
-        sem_wait(&(semaforos->sem_finalizacion_ejecucion_cpu));
-        //Destruir hilo de quantum
-        pthread_cancel(hilos->hilo_quantum);
-        log_info(logger_kernel,"Se finalizo el hilo de quantum");
-    }
-}
+// void verificar_fin_ejecucion_prev_quantum(){
+//     while(1){
+//        // sem_wait(&(semaforos->sem_finalizacion_ejecucion_cpu));
+//         //Destruir hilo de quantum
+//        // pthread_cancel(hilos->hilo_quantum);
+//         log_info(logger_kernel,"Se finalizo el hilo de quantum");
+//     }
+// }
 void iniciar_quantum()
 {
     //pthread_t hilo_quantum;

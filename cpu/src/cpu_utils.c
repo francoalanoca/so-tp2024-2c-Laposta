@@ -888,7 +888,10 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         pthread_mutex_lock(&mutex_proceso_actual);
         proceso_actual=NULL;
         pthread_mutex_unlock(&mutex_proceso_actual);
-        
+        pthread_mutex_lock(&mutex_interrupcion_kernel);
+        interrupcion_kernel = false;
+        respuesta_syscall=-1;
+        pthread_mutex_unlock(&mutex_interrupcion_kernel);
         return true;
         //che kernel, ya termine de 
         }
@@ -903,6 +906,7 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
         enviar_fin_quantum_a_kernel(proceso_actual,dispatch );
         interrupcion_kernel = false;
+        respuesta_syscall=-1;
         pthread_mutex_unlock(&mutex_interrupcion_kernel);
         return true;
     }

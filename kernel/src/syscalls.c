@@ -57,6 +57,8 @@ void ejecutar_io(int tiempo){
     tcb ->tiempo_de_io=tiempo;
 
     pasar_execute_a_blocked();
+    sem_post(&(semaforos->espacio_en_cpu));
+ 
     //agrego a io
     agregar_a_lista(tcb,lista_espera_io,&(semaforos->mutex_lista_espera_io));
     log_info(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
@@ -228,7 +230,7 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
 void memory_dump()
 {    log_info(logger_kernel,"entro en memory_dump");
     pthread_t hilo_dump; 
-    int result= pthread_create(&hilo_dump,NULL,(void*)atender_dump_memory,NULL);
+    int result= pthread_create(&hilo_dump,NULL,atender_dump_memory,NULL);
     
      log_info(logger_kernel,"cree hilo %d",result);
      pthread_detach(hilo_dump);
@@ -255,7 +257,13 @@ void* atender_dump_memory(){
         log_info(logger_kernel,"Se recibio respuesta ERROR de dump para pid: %d tid:%d ",pid_actual, tid_actual);
         //Paso a exit el hilo en blocked en caso de error del dump
         t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
-        thread_exit(thread_en_cuestion);
+
+                cancelar_hilos_asociados (thread_en_cuestion->pid);             
+                pthread_t hilo_manejo_exit;
+            pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_proceso_saliente,(void*)thread_en_cuestion);
+            
+            pthread_detach(hilo_manejo_exit);
+
     }
     else if (respuesta == PEDIDO_MEMORY_DUMP_RTA_OK){
         log_info(logger_kernel,"Se recibio respuesta OK de dump para  pid: %d tid:%d ",pid_actual, tid_actual);

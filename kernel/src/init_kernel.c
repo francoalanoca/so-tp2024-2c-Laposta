@@ -20,7 +20,7 @@ void iniciar_modulo(char *ruta_config)
     inicializar_hilos_planificador(); // corto_plazo
     inicializar_hilos_largo_plazo();
     inicializar_hilo_intefaz_io();
-    inicializar_hilo_verificacion_fin_de_ejecucion();
+    //inicializar_hilo_verificacion_fin_de_ejecucion();
 }
 void cargar_config_kernel(char *ruta_config)
 {
@@ -38,11 +38,11 @@ void cargar_config_kernel(char *ruta_config)
     log_info(logger_kernel, "configuracion cargada");
 }
 
-void inicializar_hilo_verificacion_fin_de_ejecucion(){
-    pthread_t hilo_verificacion_fin_ejecucion;
-    pthread_create(&hilo_verificacion_fin_ejecucion, NULL, (void *)verificar_fin_ejecucion_prev_quantum, NULL);
-    pthread_detach(hilo_verificacion_fin_ejecucion);
-}
+// void inicializar_hilo_verificacion_fin_de_ejecucion(){
+//     pthread_t hilo_verificacion_fin_ejecucion;
+//     pthread_create(&hilo_verificacion_fin_ejecucion, NULL, (void *)verificar_fin_ejecucion_prev_quantum, NULL);
+//     pthread_detach(hilo_verificacion_fin_ejecucion);
+// }
 
 
 void inicializar_semaforos()
@@ -222,8 +222,7 @@ void procesar_conexion_dispatch()
             ejecutar_io(tiempo_io);
             //la respuesta a la syscall es enviar otro hilo a cpu-->replanificar
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
-            sem_post(&(semaforos->espacio_en_cpu));
- 
+  
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
             t_list *params_lock = recibir_paquete(fd_conexion_cpu);
@@ -299,6 +298,7 @@ void procesar_conexion_dispatch()
             
             break;
         case PEDIDO_MEMORY_DUMP:
+            t_list* dump_args=recibir_paquete(fd_conexion_cpu);
             log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             memory_dump();

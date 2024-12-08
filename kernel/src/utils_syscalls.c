@@ -300,7 +300,9 @@ void interfaz_io(){
         sem_post(&(semaforos->sem_sleep_io));
 
         sem_wait(&(semaforos->sem_io_sleep_en_uso)); 
+          sem_wait(&(semaforos->mutex_lista_espera_io));
         t_tcb* tcb_usando_io = list_remove (lista_espera_io,0);
+          sem_post(&(semaforos->mutex_lista_espera_io));
         agregar_a_lista(tcb_usando_io,lista_ready,&(semaforos->mutex_lista_ready));
         buscar_en_lista_y_cancelar(lista_blocked,tcb_usando_io->tid,tcb_usando_io->pid,&(semaforos->mutex_lista_blocked));
         sem_post(&(semaforos->contador_threads_en_ready));
