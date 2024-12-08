@@ -16,7 +16,7 @@ extern int conexion_kernel_interrupt;
 
 extern sem_t sem_valor_instruccion;
 extern int socket_memoria;
-extern char* valor_registro_obtenido;
+extern uint32_t valor_registro_obtenido;
 extern sem_t sem_valor_registro_recibido;
 extern int rta_resize;
 extern sem_t sem_valor_resize_recibido;

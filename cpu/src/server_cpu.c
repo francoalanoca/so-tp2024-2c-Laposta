@@ -261,9 +261,9 @@ void atender_memoria(int *socket_mr) {
             case READ_MEMORIA_RTA_OK: 
                 t_list* lista_paquete_memoria_leer_ok = recibir_paquete(socket_memoria_server);
                 uint32_t tamanio_valor_registro_obtenido = *(uint32_t*) list_get(lista_paquete_memoria_leer_ok,1);
-                
-                valor_registro_obtenido = list_get(lista_paquete_memoria_leer_ok,2);
-                log_info (logger_cpu, "Valor obtenido de memoria: %s",valor_registro_obtenido);
+                //proceso_actual->registros_cpu.DX = *(uint32_t*)list_get(lista_paquete_memoria_leer_ok,2);
+                valor_registro_obtenido = *(uint32_t*)list_get(lista_paquete_memoria_leer_ok,2);
+                log_info (logger_cpu, "Valor obtenido de memoria: %d",valor_registro_obtenido);
                 sem_post(&sem_valor_registro_recibido);
                 //sem_post(&sem_esperando_read_write_mem);
                 
