@@ -474,4 +474,5 @@ void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){
     proceso->registros_cpu.base = *(uint32_t*)list_get(lista_contexto, 11);
     proceso->registros_cpu.limite = *(uint32_t*)list_get(lista_contexto, 12);
     
+    
 }   

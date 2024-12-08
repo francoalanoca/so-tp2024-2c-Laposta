@@ -153,7 +153,7 @@ void memoria_atender_cpu(){
 
 		case -1:
 			log_error(logger_memoria, "CPU se desconecto. Terminando servidor.\n");
-			//return EXIT_FAILURE;
+			return EXIT_FAILURE;
 			break;
 
 		default:
@@ -369,7 +369,7 @@ void memoria_atender_kernel(void* socket){
 		case -1:
 		
 			log_error(logger_memoria, "Kernel se desconecto. Terminando servidor.\n");
-			//return EXIT_FAILURE;
+			return EXIT_FAILURE;
 			break;
 
 		default:
