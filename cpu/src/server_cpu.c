@@ -207,7 +207,7 @@ void atender_memoria(int *socket_mr) {
 
             case SOLICITUD_INSTRUCCION_RTA:
                 
-                {
+                
                 log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
                     
                 t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
@@ -239,7 +239,6 @@ void atender_memoria(int *socket_mr) {
                     free(instruccion_recibida);*/
                 }
                 break;
-                }
             case SOLICITUD_CONTEXTO_RTA: 
                 t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
@@ -276,12 +275,18 @@ void atender_memoria(int *socket_mr) {
             
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
+             log_info(logger_cpu,"se actualizo correctamente el contexto");
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
                 int pid_v= *(uint32_t*)list_get(lista_paquete_ctx_rta,0);
                 int tid_v = *(uint32_t*)list_get(lista_paquete_ctx_rta,1);
-                
+                sem_post(&semaforo_sincro_contexto_syscall);
                 list_destroy(lista_paquete_ctx_rta);
-            break;            
+            break;
+             case DEVOLUCION_CONTEXTO_RTA_ERROR:
+                log_info(logger_cpu,"error actualizando el contexto en memoria");
+                t_list* lista_paquete_ctx_rta_error = recibir_paquete(socket_memoria_server);
+                list_destroy(lista_paquete_ctx_rta_error);
+             break;            
             default:
                 {
                     log_error(logger_cpu, "Operacion invalida enviada desde Memoria:%d",cop);

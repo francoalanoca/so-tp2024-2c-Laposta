@@ -28,6 +28,7 @@ extern sem_t sem_conexion_interrupt_iniciado;
 extern sem_t sem_conexion_dispatch_iniciado;
 extern sem_t sem_esperando_read_write_mem;
 extern sem_t sem_cpu_termino_ciclo;
+extern sem_t semaforo_sincro_contexto_syscall;
 extern pthread_mutex_t mutex_proceso_actual;
 extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;

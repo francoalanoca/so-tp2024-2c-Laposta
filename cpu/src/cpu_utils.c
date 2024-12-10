@@ -72,80 +72,92 @@ void execute(instr_t* inst,tipo_instruccion tipo_inst, t_proceso* proceso, int c
 
             // SYSCALLS:
             case DUMP_MEMORY:
-            {
+            {        enviar_contexto_a_memoria(proceso,conexion);
+
                 log_info(logger_cpu, "TID: %u - Ejecutando: DUMP_MEMORY", proceso->tid);                
-             
+             sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_dump_memory_a_kernel(socket_dispatch);
                 break;
             }
             case IO:
-            {
+            {        enviar_contexto_a_memoria(proceso,conexion);
+
                 log_info(logger_cpu, "TID: %u - Ejecutando: IO - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_io_a_kernel(inst->param1,socket_dispatch);
             
                 break;
             }
             case PROCESS_CREATE:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_CREATE - %s %s %s", proceso->tid,inst->param1, inst->param2, inst->param3); //LOG OBLIGATORIO
-               
+               sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_process_create_a_kernel(inst->param1, inst->param2, inst->param3, socket_dispatch);
             
                 
                 break;
             }
             case THREAD_CREATE:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CREATE - %s %s", proceso->tid,inst->param1,inst->param2); //LOG OBLIGATORIO
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_thread_create_a_kernel(inst->param1, inst->param2, socket_dispatch);
                
                 break;
             }
             case THREAD_JOIN:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_JOIN - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
+                 enviar_mutex_lock_a_kernel(inst->param1, socket_dispatch); 
                  enviar_thread_join_a_kernel(inst->param1, socket_dispatch);
             
                 break;
             }
             case THREAD_CANCEL:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_CANCEL - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_thread_cancel_a_kernel(inst->param1, socket_dispatch);
+
               
                 break;
             }
             case MUTEX_CREATE:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_CREATE - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
+                sem_wait(&semaforo_sincro_contexto_syscall); 
                 enviar_mutex_create_a_kernel(inst->param1, socket_dispatch);
                
                 break;
             }
             case MUTEX_LOCK:
-            {
+            {   enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_LOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_mutex_lock_a_kernel(inst->param1, socket_dispatch); 
                
                 break;
             }
             case MUTEX_UNLOCK:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: MUTEX_UNLOCK - %s", proceso->tid, inst->param1); //LOG OBLIGATORIO
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_mutex_unlock_a_kernel(inst->param1, socket_dispatch);
               
                 break;
             }
             case THREAD_EXIT:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: THREAD_EXIT", proceso->tid);
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_thread_exit_a_kernel(socket_dispatch);
               
                 break;
             }                
             case PROCESS_EXIT:
-            {
+            {enviar_contexto_a_memoria(proceso,conexion);
                 log_info(logger_cpu, "TID: %u - Ejecutando: PROCESS_EXIT", proceso->tid);
+                sem_wait(&semaforo_sincro_contexto_syscall);
                 enviar_process_exit_a_kernel(socket_dispatch);               
                 break;
             }            
@@ -940,7 +952,6 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     }
     
     if(es_syscall(tipo_inst)){
-        enviar_contexto_a_memoria(proceso,conexion_mem);
         sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
         if(respuesta_syscall==REPLANIFICACION){  // ISSUE: 4396
         log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado por syscall, esperando otro...");
@@ -964,6 +975,7 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     if(interrupcion_kernel && proceso_actual != NULL){
         log_info(logger_cpu,"ENTRO EN IF DEL  CHECK INTERRUPT\n");
         enviar_contexto_a_memoria(proceso_actual,socket_memoria);
+        sem_wait(&semaforo_sincro_contexto_syscall);
         enviar_fin_quantum_a_kernel(proceso_actual,dispatch );
         interrupcion_kernel = false;
         respuesta_syscall=-1;

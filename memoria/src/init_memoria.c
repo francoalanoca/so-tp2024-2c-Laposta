@@ -656,7 +656,7 @@ bool actualizar_contexto(t_m_contexto* contexto) {
     printf("contexto no esnull\n");
     // Iteramos sobre la lista de miniPCBs
     uint32_t cantidad_miniPCBs = list_size(lista_miniPCBs);
-     printf("Vamos a iterar %d veces\n",cantidad_miniPCBs);
+     log_info(logger_memoria,"Vamos a iterar %d veces",cantidad_miniPCBs);
     for (uint32_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
         printf("Obtengo miniPCB con pid:%d\n",miniPCB->pid);

@@ -31,7 +31,7 @@ void enviar_respuesta_iniciar_proceso(t_m_crear_proceso* crear_proceso ,int sock
  
     paquete_crear_proceso = crear_paquete(cod_ope);
  
-    // agregar_a_paquete(paquete_crear_proceso, &crear_proceso->pid,  sizeof(uint32_t));
+     agregar_a_paquete(paquete_crear_proceso, &crear_proceso->pid,  sizeof(uint32_t));
      
     enviar_paquete(paquete_crear_proceso, socket_kernel);   
     printf("Proceso enviado: %i\n", crear_proceso->pid); 
@@ -126,7 +126,8 @@ void enviar_confirmacion_memory_dump_a_kernel(op_code cod_ope,int socket_kernel)
     t_paquete* paquete_confirmacion_memory_dump;
  
     paquete_confirmacion_memory_dump = crear_paquete(cod_ope);
-    
+    int respuesta=PEDIDO_MEMORY_DUMP;
+    agregar_a_paquete(paquete_confirmacion_memory_dump,&respuesta,sizeof(int));
     enviar_paquete(paquete_confirmacion_memory_dump, socket_kernel);   
     printf("Peticion confirmacion memory dump enviada \n"); 
     eliminar_paquete(paquete_confirmacion_memory_dump); 

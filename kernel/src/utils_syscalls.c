@@ -30,7 +30,11 @@ void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
     eliminar_paquete(paquete_a_enviar);
 }
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
-    return recibir_operacion(socket_memoria);
+    int cod=-1;
+    cod=recibir_operacion(socket_memoria);
+    recibir_paquete(socket_memoria);
+    log_info(logger_kernel,"recibi paquete de memoria");
+    return cod;
 
 }
 

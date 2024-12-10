@@ -38,6 +38,8 @@ pthread_t hilo_atender_memoria;
 sem_t semaforo_respuesta_syscall;
 sem_t semaforo_binario_iniciar_ciclo;
 sem_t semaforo_binario_nuevo_proceso;
+sem_t semaforo_sincro_contexto_syscall;
+
 int socket_memoria;
 
 uint32_t valor_registro_obtenido;
@@ -70,7 +72,7 @@ int main(int argc, char *argv[])
 
     sem_init(&semaforo_binario_iniciar_ciclo,0,0);
     sem_init(&semaforo_binario_nuevo_proceso,0,1);
-
+    sem_init(&semaforo_sincro_contexto_syscall,0,0);
     pthread_mutex_init(&mutex_proceso_actual, NULL);
     pthread_mutex_init(&mutex_proceso_interrumpido_actual, NULL);
     pthread_mutex_init(&mutex_interrupcion_kernel, NULL);
