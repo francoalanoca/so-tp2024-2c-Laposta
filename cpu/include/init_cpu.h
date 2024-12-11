@@ -40,7 +40,6 @@ extern bool fin_ciclo;
 extern sem_t semaforo_binario_iniciar_ciclo;
 extern sem_t semaforo_binario_nuevo_proceso;
 typedef struct {
-    t_log *log;
     int fd;
     char *server_name;
 } t_procesar_conexion_args;

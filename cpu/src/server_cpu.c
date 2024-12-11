@@ -45,7 +45,7 @@ int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket
     if (cliente_socket != -1) {
         pthread_t atenderProcesoNuevo;
          t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
-        args->log = logger;
+     
         args->fd = cliente_socket;
         args->server_name = server_name;
         // Agregar el socket a la lista global
@@ -67,8 +67,7 @@ void procesar_conexion(int cliente_socket){
 
 void procesar_conexion_dispatch(void *v_args){
      t_procesar_conexion_args *args = (t_procesar_conexion_args *) v_args;
-    t_log *logger = malloc(sizeof(t_log));
-    logger = args->log;
+
     int cliente_socket = args->fd;
     char *server_name = args->server_name;
     free(args);
@@ -78,7 +77,7 @@ void procesar_conexion_dispatch(void *v_args){
     while (cliente_socket != -1) {
    
         if (recv(cliente_socket, &cop, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
-            log_info(logger, "DISCONNECT! KERNEL");
+            log_info(logger_cpu, "DISCONNECT! KERNEL");
 
             break;
         }
@@ -126,8 +125,7 @@ void procesar_conexion_dispatch(void *v_args){
 }
 void procesar_conexion_interrupt(void *v_args){
      t_procesar_conexion_args *args = (t_procesar_conexion_args *) v_args;
-    t_log *logger = malloc(sizeof(t_log));
-    logger = args->log;
+   
     int cliente_socket = args->fd;
     char *server_name = args->server_name;
     free(args);
@@ -138,7 +136,7 @@ void procesar_conexion_interrupt(void *v_args){
     
  
         if (recv(cliente_socket, &cop, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
-            log_info(logger, "DISCONNECT! KERNEL");
+            log_info(logger_cpu, "DISCONNECT! KERNEL");
 
             break;
         }
@@ -336,7 +334,7 @@ int server_escuchar_interrupt(t_log *logger, char *server_name, int server_socke
     if (cliente_socket != -1) {
         pthread_t atenderProcesoNuevo;
          t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
-        args->log = logger;
+ 
         args->fd = cliente_socket;
         args->server_name = server_name;
         //pthread_create(&atenderProcesoNuevo, NULL,procesar_conexion,cliente_socket);//TODO:Redefinir procesar_conexion para que reciba un PCB
