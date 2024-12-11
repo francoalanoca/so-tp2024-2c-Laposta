@@ -4,7 +4,7 @@ char* puerto_escucha;
 char * puerto_interrupt;
 int fd_mod2 = -1;
 int fd_mod3 = -1;
-//pcb *pcb_actual;
+
 
 void* crear_servidor_fs(char* ip_file_system){
       
@@ -43,10 +43,7 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
        
         args->fd = cliente_socket;
         args->server_name = "FILE_SYSTEM";
-            // Agregar el socket a la lista global
-        /*int* socket_ptr = malloc(sizeof(int));
-        *socket_ptr = cliente_socket;*/
-      
+        
       
         pthread_create(&atenderProcesoNuevo, NULL,(void*)procesar_conexion,(void*)args);
         pthread_detach(atenderProcesoNuevo);
@@ -86,7 +83,7 @@ void procesar_conexion(void *v_args){
                 pthread_mutex_lock(&mtx_file_system); // cambiar a clase mutex
                 dumpear(dumped, cliente_socket);
                 pthread_mutex_unlock(&mtx_file_system);
-               // liberar_t_dumped(dumped);
+              
                 list_destroy_and_destroy_elements(lista_paquete,free);
                 free(dumped);
                 break;  
