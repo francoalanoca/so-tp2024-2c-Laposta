@@ -12,7 +12,6 @@
 extern int conexion_memoria;
 extern  pthread_mutex_t  mtx_file_system;
 typedef struct {
-    t_log *log;
     int fd;
     char *server_name;
 } t_procesar_conexion_args;

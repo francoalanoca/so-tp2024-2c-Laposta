@@ -40,7 +40,7 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
     if (cliente_socket != -1) {
         pthread_t atenderProcesoNuevo;
          t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
-        args->log = logger_file_system;
+       
         args->fd = cliente_socket;
         args->server_name = "FILE_SYSTEM";
             // Agregar el socket a la lista global
@@ -58,8 +58,7 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
 
 void procesar_conexion(void *v_args){
      t_procesar_conexion_args *args = (t_procesar_conexion_args *) v_args;
-    t_log *logger = malloc(sizeof(t_log));
-    logger = args->log;
+   
     int cliente_socket = args->fd;
     char *server_name = args->server_name;
     free(args);
@@ -69,7 +68,7 @@ void procesar_conexion(void *v_args){
     while (cliente_socket != -1) {
    
         if (recv(cliente_socket, &cop, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
-            log_info(logger, "DISCONNECT!");
+            log_info(logger_file_system, "DISCONNECT!");
 
             break;
         }
