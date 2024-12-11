@@ -10,7 +10,7 @@
 
 char *path_config;
 char *ip_cpu;
-
+bool fin_ciclo=false;
 
 
 bool interrupcion_kernel;
@@ -29,15 +29,22 @@ sem_t sem_interrupcion_kernel;
 sem_t sem_check_interrupcion_kernel;
 sem_t sem_conexion_interrupt_iniciado;
 sem_t sem_conexion_dispatch_iniciado;
+sem_t sem_esperando_read_write_mem;
+sem_t sem_cpu_termino_ciclo;
 pthread_mutex_t mutex_proceso_actual;
 pthread_mutex_t mutex_proceso_interrumpido_actual;
 pthread_mutex_t mutex_interrupcion_kernel;
 pthread_t hilo_atender_memoria;
 sem_t semaforo_respuesta_syscall;
+sem_t semaforo_binario_iniciar_ciclo;
+sem_t semaforo_binario_nuevo_proceso;
+sem_t semaforo_sincro_contexto_syscall;
+
 int socket_memoria;
 
-char *valor_registro_obtenido;
+uint32_t valor_registro_obtenido;
 int rta_resize;
+
 
 int main(int argc, char *argv[])
 {
@@ -47,6 +54,7 @@ int main(int argc, char *argv[])
     ip_cpu = argv[2];
     proceso_actual= NULL;
     lista_sockets_global = list_create();
+
 
     sem_init(&sem_valor_instruccion, 0, 0);
 
@@ -58,6 +66,13 @@ int main(int argc, char *argv[])
     sem_init(&sem_check_interrupcion_kernel, 0, 0);
     sem_init(&sem_conexion_interrupt_iniciado, 0, 0);
     sem_init(&sem_conexion_dispatch_iniciado, 0, 0);
+    sem_init(&sem_esperando_read_write_mem, 0, 0);
+    sem_init(&sem_esperando_read_write_mem, 0, 0);
+    sem_init(&sem_cpu_termino_ciclo, 0, 1);
+
+    sem_init(&semaforo_binario_iniciar_ciclo,0,0);
+    sem_init(&semaforo_binario_nuevo_proceso,0,1);
+    sem_init(&semaforo_sincro_contexto_syscall,0,0);
     pthread_mutex_init(&mutex_proceso_actual, NULL);
     pthread_mutex_init(&mutex_proceso_interrumpido_actual, NULL);
     pthread_mutex_init(&mutex_interrupcion_kernel, NULL);
@@ -137,18 +152,16 @@ void ejecutar_ciclo() {
 
  
     while (1) {
-      
-        pthread_mutex_lock(&mutex_proceso_actual);
+        sem_wait(&semaforo_binario_iniciar_ciclo);
+      while(!fin_ciclo){
        
-        if (proceso_actual != NULL) {
-            pthread_mutex_unlock(&mutex_proceso_actual);
-            t_proceso* proceso_aux_para_evitar_problemas_con_syscalls_al_porner_el_actual_en_null=proceso_actual;
-            ciclo_de_instrucciones( &socket_memoria, proceso_aux_para_evitar_problemas_con_syscalls_al_porner_el_actual_en_null, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
-        } else {
-            pthread_mutex_unlock(&mutex_proceso_actual);
-                      
-        }
-    }
+            //pthread_mutex_unlock(&mutex_proceso_actual);
+            //t_proceso* proceso_aux=proceso_actual;
+                fin_ciclo=ciclo_de_instrucciones( &socket_memoria, proceso_actual, &conexion_kernel_dispatch,&conexion_kernel_interrupt);
+            //pthread_mutex_unlock(&mutex_proceso_actual);                  
+      }
+       sem_post( &semaforo_binario_nuevo_proceso);
+ }
 
     
 }

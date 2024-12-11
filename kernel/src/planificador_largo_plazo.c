@@ -17,8 +17,9 @@ void inicializar_listas() {
     lista_procesos_global=list_create();
     lista_espera_io = list_create();
 }
-void  inicializar_hilos_largo_plazo(){
+void inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
+    pthread_create(&(hilos->hilo_finalizacion_procesos_memoria),NULL,manejo_liberacion_memoria,NULL);
 
 }
 
@@ -52,20 +53,33 @@ void* planificar_procesos(){
                 // pasar_new_a_ready();  TODO: no se puede usar por que en NEW hay procesos y en READY hay hilos
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
                 remover_de_lista(lista_new,0,&(semaforos->mutex_lista_new));
-                agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_new));
+                agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+                log_info(logger_kernel, "nuevo proceso con pid %d y tid %d",tcb->pid,tcb->tid);
                 t_tcb* prueba_tcb=(t_tcb*)list_get(lista_ready,0);
 
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{
-                log_info(logger_kernel, "esperando liberacion de memoria \n");
+                log_info(logger_kernel, "No hay espacio en memoria para proc PCB:%d, se esperara liberacion por parte de otro proceso \n", un_pcb->pid);
+                log_info(logger_kernel, "Codigo de op recibido: %d", respuesta);
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
-                 sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
             }
                  
         }
     }
     return NULL; 
+}
+
+void manejo_liberacion_memoria(){
+    while(1){
+            sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
+        if(list_is_empty(lista_new)){
+            log_info(logger_kernel,"No hay procesos en memoria para liberar \n");
+        }else{
+            log_info(logger_kernel,"Se libero espacio en memoria");
+            sem_post(&(semaforos->sem_procesos_new));
+        }
+    }
 }
 
 
@@ -75,10 +89,10 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
         t_tcb* tcb = (t_tcb*)list_remove(lista_origen, 0);
         sem_post(sem_origen);
         if (nuevo_estado == EXIT){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista EXIT", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista EXIT", tcb->tid, tcb->pid);
             //aca deberia mandar a memoria la eliminacion del hilo
             pthread_t hilo_manejo_exit;
-            pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
+            pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_proceso_saliente,(void*)tcb);
             pthread_detach(hilo_manejo_exit);
             
         }else{
@@ -88,16 +102,16 @@ void mover_procesos(t_list* lista_origen, t_list* lista_destino, sem_t* sem_orig
             sem_post(sem_destino);
 
         if (nuevo_estado == NEW) {
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista NEW", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista NEW", tcb->tid, tcb->pid);
         }
         else if(nuevo_estado == READY){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista READY", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista READY", tcb->tid, tcb->pid);
         }
         else if(nuevo_estado == EXEC){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista EXEC", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista EXEC", tcb->tid, tcb->pid);
         }
         else if(nuevo_estado == BLOCKED){
-            log_info(logger_kernel, "Hilo con TID %d movido a la lista BLOCKED", tcb->tid);
+            log_info(logger_kernel, "Hilo con TID %d y PID %d movido a la lista BLOCKED", tcb->tid, tcb->pid);
         }else 
             log_info(logger_kernel, "No hay hilos en la lista origen");
         }

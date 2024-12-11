@@ -88,19 +88,30 @@ void procesar_conexion_dispatch(void *v_args){
     
             case PROCESO_EJECUTAR:
             {
+                sem_wait(&semaforo_binario_nuevo_proceso);
                 printf("Ejecutando procesoo\n");
+               // sem_wait(&sem_cpu_termino_ciclo);
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
-                pthread_mutex_lock(&mutex_proceso_actual);
-                proceso_actual = proceso; //Agregar a lista de procesos?               
-                //TODO: AGrego aca solicitud contexto para cualquier instruccion
+                log_info(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
+                //reinicio cpu para ejecutar otro proceso
+                pthread_mutex_lock(&mutex_interrupcion_kernel);  
+                interrupcion_kernel=false;
+                respuesta_syscall=-1;
+                fin_ciclo=false;
+                proceso_actual=NULL;
+                pthread_mutex_unlock(&mutex_interrupcion_kernel);  
+
+                pthread_mutex_lock(&mutex_proceso_actual);//asigno proceso nuevo para ejecutar
+                proceso_actual = proceso;           
                 solicitar_contexto_a_memoria(proceso,socket_memoria);
                 sem_wait(&sem_valor_base_particion);
                 pthread_mutex_unlock(&mutex_proceso_actual);
 
+                sem_post(&semaforo_binario_iniciar_ciclo);
                 //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
                 //free(proceso);
-                printf("pase free proceso\n"); 
+                
                 break;
             }
             default:
@@ -142,9 +153,9 @@ void procesar_conexion_interrupt(void *v_args){
                 t_list *params_fin_q = recibir_paquete(cliente_socket);
                 int pid=*((int *)list_get(params_fin_q, 0));
                 int tid=*((int *)list_get(params_fin_q, 1));    
-                log_info(logger_cpu, "## Llega interrupción al puerto Interrupt"); // LOG OBLIGATORIO
-                log_warning(logger_cpu, "INTERRUMPIENDO: PID:%d , TID: %d",pid,tid);
-                log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
+                log_error(logger_cpu, "## Llega interrupción al puerto Interrupt para pid:%d tid:%d",pid, tid); // LOG OBLIGATORIO
+
+                //log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
                 //pthread_mutex_lock(&mutex_proceso_actual);
                 //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
                // pthread_mutex_unlock(&mutex_proceso_actual);
@@ -155,7 +166,7 @@ void procesar_conexion_interrupt(void *v_args){
             }
             case RESPUESTA_SYSCALL:
                 {
-                printf("Recibiendo respuesta syscall");
+                log_info(logger_cpu, "Recibiendo respuesta syscall");
                 t_list* params_syscall= (char*)recibir_paquete(cliente_socket);
 
                 respuesta_syscall=*((int*)list_get(params_syscall,0));
@@ -196,7 +207,7 @@ void atender_memoria(int *socket_mr) {
 
             case SOLICITUD_INSTRUCCION_RTA:
                 
-                {
+                
                 log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
                     
                 t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
@@ -228,20 +239,54 @@ void atender_memoria(int *socket_mr) {
                     free(instruccion_recibida);*/
                 }
                 break;
-                }
             case SOLICITUD_CONTEXTO_RTA: 
                 t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
                 deserializar_contexto_(proceso_actual,lista_paquete_contexto);
                 sem_post(&sem_valor_base_particion);
             break;
+            case WRITE_MEMORIA_RTA_OK: 
+                t_list* lista_paquete_memoria_ok = recibir_paquete(socket_memoria_server);
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                sem_post(&sem_esperando_read_write_mem);
+                
+            break;
+            case WRITE_MEMORIA_RTA_ERROR: 
+                t_list* lista_paquete_memoria_error = recibir_paquete(socket_memoria_server);
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                sem_post(&sem_esperando_read_write_mem);
+                log_error(logger_cpu, "Error al escribir en memoria");
+            break;
+            case READ_MEMORIA_RTA_OK: 
+                t_list* lista_paquete_memoria_leer_ok = recibir_paquete(socket_memoria_server);
+                uint32_t tamanio_valor_registro_obtenido = *(uint32_t*) list_get(lista_paquete_memoria_leer_ok,1);
+                //proceso_actual->registros_cpu.DX = *(uint32_t*)list_get(lista_paquete_memoria_leer_ok,2);
+                valor_registro_obtenido = *(uint32_t*)list_get(lista_paquete_memoria_leer_ok,2);
+                log_info (logger_cpu, "Valor obtenido de memoria: %d",valor_registro_obtenido);
+                sem_post(&sem_valor_registro_recibido);
+                //sem_post(&sem_esperando_read_write_mem);
+                
+            break;
+            case READ_MEMORIA_RTA_ERROR: 
+                t_list* lista_paquete_memoria_leer_error = recibir_paquete(socket_memoria_server);
+                //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                sem_post(&sem_esperando_read_write_mem);
+                log_error(logger_cpu, "Error al leer en memoria");
+            
+            break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
+             log_info(logger_cpu,"se actualizo correctamente el contexto");
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
                 int pid_v= *(uint32_t*)list_get(lista_paquete_ctx_rta,0);
                 int tid_v = *(uint32_t*)list_get(lista_paquete_ctx_rta,1);
-                
+                sem_post(&semaforo_sincro_contexto_syscall);
                 list_destroy(lista_paquete_ctx_rta);
-            break;            
+            break;
+             case DEVOLUCION_CONTEXTO_RTA_ERROR:
+                log_info(logger_cpu,"error actualizando el contexto en memoria");
+                t_list* lista_paquete_ctx_rta_error = recibir_paquete(socket_memoria_server);
+                list_destroy(lista_paquete_ctx_rta_error);
+             break;            
             default:
                 {
                     log_error(logger_cpu, "Operacion invalida enviada desde Memoria:%d",cop);
@@ -433,5 +478,6 @@ void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){
     proceso->registros_cpu.HX = *(uint32_t*)list_get(lista_contexto, 10);
     proceso->registros_cpu.base = *(uint32_t*)list_get(lista_contexto, 11);
     proceso->registros_cpu.limite = *(uint32_t*)list_get(lista_contexto, 12);
+    
     
 }   

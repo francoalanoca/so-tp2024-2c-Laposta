@@ -3,10 +3,8 @@
 int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
     int respuesta;
-     printf("ENTRA CREAR PROCESO");
 
     if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        printf("ENTRA DINAMICAS");
         respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
     }else{
         if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
@@ -18,7 +16,7 @@ int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
 //Funcion que crea las estructuras del proceso
 int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
-    printf("ENTRA CREAR PROCESO DINAMICO");
+    printf("ENTRA CREAR PROCESO DINAMICO\n");
     //log_info(logger_memoria, "Creacion del proceso dinamico PID - %i \n", proceso_pid);
     log_info(logger_memoria, "Iniciando estructura dinamica \n");
     
@@ -54,7 +52,7 @@ int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
     // Si es null no hay memoria
     if (particion_resultante == NULL) {
         log_error(logger_memoria, "No hay memoria \n");
-        return -1; 
+        return INICIAR_PROCESO_RTA_ERROR_SIN_ESPACIO; 
     }
 
     particion_resultante->pid = proceso_pid;
@@ -98,18 +96,15 @@ t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
 
     //iniciamos la variable mejor en Null
     t_particion_dinamica *mejor_particion = NULL;
- printf("ENTRO A BUSCAR BEST\n");
     //Recorremos la lista de particiones comparando en cada iteracion
     for (int i = 0; i < list_size(lista_particiones_dinamicas); i++){
-        printf("ENTRO A FOR\n");
         particion = list_get(lista_particiones_dinamicas, i);
 
         //Verificamos que la particion obtenida este libre y sea >= al proceso
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
-            printf("ENTRO A IF PARTICION > PROCESO\n");
+
             //Verificamos si todavia no hay una mejor o si el tamaño particion actual es menor a la mejor actual 
             if (mejor_particion == NULL || particion->tamanio < mejor_particion->tamanio) {
-                printf("ENTRO A IF MEJOR PARTICION\n");
                 mejor_particion = particion;
             }
         }

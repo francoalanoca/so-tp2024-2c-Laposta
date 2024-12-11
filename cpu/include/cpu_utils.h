@@ -29,7 +29,7 @@ typedef enum
 
 //ciclo de instrccciones 
 
-void ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch,int *socket_interrupt);
+bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_dispatch,int *socket_interrupt);
 instr_t* fetch(int conexion, t_proceso* proceso);
 void pedir_instruccion(t_proceso* proceso,int conexion);
 tipo_instruccion decode(instr_t* instr, int conexion_memo);
@@ -77,7 +77,7 @@ uint32_t string_a_uint32(const char* str);
 
 void pedir_valor_a_memoria(uint32_t dir_fisica, uint32_t pid, uint32_t tid, int conexion);
 
-
+tipo_instruccion str_to_tipo_instruccion(const char *str);
 
 
 

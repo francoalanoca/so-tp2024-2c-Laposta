@@ -30,7 +30,11 @@ void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
     eliminar_paquete(paquete_a_enviar);
 }
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
-    return recibir_operacion(socket_memoria);
+    int cod=-1;
+    cod=recibir_operacion(socket_memoria);
+    recibir_paquete(socket_memoria);
+    log_info(logger_kernel,"recibi paquete de memoria");
+    return cod;
 
 }
 
@@ -139,9 +143,33 @@ void* enviar_a_memoria_thread_saliente(void* t){
     int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
     if(rta==FINALIZAR_HILO_RTA_OK){
         log_info(logger_kernel, "## (<%d>:<%d>) Finaliza el hilo",tcb->pid,tcb->tid);
+        sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); //EStO ACA NO
     }
-    else
-         log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+    else{
+        log_info(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+    }
+    close(fd_memoria); 
+    eliminar_paquete(paquete);
+}
+
+void* enviar_a_memoria_proceso_saliente(void* t){
+    t_tcb* tcb=(t_tcb*)t;
+    t_paquete *paquete=crear_paquete(FINALIZAR_PROCESO);
+    agregar_a_paquete(paquete,&(tcb->pid),sizeof(uint32_t));
+    int fd_memoria=conectar_a_memoria();
+    enviar_paquete(paquete,fd_memoria);
+   
+    
+    //espero respuesta de memoria;
+
+    int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
+    if(rta==FINALIZAR_PROCESO_RTA_OK){
+        log_info(logger_kernel, "## Finaliza el proceso %d",tcb->pid);
+        sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); //EStO ACA NO
+    }
+    else{
+        log_info(logger_kernel, "## MEMORIA no logro Finalizar el proceso %d",tcb->pid);
+    }
     close(fd_memoria); 
     eliminar_paquete(paquete);
 }
@@ -184,7 +212,7 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
  }
 // REVISAR: agregar la funcion utilizada en thread_cancel para ir hilo por hilo mandando a memoria y que finalice el hilo en cuestion. Ya esta
  //Paso un pcb y cancelo todos los tcb asociados a ese pcb en la lista en cuestion
-void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t* sem){
+void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t* sem,t_estado lista_estado){
     sem_wait(sem);
     t_tcb* tcb=NULL;
     for(int i=0;i<list_size(lista_en_custion);i){
@@ -195,6 +223,9 @@ void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t
             pthread_create(&hilo_manejo_exit,NULL,enviar_a_memoria_thread_saliente,(void*)tcb);
             pthread_detach(hilo_manejo_exit);
             list_remove(lista_en_custion,i);
+            if(lista_estado==READY){
+                sem_wait(&(semaforos->contador_threads_en_ready));
+            }
         }else{
             i++;
         }
@@ -205,6 +236,7 @@ void buscar_y_cancelar_tcb_asociado_a_pcb(int pid,t_list* lista_en_custion,sem_t
 //busca un tcb en una lista por su tid y pid y lo remueve
 t_tcb* buscar_en_lista_y_cancelar(t_list* lista,int tid,int pid,sem_t* sem){
     sem_wait(sem);
+    log_info(logger_kernel,"Entre en buscar lista y cancelar para pid: %d tid :%d ",pid, tid );
     for(int i=0;i<list_size(lista);i++){
         t_tcb* tcb=(t_tcb*)list_get(lista,i);
         if(tcb->tid==tid && tcb->pid==pid){
@@ -266,25 +298,41 @@ void interfaz_io(){
         sem_wait(&(semaforos->mutex_lista_espera_io));
         t_tcb* tcb_io = list_get (lista_espera_io,0);
         sem_post(&(semaforos->mutex_lista_espera_io));
+
+        log_info(logger_kernel,"TCB OBTENIDO de la lista de espera de io: %d", tcb_io->tid);
+
         sem_post(&(semaforos->sem_sleep_io));
 
         sem_wait(&(semaforos->sem_io_sleep_en_uso)); 
+          sem_wait(&(semaforos->mutex_lista_espera_io));
         t_tcb* tcb_usando_io = list_remove (lista_espera_io,0);
+          sem_post(&(semaforos->mutex_lista_espera_io));
         agregar_a_lista(tcb_usando_io,lista_ready,&(semaforos->mutex_lista_ready));
         buscar_en_lista_y_cancelar(lista_blocked,tcb_usando_io->tid,tcb_usando_io->pid,&(semaforos->mutex_lista_blocked));
+        sem_post(&(semaforos->contador_threads_en_ready));
     }
 }
 
-void hilo_sleep_io(){
-    while(1){
+void hilo_sleep_io() {
+    while (1) {
         sem_wait(&(semaforos->sem_sleep_io));
-        t_tcb* tcb_usando_io = list_get (lista_espera_io,0);
-        int tiempo = tcb_usando_io->tiempo_de_io;
-        log_info(logger_kernel,"## IO en uso por %d milisegundos",tiempo);
-        sleep(tiempo);
-        sem_post(&(semaforos->sem_io_sleep_en_uso));
+        
+        sem_wait(&(semaforos->mutex_lista_espera_io));
+        if (list_size(lista_espera_io) > 0) {
+            t_tcb* tcb_usando_io = list_get(lista_espera_io, 0);
+            sem_post(&(semaforos->mutex_lista_espera_io));
+
+            int tiempo = tcb_usando_io->tiempo_de_io / 1000;
+            log_info(logger_kernel, "## IO en uso por %d milisegundos", tiempo);
+            sleep(tiempo);
+            sem_post(&(semaforos->sem_io_sleep_en_uso));
+        } else {
+            sem_post(&(semaforos->mutex_lista_espera_io));
+            log_error(logger_kernel, "Lista de espera IO vacía en hilo_sleep_io.");
+        }
     }
 }
+
 
 
 //TODO: FIXME: controlar semaforos

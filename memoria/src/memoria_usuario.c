@@ -73,7 +73,7 @@ void inicializar_memoria_particiones_fijas(uint32_t mem_size, uint32_t num_parti
 
 
 
-void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
+void inicializar_proceso(uint32_t pid, uint32_t tamanio){
     t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
     //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
@@ -104,7 +104,7 @@ void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
 
     nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
 
-    nuevo_proceso->limite = tamanio_proceso;
+    nuevo_proceso->limite = nuevo_proceso->base + tamanio;
 
     //list_add(nuevo_proceso->hilos,nuevo_hilo);
     pthread_mutex_lock(&mutex_lista_miniPCBs);
@@ -159,7 +159,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
                     pthread_mutex_unlock(&mutex_pids_por_bloque);
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
+                    inicializar_proceso(pid, tamanio_bloque_actual); //VER UBICACION
                     return INICIAR_PROCESO_RTA_OK;
                 }
             }
@@ -213,7 +213,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pthread_mutex_unlock(&mutex_pids_por_bloque);
                     printf("Se agrego a lista. Estado actual:\n");
                     print_lista_pid_por_bloque(pids_por_bloque);
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
+                    inicializar_proceso(pid, tamanio_ultimo_bloque_best_fit); //VER UBICACION
                      return INICIAR_PROCESO_RTA_OK; 
             }
         }
@@ -262,7 +262,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     list_add(pids_por_bloque,pid_por_bloque);
                     pthread_mutex_unlock(&mutex_pids_por_bloque);
-                    inicializar_proceso(pid, tam_proceso); //VER UBICACION
+                    inicializar_proceso(pid, tamanio_ultimo_bloque_worst_fit); //VER UBICACION
                 
                 return INICIAR_PROCESO_RTA_OK;
             }

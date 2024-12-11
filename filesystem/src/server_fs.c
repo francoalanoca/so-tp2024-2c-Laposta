@@ -7,10 +7,7 @@ int fd_mod3 = -1;
 //pcb *pcb_actual;
 
 void* crear_servidor_fs(char* ip_file_system){
-    log_info(logger_file_system, "empieza crear_servidor_dispatch");
-
-    log_info(logger_file_system, "valor de PUERTO_ESCUCHA_DISPATCH: %s", cfg_file_system->PUERTO_ESCUCHA);
-    
+      
 
     puerto_escucha = malloc((strlen(cfg_file_system->PUERTO_ESCUCHA) + 1) * sizeof(char));
 if (puerto_escucha != NULL) {
@@ -21,7 +18,7 @@ else{
 }
    
     log_info(logger_file_system, "crea puerto_escucha");
-    printf("El puerto_escucha es: %s", puerto_escucha);
+
     fd_mod2 = iniciar_servidor(logger_file_system, "SERVER file_system ", ip_file_system,  puerto_escucha);
     log_info(logger_file_system, "inicio servidor");
     if (fd_mod2 == 0) {
@@ -90,7 +87,7 @@ void procesar_conexion(void *v_args){
                 dumpear(dumped, cliente_socket);
                 pthread_mutex_unlock(&mtx_file_system);
                 //liberar_t_dumped(dumped);
-                list_destroy_and_destroy_elements(lista_paquete, free);
+                //list_destroy_and_destroy_elements(lista_paquete, free);
                 break;  
             }
             default:

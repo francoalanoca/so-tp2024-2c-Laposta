@@ -16,7 +16,7 @@ extern int conexion_kernel_interrupt;
 
 extern sem_t sem_valor_instruccion;
 extern int socket_memoria;
-extern char* valor_registro_obtenido;
+extern uint32_t valor_registro_obtenido;
 extern sem_t sem_valor_registro_recibido;
 extern int rta_resize;
 extern sem_t sem_valor_resize_recibido;
@@ -26,6 +26,9 @@ extern sem_t sem_interrupcion_kernel;
 extern sem_t sem_check_interrupcion_kernel;
 extern sem_t sem_conexion_interrupt_iniciado;
 extern sem_t sem_conexion_dispatch_iniciado;
+extern sem_t sem_esperando_read_write_mem;
+extern sem_t sem_cpu_termino_ciclo;
+extern sem_t semaforo_sincro_contexto_syscall;
 extern pthread_mutex_t mutex_proceso_actual;
 extern pthread_mutex_t mutex_proceso_interrumpido_actual;
 extern pthread_mutex_t mutex_interrupcion_kernel;
@@ -33,6 +36,9 @@ extern int base_particion;
 
 extern int respuesta_syscall;
 extern sem_t semaforo_respuesta_syscall;
+extern bool fin_ciclo;
+extern sem_t semaforo_binario_iniciar_ciclo;
+extern sem_t semaforo_binario_nuevo_proceso;
 typedef struct {
     t_log *log;
     int fd;

@@ -39,10 +39,10 @@ int cargar_configuracion(char *path) {
     file_cfg_file_system = config_create(path);
 
     cfg_file_system->PUERTO_ESCUCHA = strdup(config_get_string_value(file_cfg_file_system, "PUERTO_ESCUCHA"));
-    log_info(logger_file_system, "IP_MEMORIA cargado correctamente: %s", cfg_file_system->PUERTO_ESCUCHA);
+    log_info(logger_file_system, "PUERTO_ESCUCHA cargado correctamente: %s", cfg_file_system->PUERTO_ESCUCHA);
 
     cfg_file_system->MOUNT_DIR = strdup(config_get_string_value(file_cfg_file_system, "MOUNT_DIR"));
-    log_info(logger_file_system, "PUERTO_MEMORIA cargado correctamente: %s", cfg_file_system->MOUNT_DIR);
+    log_info(logger_file_system, "MOUNT_DIR cargado correctamente: %s", cfg_file_system->MOUNT_DIR);
 
     cfg_file_system->BLOCK_SIZE = config_get_int_value(file_cfg_file_system, "BLOCK_SIZE");
     log_info(logger_file_system, "BLOCK_SIZE cargado correctamente: %d", cfg_file_system->BLOCK_SIZE);
