@@ -12,7 +12,7 @@ int main(char argc, char *argv[]) {
 
     pthread_mutex_init(&mtx_file_system, NULL);
 
-    if (!init(path_config) || !cargar_configuracion(path_config)) {
+    if (!init(path_config)) {
         cerrar_programa();
         printf("No se pudo inicializar entrada salida");
         return EXIT_FAILURE;
@@ -25,7 +25,7 @@ int main(char argc, char *argv[]) {
     pthread_create(&servidor_fs, NULL, (void *)crear_servidor_fs, "127.0.0.0");
     pthread_join (servidor_fs,NULL);
     pthread_join (fs,NULL);
-     printf("pasado hilos...\n");
+   
     
     
 
