@@ -284,6 +284,7 @@ void memoria_atender_kernel(void* socket){
 			
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
 			free(iniciar_hilo->archivo_pseudocodigo);
+			free(iniciar_hilo);
 			break;
 
 		case FINALIZAR_HILO:
@@ -413,6 +414,9 @@ void atender_dump_memory_fs(t_peticion_dump_fs* peticion_fs){
 	   //Enviar a kernel ERROR
 	   enviar_confirmacion_memory_dump_a_kernel(PEDIDO_MEMORY_DUMP_RTA_ERROR,peticion_fs->fd_kernel);
     }
+	free(peticion_fs->nombre_archivo);
+	free(peticion_fs->contenido);
+	free(peticion_fs);
 }
 
 

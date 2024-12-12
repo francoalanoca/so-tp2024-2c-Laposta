@@ -447,7 +447,7 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
     t_miniPCB *proceso = busco_proceso_por_PID(proceso_pid);
 
     //Recorremos la lista de hilos
-    for (int j = 0; j < list_size(proceso->hilos); j++){
+    /*for (int j = 0; j < list_size(proceso->hilos); j++){
 
         //Sacamos la pagina de la lista
         t_hilo *hilo = list_get(proceso->hilos, j);
@@ -455,7 +455,7 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
         list_destroy_and_destroy_elements(hilo->lista_de_instrucciones, free);
         list_remove_element(proceso->hilos, hilo);
         
-    }
+    }*/
 
 
     log_trace(logger_memoria, "Log Obligatorio: \n");
@@ -466,7 +466,8 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
 
     unificar_particiones_dinamicas(indice_particion);
     
-    list_remove_element(lista_miniPCBs, proceso);
+    //list_remove_element(lista_miniPCBs, proceso);
+    eliminar_proceso_de_lista(proceso_pid);
 }
 
 
