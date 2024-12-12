@@ -69,6 +69,7 @@ void memoria_atender_cpu(){
 			
 			enviar_respuesta_instruccion(instruccion, socket_cpu);    
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_INSTRUCCION_RTA \n");
+			free(solicitud_instruccion);
 			break;
 
 		case READ_MEMORIA:
@@ -96,6 +97,7 @@ void memoria_atender_cpu(){
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_read_memoria(respuesta_leer, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de READ_MEMORIA_RTA \n");
+			free(peticion_leer);
 			break;
 
 		case WRITE_MEMORIA:
@@ -117,6 +119,7 @@ void memoria_atender_cpu(){
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_write_memoria(respuesta_escribir, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de WRITE_MEMORIA_RTA \n");
+			free(peticion_escribir);
 			break;
 		
 		case DEVOLUCION_CONTEXTO:
@@ -149,6 +152,7 @@ void memoria_atender_cpu(){
 			}
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de DEVOLUCION_CONTEXTO_RTA \n");
+			//free(contexto_actualizado);
 			break;
 
 		case -1:
@@ -160,7 +164,10 @@ void memoria_atender_cpu(){
 			log_warning(logger_memoria,"Operacion desconocida: %d",cod_op);
 			break;
 		}
+		list_destroy_and_destroy_elements(valores,free);
     }
+
+	
 }
 
 
@@ -227,6 +234,7 @@ void memoria_atender_kernel(void* socket){
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_PROCESO_RTA \n");
+			free(iniciar_proceso);
 			break;
 
 		case FINALIZAR_PROCESO:
@@ -275,6 +283,7 @@ void memoria_atender_kernel(void* socket){
 			// }
 			
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
+			free(iniciar_hilo->archivo_pseudocodigo);
 			break;
 
 		case FINALIZAR_HILO:
@@ -378,6 +387,7 @@ void memoria_atender_kernel(void* socket){
 		}
 
 		free(socket);
+		list_destroy_and_destroy_elements(valores,free);
     //  }
 }
 

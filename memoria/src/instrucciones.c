@@ -94,9 +94,9 @@ void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
         exit(EXIT_FAILURE);
     }
 
-	char *linea;
+	char *linea = NULL;
 	size_t len;
-	linea = string_new();
+	//linea = string_new();
 	len = 0;
 int contador=0;
     //mientras no sea el fin del archivo
@@ -129,6 +129,9 @@ int contador=0;
 
         } 
         contador++;
+
+        free(linea);
+        linea = NULL;
 	}
      log_warning(logger_memoria,"cantidad de instruc leidas: %d",list_size(hilo->lista_de_instrucciones));
 
