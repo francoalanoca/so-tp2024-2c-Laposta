@@ -726,8 +726,7 @@ bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
     }
 
     // Calculamos la posición en la memoria a partir de la dirección física
-    uint8_t* posicion_memoria = malloc(sizeof(uint8_t*));
-    posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+    uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
     log_info(logger_memoria, "WRITE MEM: posicion_memoria: %p\n", (void*)posicion_memoria);
 
     // Escribimos la cadena en la posición calculada
