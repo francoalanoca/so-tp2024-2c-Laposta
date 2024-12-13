@@ -15,7 +15,6 @@ void memoria_atender_cpu(){
         //Se queda esperando a que Cpu le envie algo y extrae el cod de operacion
 		int cod_op = recibir_operacion(socket_cpu);
 		op_code response;
-		t_list* valores = NULL;
 
 
 		switch (cod_op) {
@@ -32,9 +31,9 @@ void memoria_atender_cpu(){
 		case SOLICITUD_CONTEXTO:
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí SOLICITUD_CONTEXTO \n");
-			valores = recibir_paquete(socket_cpu);
-			uint32_t pid = *(uint32_t*)list_get(valores, 0);
-			uint32_t tid = *(uint32_t*)list_get(valores, 1);
+			t_list* valores_sol_contexto = recibir_paquete(socket_cpu);
+			uint32_t pid = *(uint32_t*)list_get(valores_sol_contexto, 0);
+			uint32_t tid = *(uint32_t*)list_get(valores_sol_contexto, 1);
 			t_m_contexto* contexto_encontrado = buscar_contexto_en_lista(pid,tid);
 			if(contexto_encontrado == NULL){
 				log_info(logger_memoria, "NO SE ENCONTRO EL CONTEXTO\n");
@@ -56,31 +55,29 @@ void memoria_atender_cpu(){
 			enviar_respuesta_contexto(contexto_encontrado,socket_cpu);
 			log_info(logger_memoria, "## Contexto Solicitado - (PID:TID) - (%d:%d)\n",pid,tid);
 			free(contexto_encontrado);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_sol_contexto, free);
 			break;
 
 		case SOLICITUD_INSTRUCCION:
 			//sleep(8);
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí SOLICITUD_INSTRUCCION \n");
-			valores = recibir_paquete(socket_cpu);
-			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores);         
+			t_list* valores_sol_instruccion = recibir_paquete(socket_cpu);
+			t_proceso_memoria* solicitud_instruccion = deserializar_solicitud_instruccion(valores_sol_instruccion);         
             char* instruccion = buscar_instruccion(solicitud_instruccion->pid, solicitud_instruccion->tid, solicitud_instruccion->program_counter);
 			log_info(logger_memoria, "## Obtener instrucción - (PID:TID) - (%d:%d) - Instrucción: %s\n",solicitud_instruccion->pid,solicitud_instruccion->tid,instruccion); 
 			
 			enviar_respuesta_instruccion(instruccion, socket_cpu);    
 			log_info(logger_memoria, "enviada respuesta de SOLICITUD_INSTRUCCION_RTA \n");
 			free(solicitud_instruccion);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_sol_instruccion, free);
 			break;
 
 		case READ_MEMORIA:
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí READ_MEMORIA \n");
-			valores = recibir_paquete(socket_cpu);
-			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores); 
+			t_list* valores_read_mem = recibir_paquete(socket_cpu);
+			t_escribir_leer* peticion_leer = deserializar_read_memoria(valores_read_mem); 
 			uint32_t tamanio_rta = 4;    
 			log_info(logger_memoria, "ANTES DE MEMSET \n");
             uint32_t respuesta_leer = -1;
@@ -102,15 +99,14 @@ void memoria_atender_cpu(){
 			//enviar_respuesta_read_memoria(respuesta_leer, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de READ_MEMORIA_RTA \n");
 			free(peticion_leer);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_read_mem, free);
 			break;
 
 		case WRITE_MEMORIA:
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí WRITE_MEMORIA \n");
-			valores = recibir_paquete(socket_cpu);
-			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores);  
+			t_list* valores_write_mem = recibir_paquete(socket_cpu);
+			t_escribir_leer* peticion_escribir = deserializar_write_memoria(valores_write_mem);  
 			//INICIO MUTEX 
 			if(write_mem(peticion_escribir->direccion_fisica, peticion_escribir->valor)){
 				
@@ -126,17 +122,16 @@ void memoria_atender_cpu(){
 			//enviar_respuesta_write_memoria(respuesta_escribir, socket_cpu);
 			log_info(logger_memoria, "enviada respuesta de WRITE_MEMORIA_RTA \n");
 			free(peticion_escribir);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_write_mem, free);
 			break;
 		
 		case DEVOLUCION_CONTEXTO:
 			usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "Recibí DEVOLUCION_CONTEXTO \n");
-			valores = recibir_paquete(socket_cpu);
+			t_list* valores_dev_contexto = recibir_paquete(socket_cpu);
 			t_m_contexto* contexto_actualizado = malloc(sizeof(t_m_contexto));
 			//t_m_contexto* contexto_actualizado = deserializar_contexto(valores);
-			deserializar_contexto(contexto_actualizado,valores);
+			deserializar_contexto(contexto_actualizado,valores_dev_contexto);
 			log_warning(logger_memoria,"PC=%d",contexto_actualizado->registros.PC);
 			log_warning(logger_memoria,"AX=%d",contexto_actualizado->registros.AX);
 			log_warning(logger_memoria,"BX=%d",contexto_actualizado->registros.BX);
@@ -161,8 +156,7 @@ void memoria_atender_cpu(){
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			log_info(logger_memoria, "enviada respuesta de DEVOLUCION_CONTEXTO_RTA \n");
 			free(contexto_actualizado);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_dev_contexto, free);
 			break;
 
 		case -1:
@@ -193,7 +187,6 @@ void memoria_atender_kernel(void* socket){
         //Se queda esperando a que KErnel le envie algo y extrae el cod de operacion
 		int cod_op = recibir_operacion(fd_kernel);
 		op_code response;
-		t_list* valores = NULL;
 		//pthread_t
 		//sleep(5);
 		switch (cod_op) {
@@ -210,17 +203,16 @@ void memoria_atender_kernel(void* socket){
 		
 		case INICIAR_PROCESO:
 			log_info(logger_memoria, "Recibí INICIAR_PROCESO \n");
-			valores = recibir_paquete(fd_kernel);
+			t_list* valores_ini_proceso = recibir_paquete(fd_kernel);
 
-			 if (valores == NULL) {
+			 if (valores_ini_proceso == NULL) {
                 log_error(logger_memoria, "Error al recibir paquete");
                 break;
             }
 
-			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores);
+			t_m_crear_proceso* iniciar_proceso = deserializar_iniciar_proceso(valores_ini_proceso);
 			if (!iniciar_proceso) {
                 log_error(logger_memoria, "Error al deserializar iniciar_proceso");
-                list_destroy_and_destroy_elements(valores, free);
                 break;
             }
 			printf("SALIO DE DESEREALIZACION:%d\n",iniciar_proceso->pid);
@@ -256,18 +248,17 @@ void memoria_atender_kernel(void* socket){
 			//enviar_respuesta_iniciar_proceso(iniciar_proceso, fd_kernel);
 			log_info(logger_memoria, "enviada respuesta de INICIAR_PROCESO_RTA \n");
 			free(iniciar_proceso);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_ini_proceso, free);
 			break;
 
 		case FINALIZAR_PROCESO:
 			log_info(logger_memoria, "Recibí FINALIZAR_PROCESO \n");
-			valores = recibir_paquete(fd_kernel);
-			if (valores == NULL) {
+			t_list* valores_fin_proceso = recibir_paquete(fd_kernel);
+			if (valores_fin_proceso == NULL) {
                 log_error(logger_memoria, "Error al recibir paquete");
                 break;
             }
-			uint32_t pid_proceso_a_finalizar = deserializar_finalizar_proceso(valores);
+			uint32_t pid_proceso_a_finalizar = deserializar_finalizar_proceso(valores_fin_proceso);
             //finalizar_proceso(pid_proceso_a_finalizar);
 			if(!existe_proceso_en_memoria(pid_proceso_a_finalizar)){
 				//Enviar rta ERROR:No existe
@@ -289,18 +280,17 @@ void memoria_atender_kernel(void* socket){
 			//usleep(cfg_memoria->RETARDO_RESPUESTA * 1000);
 			//enviar_respuesta_finalizar_proceso(pid_proceso_a_finalizar, fd_kernel);
 			log_info(logger_memoria, "enviada respuesta de FINALIZAR_PROCESO_RTA \n");
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_fin_proceso, free);
 			break;
 
 		case INICIAR_HILO:
 			log_info(logger_memoria, "Recibí INICIAR_HILO \n");
-			valores = recibir_paquete(fd_kernel);
-			if (valores == NULL) {
+			t_list* valores_ini_hilo = recibir_paquete(fd_kernel);
+			if (valores_ini_hilo == NULL) {
                 log_error(logger_memoria, "Error al recibir paquete");
                 break;
             }
-			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores);
+			t_m_crear_hilo* iniciar_hilo = deserializar_iniciar_hilo(valores_ini_hilo);
 			// if(existe_hilo_en_memoria(iniciar_hilo->pid,iniciar_hilo->tid)){
 			// 	//Enviar rta ERROR:Ya existe
 			// 	enviar_respuesta_iniciar_hilo(iniciar_hilo, fd_kernel,INICIAR_HILO_RTA_ERROR_YA_EXISTE);
@@ -316,21 +306,19 @@ void memoria_atender_kernel(void* socket){
 			// }
 			
 			log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTA \n");
-			free(iniciar_hilo->archivo_pseudocodigo);
 			free(iniciar_hilo);
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_ini_hilo, free);
 			break;
 
 		case FINALIZAR_HILO:
 			log_info(logger_memoria, "Recibí FINALIZAR_HILO \n");
-			valores = recibir_paquete(fd_kernel);
-			if (valores == NULL) {
+			t_list* valores_fin_hilo = recibir_paquete(fd_kernel);
+			if (valores_fin_hilo == NULL) {
                 log_error(logger_memoria, "Error al recibir paquete");
                 break;
             }
-			uint32_t pid_hilo = *(uint32_t*)list_get(valores, 0);
-			uint32_t tid_hilo = *(uint32_t*)list_get(valores, 1);
+			uint32_t pid_hilo = *(uint32_t*)list_get(valores_fin_hilo, 0);
+			uint32_t tid_hilo = *(uint32_t*)list_get(valores_fin_hilo, 1);
 
 			if(!existe_hilo_en_memoria(pid_hilo,tid_hilo)){
 				//Enviar rta ERROR:No existe
@@ -347,19 +335,18 @@ void memoria_atender_kernel(void* socket){
 
 			
 			log_info(logger_memoria, "enviada respuesta de FINALIZAR_HILO_RTA \n");
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_fin_hilo, free);
 			break;
 
 		case PEDIDO_MEMORY_DUMP:
 			log_info(logger_memoria, "Recibí PEDIDO_MEMORY_DUMP \n");
-			valores = recibir_paquete(fd_kernel);
-			if (valores == NULL) {
+			t_list* valores_ped_dump = recibir_paquete(fd_kernel);
+			if (valores_ped_dump == NULL) {
                 log_error(logger_memoria, "Error al recibir paquete");
                 break;
             }
-			uint32_t pid = *(uint32_t*)list_get(valores, 0);
-			uint32_t tid = *(uint32_t*)list_get(valores, 1);
+			uint32_t pid = *(uint32_t*)list_get(valores_ped_dump, 0);
+			uint32_t tid = *(uint32_t*)list_get(valores_ped_dump, 1);
 
 			log_info(logger_memoria, "## Memory Dump solicitado - (PID:TID) - (%d:%d)\n",pid,tid); 
 
@@ -377,7 +364,6 @@ void memoria_atender_kernel(void* socket){
 			char* contenido_leido = malloc(tamanio_proceso);
 			if (contenido_leido == NULL) {
                 log_warning(logger_memoria, "Error al asignar memoria para contenido_leido");
-                list_destroy_and_destroy_elements(valores, free);
                 break;
             }
 
@@ -407,7 +393,6 @@ void memoria_atender_kernel(void* socket){
 			t_peticion_dump_fs* peticion_fs = malloc(sizeof(t_peticion_dump_fs));
 			if (peticion_fs == NULL) {
                 free(contenido_leido);
-                list_destroy_and_destroy_elements(valores, free);
                 break;
             }
 			peticion_fs->tamanio_nombre_archivo = tamanio_nombre_archivo;
@@ -424,30 +409,24 @@ void memoria_atender_kernel(void* socket){
 			pthread_t hilo_dump_fs; 
     		pthread_create(&hilo_dump_fs, NULL, (void *)atender_dump_memory_fs, peticion_fs);
     		pthread_detach(hilo_dump_fs); //va el & o no? si lo pongo me tira un warning
-			list_destroy_and_destroy_elements(valores, free);
-            valores = NULL;
+			list_destroy_and_destroy_elements(valores_ped_dump, free);
 			break;
 
 		case -1:
 		
 			log_error(logger_memoria, "Kernel se desconecto. Terminando servidor.\n");
-			if (valores) {
-                list_destroy_and_destroy_elements(valores, free);
-            }
 			return EXIT_FAILURE;
 			break;
 
 		default:
 			log_warning(logger_memoria,"Operacion desconocida: %d",cod_op);
-			if (valores != NULL) {
-       		list_destroy_and_destroy_elements(valores, free);
-        	valores = NULL;
-    }
+
 			break;
 		}
-
-		free(socket);
+		log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTAa \n");
+		//free(socket);
 		//list_destroy_and_destroy_elements(valores,free);
+		log_info(logger_memoria, "enviada respuesta de INICIAR_HILO_RTAa \n");
     //  }
 }
 
