@@ -608,7 +608,7 @@ uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
         t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
 
         if (proceso_actual->pid == pid) {
-            return proceso_actual->limite;
+            return proceso_actual->limite - proceso_actual->base;
         }
     }
     return -1; 
