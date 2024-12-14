@@ -148,6 +148,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
                 if (tam_proceso <= tamanio_bloque_actual && !bitarray_test_bit(bitmap_particiones,i)) {
                     bloque_libre_encontrado = true;
                     printf("Elijo bloque %d\n", i);
+                    log_info(logger_memoria,"Elijo bloque %d para proceso con PID %d de tamaño %d\n", i,pid,tam_proceso);
 
                     pthread_mutex_lock(&mutex_pids_por_bloque);
                     bitarray_set_bit(bitmap_particiones, i);
@@ -201,6 +202,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
             }
             else {
                 printf("Elijo bloque %d\n", ultimo_bloque_best_fit);
+                log_info(logger_memoria,"Elijo bloque %d para proceso con PID %d de tamaño %d\n", ultimo_bloque_best_fit,pid,tam_proceso);
                 pthread_mutex_lock(&mutex_bitmap_particiones);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_best_fit);
                 pthread_mutex_unlock(&mutex_bitmap_particiones);
@@ -252,6 +254,7 @@ int crear_proceso_fijas(uint32_t tam_proceso, t_list* lista_de_particiones, uint
             }
             else {
                 printf("Elijo bloque %d\n", ultimo_bloque_worst_fit);
+                log_info(logger_memoria,"Elijo bloque %d para proceso con PID %d de tamaño %d\n", ultimo_bloque_worst_fit,pid,tam_proceso);
                 pthread_mutex_lock(&mutex_bitmap_particiones);
                 bitarray_set_bit(bitmap_particiones, ultimo_bloque_worst_fit);
                 pthread_mutex_unlock(&mutex_bitmap_particiones);

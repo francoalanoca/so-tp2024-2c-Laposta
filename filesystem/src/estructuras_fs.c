@@ -200,7 +200,8 @@ void persistir_metadata(t_dumped *dumped, int primer_bloque ) {
 
     config_destroy(file_metadata);
     fclose(file_metadata_vacio);
-    
+    free(tamanio_archivo);
+    free(primer_bloque_char);
 
 }
 

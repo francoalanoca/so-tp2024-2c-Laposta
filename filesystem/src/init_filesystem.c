@@ -55,7 +55,7 @@ int cargar_configuracion(char *path) {
     
 
     cfg_file_system-> LOG_LEVEL = strdup(config_get_string_value(file_cfg_file_system, "LOG_LEVEL"));
-    log_info(logger_file_system, "LOG LEVEL cargado correctamente: %d", cfg_file_system->LOG_LEVEL);
+    log_info(logger_file_system, "LOG LEVEL cargado correctamente: %s", cfg_file_system->LOG_LEVEL);
 
 
     log_info(logger_file_system, "Archivo de configuracion cargado correctamente");
@@ -75,7 +75,7 @@ int init(char *path_config) {
         return false;
     }
     //inicializo el archivo de configuracion
-    file_cfg_file_system = iniciar_config(path_config,logger_file_system);
+    cargar_configuracion(path_config);
 
     return checkProperties(path_config);
 }

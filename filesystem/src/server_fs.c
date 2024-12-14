@@ -4,7 +4,7 @@ char* puerto_escucha;
 char * puerto_interrupt;
 int fd_mod2 = -1;
 int fd_mod3 = -1;
-//pcb *pcb_actual;
+
 
 void* crear_servidor_fs(char* ip_file_system){
       
@@ -40,16 +40,14 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
     if (cliente_socket != -1) {
         pthread_t atenderProcesoNuevo;
          t_procesar_conexion_args *args = malloc(sizeof(t_procesar_conexion_args));
-        args->log = logger_file_system;
+       
         args->fd = cliente_socket;
         args->server_name = "FILE_SYSTEM";
-            // Agregar el socket a la lista global
-        int* socket_ptr = malloc(sizeof(int));
-        *socket_ptr = cliente_socket;
-      
+        
       
         pthread_create(&atenderProcesoNuevo, NULL,(void*)procesar_conexion,(void*)args);
         pthread_detach(atenderProcesoNuevo);
+  
         return 1;
     }
     return 0;
@@ -57,8 +55,7 @@ int server_escuchar_fs(int server_socket, int *global_socket) {
 
 void procesar_conexion(void *v_args){
      t_procesar_conexion_args *args = (t_procesar_conexion_args *) v_args;
-    t_log *logger = malloc(sizeof(t_log));
-    logger = args->log;
+   
     int cliente_socket = args->fd;
     char *server_name = args->server_name;
     free(args);
@@ -68,7 +65,7 @@ void procesar_conexion(void *v_args){
     while (cliente_socket != -1) {
    
         if (recv(cliente_socket, &cop, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
-            log_info(logger, "DISCONNECT!");
+            log_info(logger_file_system, "DISCONNECT!");
 
             break;
         }
@@ -86,8 +83,9 @@ void procesar_conexion(void *v_args){
                 pthread_mutex_lock(&mtx_file_system); // cambiar a clase mutex
                 dumpear(dumped, cliente_socket);
                 pthread_mutex_unlock(&mtx_file_system);
-                //liberar_t_dumped(dumped);
-                //list_destroy_and_destroy_elements(lista_paquete, free);
+              
+                list_destroy_and_destroy_elements(lista_paquete,free);
+                free(dumped);
                 break;  
             }
             default:

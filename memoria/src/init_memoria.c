@@ -441,8 +441,7 @@ void eliminar_proceso_de_lista(uint32_t pid){
 
 void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid){
     uint32_t indice_proceso_hilo = buscar_indice_pcb_por_pid(lista_procesos,pid);
-	t_miniPCB* proceso_hilo_a_eliminar = malloc(sizeof(t_miniPCB));
-    proceso_hilo_a_eliminar = list_get(lista_procesos,indice_proceso_hilo);
+	t_miniPCB* proceso_hilo_a_eliminar = list_get(lista_procesos,indice_proceso_hilo);
     uint32_t indice_hilo_a_eliminar = buscar_indice_hilos_por_tid(proceso_hilo_a_eliminar->hilos,tid);
 	list_remove_and_destroy_element(proceso_hilo_a_eliminar->hilos,indice_hilo_a_eliminar,(void*)liberar_hilo);
     printf("Se elimina tid %d correspondiente a pid %d\n",tid,pid);
@@ -609,7 +608,7 @@ uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
         t_miniPCB* proceso_actual = list_get(lista_miniPCBs, i);
 
         if (proceso_actual->pid == pid) {
-            return proceso_actual->limite;
+            return proceso_actual->limite - proceso_actual->base;
         }
     }
     return -1; 
@@ -726,8 +725,7 @@ bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
     }
 
     // Calculamos la posición en la memoria a partir de la dirección física
-    uint8_t* posicion_memoria = malloc(sizeof(uint8_t*));
-    posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
+    uint8_t* posicion_memoria = (uint8_t*)memoria_usuario + direccion_fisica;
     log_info(logger_memoria, "WRITE MEM: posicion_memoria: %p\n", (void*)posicion_memoria);
 
     // Escribimos la cadena en la posición calculada
