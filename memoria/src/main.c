@@ -10,23 +10,23 @@ int main(int argc, char* argv[]) {
     if (!init(path_config) || !cargar_configuracion(path_config)) {
 
         cerrar_programa();
-        printf("No se pudo inicializar configuracion\n");
+        //printf("No se pudo inicializar configuracion\n");
         return EXIT_FAILURE;
     }
     //inicializar_configuraion(path_config);
-    printf("Se iniciaron correctamente las configuraciones\n");
+    //printf("Se iniciaron correctamente las configuraciones\n");
 
     //-------------------Variables---------------------------
     if (!inicializar_memoria()) {
         cerrar_programa();
-        printf("No se pudo inicializar Memoria\n");
+        //printf("No se pudo inicializar Memoria\n");
         return EXIT_FAILURE;
     }
-    log_info(logger_memoria, "Se inicio correctamente la Memoria");
+    log_trace(logger_memoria, "Se inicio correctamente la Memoria");
 
     //-------------------Servidores------------------------
     iniciar_servidores();
-    log_info(logger_memoria, "Se inicio correctamente los servidores");
+    log_trace(logger_memoria, "Se inicio correctamente los servidores");
 
     //saludar("memoria");
     //void cerrar_programa();

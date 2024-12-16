@@ -16,9 +16,9 @@ int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
 //Funcion que crea las estructuras del proceso
 int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
-    printf("ENTRA CREAR PROCESO DINAMICO\n");
+    log_trace(logger_memoria,"ENTRA CREAR PROCESO DINAMICO\n");
     //log_info(logger_memoria, "Creacion del proceso dinamico PID - %i \n", proceso_pid);
-    log_info(logger_memoria, "Iniciando estructura dinamica \n");
+    log_trace(logger_memoria, "Iniciando estructura dinamica \n");
     
     //t_particion_dinamica* particion_proceso = malloc(sizeof(t_particion_dinamica));
     int resutado_crear_proceso = asignar_memoria(proceso_pid, tamanio_proceso);
@@ -37,15 +37,15 @@ int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
     // Selecciona la partición según el algoritmo
     if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "FIRST") == 0) {
         particion_resultante = buscar_first_fit(tamanio_proceso);
-        log_info(logger_memoria, "Se eligio la primer particion posible \n");
+        log_trace(logger_memoria, "Se eligio la primer particion posible \n");
 
     } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "BEST") == 0) {
         particion_resultante = buscar_best_fit(tamanio_proceso);
-        log_info(logger_memoria, "Se eligio la mejor particion posible \n");
+        log_trace(logger_memoria, "Se eligio la mejor particion posible \n");
 
     } else if (strcmp(cfg_memoria->ALGORITMO_BUSQUEDA, "WORST") == 0) {
         particion_resultante = buscar_worst_fit(tamanio_proceso);
-        log_info(logger_memoria, "Se eligio la peor particion posible \n");
+        log_trace(logger_memoria, "Se eligio la peor particion posible \n");
     }
 
 
@@ -171,11 +171,11 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
         pthread_mutex_unlock(&mutex_lista_miniPCBs);
 
         //list_add(lista_particiones_dinamicas, particion); //VER
-        log_info(logger_memoria, "Asiganada una particion exacta al PID - %d \n", particion->pid);
+        log_trace(logger_memoria, "Asiganada una particion exacta al PID - %d \n", particion->pid);
         //log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
     }else{
-        log_info(logger_memoria, "La particion es grande para el proceso \n");
-    log_info(logger_memoria, "Ajustando el tamaño a la particion");
+        log_trace(logger_memoria, "La particion es grande para el proceso \n");
+    log_trace(logger_memoria, "Ajustando el tamaño a la particion");
 
     //Creamos una nueva partición para la parte libre
     t_particion_dinamica* nueva_particion = malloc(sizeof(t_particion_dinamica));
@@ -185,8 +185,8 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
     nueva_particion->pid = -1;                                           //No tiene proceso asignado (ver si va 0)
     nueva_particion->tid = -1;                                           //No tiene hilo asignado (ver si va 0)
     //nueva_particion->siguiente = particion->siguiente;
-    log_info(logger_memoria, "Creada una particion libre con el sobrante \n");
-    log_info(logger_memoria, "Tamanio de la nueva particion libre: %d", nueva_particion->tamanio);
+    log_trace(logger_memoria, "Creada una particion libre con el sobrante \n");
+    log_trace(logger_memoria, "Tamanio de la nueva particion libre: %d", nueva_particion->tamanio);
 
     t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
     proceso->pid = particion->pid;
@@ -221,7 +221,7 @@ char* escribir_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, char* va
     
     //Se espera que tamanio_a_escribir sea 4 bytes.
     if (tamanio_a_escribir != 4){
-        log_info(logger_memoria, "ERROR: Se espera escribir 4 bytes.");
+        log_error(logger_memoria, "ERROR: Se espera escribir 4 bytes.");
     }
 
     //Reservar espacio para la respuesta
@@ -231,14 +231,14 @@ char* escribir_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, char* va
     t_particion_dinamica* particion = busco_particion_dinamica_por_PID(proceso_pid);
 
     if (particion == NULL){
-        log_info(logger_memoria, "ERROR: Partición no encontrada");
+        log_error(logger_memoria, "ERROR: Partición no encontrada");
     }
 
     //Verificar que hay suficiente espacio desde la dirección física en la partición.
     uint32_t espacio_disponible = particion->inicio + particion->tamanio - direccion_fisica;
 
     if (espacio_disponible < tamanio_a_escribir){
-        log_info(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
+        log_error(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
     }
 
     //Copiar los 4 bytes del valor en la memoria.
@@ -258,7 +258,7 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
     
     //Se espera que tamanio_a_leer sea 4 bytes.
     if (tamanio_a_leer != 4){
-        log_info(logger_memoria, "ERROR: Se espera leer 4 bytes.");
+        log_error(logger_memoria, "ERROR: Se espera leer 4 bytes.");
     }
 
     //Reservar espacio para los 4 bytes que se van a leer.
@@ -270,7 +270,7 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
     if (particion == NULL){
 
         free(leido);
-        log_info(logger_memoria, "ERROR: Partición no encontrada");
+        log_error(logger_memoria, "ERROR: Partición no encontrada");
     }
 
     //Verificar que hay suficiente espacio desde la dirección física en la partición.
@@ -278,7 +278,7 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
 
     if (espacio_disponible < tamanio_a_leer){
         free(leido);
-        log_info(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
+        log_error(logger_memoria, "ERROR: Espacio insuficiente en la partición.");
     }
 
     //Copiar los 4 bytes de la memoria a la variable leída.
@@ -459,7 +459,7 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
 
 
     log_trace(logger_memoria, "Log Obligatorio: \n");
-    log_info(logger_memoria, "Destruccion de particion: \n");
+    log_trace(logger_memoria, "Destruccion de particion: \n");
    // log_info(logger_memoria, "## Proceso Destruido - PID: %d Tamanio: %d", proceso_pid, particion->tamanio);
 
     particion->ocupado = false;

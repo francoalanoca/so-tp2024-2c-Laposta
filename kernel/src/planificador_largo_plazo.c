@@ -23,61 +23,51 @@ void inicializar_hilos_largo_plazo(){
 
 }
 
-void* planificar_procesos() {
+void* planificar_procesos(){
+    
     while (1) {
-        // Esperamos que un proceso sea agregado a la lista NEW
-        sem_wait(&(semaforos->sem_procesos_new));
 
-        t_pcb* un_pcb = NULL;
-        int indice_pcb_elegido = -1;
+        sem_wait(&(semaforos->sem_procesos_new));//se ingreso un proceso
+      
 
-        // Bloqueamos acceso a la lista NEW para buscar un PCB elegible
         sem_wait(&(semaforos->mutex_lista_new));
+        t_pcb* un_pcb=NULL;
+        un_pcb=list_get(lista_new,0);
+        sem_post(&(semaforos->mutex_lista_new));
+                    // chequeamos si el pcb no es null
 
-        for (int i = 0; i < list_size(lista_new); i++) {
-            t_pcb* pcb_actual = list_get(lista_new, i);
-            if (pcb_actual != NULL) {
-                int socket_memoria = conectar_a_memoria();
-                enviar_solicitud_espacio_a_memoria(pcb_actual, socket_memoria);
-                int respuesta = recibir_resp_de_memoria_a_solicitud(socket_memoria);
-                close(socket_memoria);
 
-                if (respuesta == INICIAR_PROCESO_RTA_OK) {
-                    un_pcb = pcb_actual; // Encontramos un PCB que puede ser iniciado
-                    indice_pcb_elegido = i;
-                    break; // Salimos del bucle
-                } else {
-                    log_info(logger_kernel, 
-                             "El PCB con PID:%d no puede iniciar, esperando espacio en memoria.", 
-                             pcb_actual->pid);
-                }
-            }
-        }
-
-        sem_post(&(semaforos->mutex_lista_new)); // Liberamos el mutex de la lista NEW
-
-        // Si no se encontró un proceso elegible, esperamos la liberación de memoria
         if (un_pcb == NULL) {
-            log_info(logger_kernel, 
-                     "No se encontró ningún proceso elegible en la lista NEW. Esperando recursos.");
-            continue; // Vuelve al inicio del bucle, esperando un nuevo semáforo
+            
+            continue;
+        }else{
+            int socket_memoria=conectar_a_memoria();
+            enviar_solicitud_espacio_a_memoria(un_pcb,socket_memoria);
+          
+            int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
+            close(socket_memoria);
+            if(respuesta==INICIAR_PROCESO_RTA_OK){
+                log_info(logger_kernel,"recibi ok para crear proceso");
+               t_tcb* tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
+
+                // pasar_new_a_ready();  TODO: no se puede usar por que en NEW hay procesos y en READY hay hilos
+                //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
+                remover_de_lista(lista_new,0,&(semaforos->mutex_lista_new));
+                agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
+                log_info(logger_kernel, "nuevo proceso con pid %d y tid %d",tcb->pid,tcb->tid);
+                t_tcb* prueba_tcb=(t_tcb*)list_get(lista_ready,0);
+
+                //Le avisamos a planif_corto_plazo que tiene un thread en ready
+                sem_post(&(semaforos->contador_threads_en_ready));
+            }else{
+                log_info(logger_kernel, "No hay espacio en memoria para proc PCB:%d, se esperara liberacion por parte de otro proceso \n", un_pcb->pid);
+                log_info(logger_kernel, "Codigo de op recibido: %d", respuesta);
+                //el proceso continua en new hasta que se elimine otro proceso(EXIT)
+            }
+                 
         }
-
-        // Crear el thread principal del proceso y mover el TCB a READY
-        log_info(logger_kernel, "Recibí OK para crear el proceso con PID:%d", un_pcb->pid);
-        t_tcb* tcb = thread_create(un_pcb->ruta_pseudocodigo, un_pcb->prioridad_th_main, un_pcb->pid);
-
-        // Removemos el PCB de la lista NEW y agregamos el TCB a la lista READY
-        remover_de_lista(lista_new, indice_pcb_elegido, &(semaforos->mutex_lista_new));
-        agregar_a_lista(tcb, lista_ready, &(semaforos->mutex_lista_ready));
-
-        log_info(logger_kernel, "Nuevo proceso con PID:%d y TID:%d movido a READY.", tcb->pid, tcb->tid);
-
-        // Notificamos al planificador de corto plazo que hay un thread en READY
-        sem_post(&(semaforos->contador_threads_en_ready));
     }
-
-    return NULL;
+    return NULL; 
 }
 
 
