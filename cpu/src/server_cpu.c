@@ -211,40 +211,34 @@ void atender_memoria(int *socket_mr) {
         }
         switch (cop) {
 
-            case SOLICITUD_INSTRUCCION_RTA:
-                
-                
-                log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
-                    
-                t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
-                    log_info(logger_cpu, "Paquete recibido");
-                instr_t* instruccion_recibida = instruccion_deserializar(lista_paquete_instruccion_rec);
-                    log_info(logger_cpu, "EL codigo de instrucción es %d ",instruccion_recibida->id);
-                if(instruccion_recibida != NULL){
-                    prox_inst = instruccion_recibida;
-                    log_info(logger_cpu, "EL codigo de instrucción es %d ",prox_inst->id);
-                    //SEMAFORO QUE ACTIVA EL SEGUIMIENTO DEL FLUJO EN FETCH
-                    list_destroy_and_destroy_elements(lista_paquete_instruccion_rec,free);
-                    /*free(instruccion_recibida->param1);
-                    free(instruccion_recibida->param2);
-                    free(instruccion_recibida->param3);
-                    free(instruccion_recibida->param4);
-                    free(instruccion_recibida->param5);
-                    free(instruccion_recibida);*/
-                    log_info(logger_cpu, "POST SEMAFORO");
-                    sem_post(&sem_valor_instruccion);
-                }
-                else{
-                    log_info(logger_cpu, "ERROR AL  RECIBIR INSTRUCCION DE MEMORIA");
-                    list_destroy_and_destroy_elements(lista_paquete_instruccion_rec,free);
-                    /*free(instruccion_recibida->param1);
-                    free(instruccion_recibida->param2);
-                    free(instruccion_recibida->param3);
-                    free(instruccion_recibida->param4);
-                    free(instruccion_recibida->param5);
-                    free(instruccion_recibida);*/
-                }
-                break;
+case SOLICITUD_INSTRUCCION_RTA:
+    log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
+
+    t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
+    log_info(logger_cpu, "Paquete recibido");
+
+    instr_t* instruccion_recibida = instruccion_deserializar(lista_paquete_instruccion_rec);
+
+    if (instruccion_recibida != NULL) {
+        // Liberar prox_inst anterior antes de asignar uno nuevo
+        if (prox_inst != NULL) {
+            free_instr(prox_inst);
+            prox_inst = NULL;
+        }
+        prox_inst = instruccion_recibida;
+        log_info(logger_cpu, "EL codigo de instrucción es %d ",prox_inst->id);
+
+        // Liberar lista después de su uso
+        list_destroy_and_destroy_elements(lista_paquete_instruccion_rec, free);
+
+        // Semáforo para el flujo del FETCH
+        sem_post(&sem_valor_instruccion);
+    } else {
+        log_error(logger_cpu, "Error al deserializar la instrucción");
+        list_destroy_and_destroy_elements(lista_paquete_instruccion_rec, free);
+    }
+    break;
+
             case SOLICITUD_CONTEXTO_RTA: 
                 t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
@@ -273,6 +267,7 @@ void atender_memoria(int *socket_mr) {
                 log_info (logger_cpu, "Valor obtenido de memoria: %d",valor_registro_obtenido);
                 sem_post(&sem_valor_registro_recibido);
                 //sem_post(&sem_esperando_read_write_mem);
+                list_destroy_and_destroy_elements(lista_paquete_memoria_leer_ok,free);
                 
             break;
             case READ_MEMORIA_RTA_ERROR: 
@@ -413,29 +408,35 @@ void armar_instr(instr_t *instr, const char *input) {
     // Copia la cadena de entrada para no modificar el original
     char *input_copy = strdup(input);
     char *token = strtok(input_copy, " ");
+
     if (token == NULL) {
         free(input_copy);
         return;
     }
-      log_info(logger_cpu, "el token es %s", token );
-    // Primer token es el id
+
+    log_info(logger_cpu, "El primer token es: %s", token);
+
+    // Inicialización completa de la estructura
+    instr->id = -1;
+    instr->idLength = 0;
+    instr->param1 = NULL;
+    instr->param1Length = 0;
+    instr->param2 = NULL;
+    instr->param2Length = 0;
+    instr->param3 = NULL;
+    instr->param3Length = 0;
+    instr->param4 = NULL; 
+    instr->param4Length = 0;
+    instr->param5 = NULL;
+    instr->param5Length = 0;
+
+    // Asignamos el ID de la instrucción
     instr->id = str_to_tipo_instruccion(token);
     instr->idLength = strlen(token);
 
-    // Inicializo estructura
-    instr->param1Length = 0;
-    instr->param1 = NULL;
-    instr->param2Length = 0;
-    instr->param2 = NULL;
-    instr->param3Length = 0;
-    instr->param3 = NULL;
-    instr->param4Length = 0;
-    instr->param4 = NULL;
-    instr->param5Length = 0;
-    instr->param5 = NULL;
-
     int param_count = 0;
     while ((token = strtok(NULL, " ")) != NULL) {
+        log_info(logger_cpu, "Parámetro %d: %s", param_count + 1, token);
         switch (param_count) {
             case 0:
                 instr->param1 = strdup(token);
@@ -449,7 +450,16 @@ void armar_instr(instr_t *instr, const char *input) {
                 instr->param3 = strdup(token);
                 instr->param3Length = strlen(token);
                 break;
+            case 3:
+                instr->param4 = strdup(token);
+                instr->param4Length = strlen(token);
+                break;
+            case 4:
+                instr->param5 = strdup(token);
+                instr->param5Length = strlen(token);
+                break;
             default:
+                log_warning(logger_cpu, "Parámetro extra ignorado: %s", token);
                 break;
         }
         param_count++;
@@ -458,13 +468,20 @@ void armar_instr(instr_t *instr, const char *input) {
     free(input_copy);
 }
 
+
+
 void free_instr(instr_t *instr) {
-    
-    if (instr->param1 != NULL) free(instr->param1);
-    if (instr->param2 != NULL) free(instr->param2);
-    if (instr->param3 != NULL) free(instr->param3);
-    if (instr->param4 != NULL) free(instr->param4);
-    if (instr->param5 != NULL) free(instr->param5);
+    if (instr == NULL) return;
+
+    log_info(logger_cpu, "Liberando memoria de instr_t...");
+    if (instr->param1) { free(instr->param1); instr->param1 = NULL; }
+    if (instr->param2) { free(instr->param2); instr->param2 = NULL; }
+    if (instr->param3) { free(instr->param3); instr->param3 = NULL; }
+    if (instr->param4) { free(instr->param4); instr->param4 = NULL; }
+    if (instr->param5) { free(instr->param5); instr->param5 = NULL; }
+
+    free(instr);
+    log_info(logger_cpu, "instr_t liberado correctamente.");
 }
 
 void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    

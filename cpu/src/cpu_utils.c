@@ -1008,42 +1008,47 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     }
     pthread_mutex_unlock(&mutex_interrupcion_kernel);
 
-    free(inst->param1);
-    free(inst->param2);
-    free(inst->param3);
-    free(inst->param4);
-    free(inst->param5);
-    free(inst);
+   // free(inst->param1);
+   // free(inst->param2);
+   // free(inst->param3);
+   // free(inst->param4);
+   // free(inst->param5);
+    //free(inst);
     log_info(logger_cpu, "Termino ciclo de instrucciones");   
     return false;//continuara con el siguiente ciclo
 }
 
 tipo_instruccion str_to_tipo_instruccion(const char *str) {
-    trim_newline(str);
+    char *mutable_str = strdup(str);  // Creamos una copia mutable
+    trim_newline(mutable_str);
+
     tipo_instruccion instruccion_a_devolver = -1;
-    if (strcmp(str, "SET") == 0) instruccion_a_devolver = SET;
-    else if (strcmp(str, "READ_MEM") == 0) instruccion_a_devolver = READ_MEM;
-    else if (strcmp(str, "WRITE_MEM") == 0) instruccion_a_devolver = WRITE_MEM;
-    else if (strcmp(str, "SUM") == 0) instruccion_a_devolver = SUM;
-    else if (strcmp(str, "SUB") == 0) instruccion_a_devolver = SUB;
-    else if (strcmp(str, "JNZ") == 0) instruccion_a_devolver = JNZ;
-    else if (strcmp(str, "LOG") == 0) instruccion_a_devolver = LOG;
-    else if (strcmp(str, "DUMP_MEMORY") == 0) instruccion_a_devolver = DUMP_MEMORY;
-    else if (strcmp(str, "IO") == 0) instruccion_a_devolver = IO;
-    else if (strcmp(str, "PROCESS_CREATE") == 0) instruccion_a_devolver = PROCESS_CREATE;
-    else if (strcmp(str, "THREAD_CREATE") == 0) instruccion_a_devolver = THREAD_CREATE;
-    else if (strcmp(str, "THREAD_JOIN") == 0) instruccion_a_devolver = THREAD_JOIN;
-    else if (strcmp(str, "THREAD_CANCEL") == 0) instruccion_a_devolver = THREAD_CANCEL;
-    else if (strcmp(str, "MUTEX_CREATE") == 0) instruccion_a_devolver = MUTEX_CREATE;
-    else if (strcmp(str, "MUTEX_LOCK") == 0) instruccion_a_devolver = MUTEX_LOCK;
-    else if (strcmp(str, "MUTEX_UNLOCK") == 0) instruccion_a_devolver = MUTEX_UNLOCK;
-    else if (strcmp(str, "THREAD_EXIT") == 0) instruccion_a_devolver = THREAD_EXIT;
-    else if (strcmp(str, "PROCESS_EXIT") == 0) instruccion_a_devolver = PROCESS_EXIT;
-    else log_warning(logger_cpu, "Entro en el default de str_to_tipo_instruccion ");
-    printf("imprimo instruccion_a_devolver: %d \n", instruccion_a_devolver);
- 
+    if (strcmp(mutable_str, "SET") == 0) instruccion_a_devolver = SET;
+    else if (strcmp(mutable_str, "READ_MEM") == 0) instruccion_a_devolver = READ_MEM;
+    else if (strcmp(mutable_str, "WRITE_MEM") == 0) instruccion_a_devolver = WRITE_MEM;
+    else if (strcmp(mutable_str, "SUM") == 0) instruccion_a_devolver = SUM;
+    else if (strcmp(mutable_str, "SUB") == 0) instruccion_a_devolver = SUB;
+    else if (strcmp(mutable_str, "JNZ") == 0) instruccion_a_devolver = JNZ;
+    else if (strcmp(mutable_str, "LOG") == 0) instruccion_a_devolver = LOG;
+    else if (strcmp(mutable_str, "DUMP_MEMORY") == 0) instruccion_a_devolver = DUMP_MEMORY;
+    else if (strcmp(mutable_str, "IO") == 0) instruccion_a_devolver = IO;
+    else if (strcmp(mutable_str, "PROCESS_CREATE") == 0) instruccion_a_devolver = PROCESS_CREATE;
+    else if (strcmp(mutable_str, "THREAD_CREATE") == 0) instruccion_a_devolver = THREAD_CREATE;
+    else if (strcmp(mutable_str, "THREAD_JOIN") == 0) instruccion_a_devolver = THREAD_JOIN;
+    else if (strcmp(mutable_str, "THREAD_CANCEL") == 0) instruccion_a_devolver = THREAD_CANCEL;
+    else if (strcmp(mutable_str, "MUTEX_CREATE") == 0) instruccion_a_devolver = MUTEX_CREATE;
+    else if (strcmp(mutable_str, "MUTEX_LOCK") == 0) instruccion_a_devolver = MUTEX_LOCK;
+    else if (strcmp(mutable_str, "MUTEX_UNLOCK") == 0) instruccion_a_devolver = MUTEX_UNLOCK;
+    else if (strcmp(mutable_str, "THREAD_EXIT") == 0) instruccion_a_devolver = THREAD_EXIT;
+    else if (strcmp(mutable_str, "PROCESS_EXIT") == 0) instruccion_a_devolver = PROCESS_EXIT;
+    else log_warning(logger_cpu, "Instrucción desconocida: %s", str);
+
+    log_info(logger_cpu, "Código de instrucción devuelto: %d", instruccion_a_devolver);
+
+    free(mutable_str);
     return instruccion_a_devolver;
 }
+
 
 void trim_newline(char *str) {
     char *end = str + strlen(str) - 1;
