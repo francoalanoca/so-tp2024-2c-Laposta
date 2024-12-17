@@ -954,9 +954,9 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
     
     log_info(logger_cpu, "Entro al ciclo");
 
-    instr_t *inst = malloc(sizeof(instr_t));
+    //instr_t *inst = malloc(sizeof(instr_t));
     log_info(logger_cpu, "Voy a entrar a fetch");
-    inst = fetch(conexion_mem,proceso); 
+    instr_t *inst = fetch(conexion_mem,proceso); 
     tipo_instruccion tipo_inst;
     log_info(logger_cpu, "Voy a entrar a decode");
     

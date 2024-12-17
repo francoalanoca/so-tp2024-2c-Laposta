@@ -241,6 +241,7 @@ void atender_memoria(int *socket_mr) {
                 t_list* lista_paquete_contexto = recibir_paquete(socket_memoria_server);
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
                 deserializar_contexto_(proceso_actual,lista_paquete_contexto);
+                list_destroy_and_destroy_elements(lista_paquete_contexto, free);
                 sem_post(&sem_valor_base_particion);
             break;
             case WRITE_MEMORIA_RTA_OK: 
