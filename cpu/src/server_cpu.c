@@ -98,15 +98,20 @@ void procesar_conexion_dispatch(void *v_args){
                 interrupcion_kernel=false;
                 respuesta_syscall=-1;
                 fin_ciclo=false;
-                proceso_actual=NULL;
+                //proceso_actual=NULL;
+                 if (proceso_actual != NULL) {
+                free(proceso_actual);
+                 proceso_actual = NULL;
+                }
                 pthread_mutex_unlock(&mutex_interrupcion_kernel);  
 
                 pthread_mutex_lock(&mutex_proceso_actual);//asigno proceso nuevo para ejecutar
+               
                 proceso_actual = proceso;           
                 solicitar_contexto_a_memoria(proceso,socket_memoria);
                 sem_wait(&sem_valor_base_particion);
                 pthread_mutex_unlock(&mutex_proceso_actual);
-
+                list_destroy_and_destroy_elements(lista_paquete_proceso_ejecutar,free);
                 sem_post(&semaforo_binario_iniciar_ciclo);
                 //list_destroy(lista_paquete_proceso_ejecutar); //guarda con esto
                 //free(proceso);
@@ -158,6 +163,7 @@ void procesar_conexion_interrupt(void *v_args){
                 //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
                // pthread_mutex_unlock(&mutex_proceso_actual);
                 interrupcion_kernel=true;           
+                list_destroy_and_destroy_elements(params_fin_q,free);
                 pthread_mutex_unlock(&mutex_interrupcion_kernel);  
                 break;
 
@@ -170,6 +176,8 @@ void procesar_conexion_interrupt(void *v_args){
                 respuesta_syscall=*((int*)list_get(params_syscall,0));
 
                 sem_post(&semaforo_respuesta_syscall);
+
+                list_destroy_and_destroy_elements(params_syscall,free);
                 
                 break;
             }
@@ -247,6 +255,7 @@ void atender_memoria(int *socket_mr) {
             case WRITE_MEMORIA_RTA_OK: 
                 t_list* lista_paquete_memoria_ok = recibir_paquete(socket_memoria_server);
                 //proceso_actual = malloc(sizeof(t_proceso)); el malloc deberia estar hecho cuand llega PROCESO_EJECUTAR
+                list_destroy_and_destroy_elements(lista_paquete_memoria_ok,free);
                 sem_post(&sem_esperando_read_write_mem);
                 
             break;
@@ -279,7 +288,7 @@ void atender_memoria(int *socket_mr) {
                 int pid_v= *(uint32_t*)list_get(lista_paquete_ctx_rta,0);
                 int tid_v = *(uint32_t*)list_get(lista_paquete_ctx_rta,1);
                 sem_post(&semaforo_sincro_contexto_syscall);
-                list_destroy(lista_paquete_ctx_rta);
+                list_destroy_and_destroy_elements(lista_paquete_ctx_rta,free);
             break;
              case DEVOLUCION_CONTEXTO_RTA_ERROR:
                 log_info(logger_cpu,"error actualizando el contexto en memoria");

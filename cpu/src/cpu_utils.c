@@ -195,7 +195,10 @@ void enviar_fin_quantum_a_kernel(    t_proceso *proceso,int socket){
     log_warning(logger_cpu, "TIEMPO DE QUANTUM TERMINADO - PID: %d, TID: %d", proceso->pid, proceso->tid);
     eliminar_paquete(paquete_fin_quantum);
     pthread_mutex_lock(&mutex_proceso_actual);
-    proceso_actual= NULL; 
+    if (proceso_actual != NULL) {
+                free(proceso_actual);
+                 proceso_actual = NULL;
+                } 
     log_warning(logger_cpu, "proceso desalojado");
     
     pthread_mutex_unlock(&mutex_proceso_actual);
@@ -975,7 +978,10 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         log_warning(logger_cpu, "EL PROCESO ACTUAL desalojado por syscall, esperando otro...");
        //free(proceso_actual); este free pone en null tambien al proceso pasado por parametro a esta funcion
         pthread_mutex_lock(&mutex_proceso_actual);
-        proceso_actual=NULL;
+        if (proceso_actual != NULL) {
+                free(proceso_actual);
+                 proceso_actual = NULL;
+                }
         pthread_mutex_unlock(&mutex_proceso_actual);
         pthread_mutex_lock(&mutex_interrupcion_kernel);
         interrupcion_kernel = false;
