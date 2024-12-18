@@ -18,9 +18,6 @@ t_m_crear_proceso* deserializar_iniciar_proceso(t_list* lista_paquete) {
     crear_proceso->tamanio_proceso = *((uint32_t*) list_get(lista_paquete, 1));
     log_trace(logger_memoria,"Tamanio recibido: %d \n", crear_proceso->tamanio_proceso);
 
-    // Deserializar el archivo de pseudocódigo (es un puntero a char)
-    // crear_proceso->archivo_pseudocodigo = (char*) list_get(lista_paquete, 2);
-    // log_trace(logger_memoria,"Nombre del archivo: %s \n", crear_proceso->archivo_pseudocodigo);
 
     return crear_proceso;
 }
@@ -187,51 +184,6 @@ void deserializar_contexto(t_m_contexto* contexto,t_list*  lista_paquete ){
 
 
 
-/*t_m_contexto* deserializar_contexto(t_list*  lista_paquete ){
-
-    t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
-    
-    contexto->pid = *(uint32_t*)list_get(lista_paquete, 0);
-    log_trace(logger_memoria,"Pid recibido: %d \n", contexto->pid);
-    
-    contexto->tid = *(uint32_t*)list_get(lista_paquete, 1);
-    log_trace(logger_memoria,"Tid recibido: %d \n", contexto->tid);
-
-    contexto->registros.PC = *(uint32_t*)list_get(lista_paquete, 2);
-    log_trace(logger_memoria,"Registro PC recibido: %d \n", contexto->registros.PC);
-
-    contexto->registros.AX = *(uint32_t*)list_get(lista_paquete, 3);
-    log_trace(logger_memoria,"Registro AX recibido: %d \n", contexto->registros.AX);
-
-    contexto->registros.BX = *(uint32_t*)list_get(lista_paquete, 4);
-    log_trace(logger_memoria,"Registro BX recibido: %d \n", contexto->registros.BX);
-
-    contexto->registros.CX = *(uint32_t*)list_get(lista_paquete, 5);
-    log_trace(logger_memoria,"Registro CX recibido: %d \n", contexto->registros.CX);
-
-    contexto->registros.DX = *(uint32_t*)list_get(lista_paquete, 6);
-    log_trace(logger_memoria,"Registro DX recibido: %d \n", contexto->registros.DX);
-
-    contexto->registros.EX = *(uint32_t*)list_get(lista_paquete, 7);
-    log_trace(logger_memoria,"Registro EX recibido: %d \n", contexto->registros.EX);
-
-    contexto->registros.FX = *(uint32_t*)list_get(lista_paquete, 8);
-    log_trace(logger_memoria,"Registro FX recibido: %d \n", contexto->registros.FX);
-
-    contexto->registros.GX = *(uint32_t*)list_get(lista_paquete, 9);
-    log_trace(logger_memoria,"Registro GX recibido: %d \n", contexto->registros.GX);
-
-    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 10);
-    log_trace(logger_memoria,"Registro HX recibido: %d \n", contexto->registros.HX);
-
-    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 11);
-    log_trace(logger_memoria,"Registro base recibido: %d \n", contexto->base);
-
-    contexto->registros.HX = *(uint32_t*)list_get(lista_paquete, 12);
-    log_trace(logger_memoria,"Registro limite recibido: %d \n", contexto->limite);
-
-    return contexto;
-}*/
 
 
 void enviar_respuesta_contexto(t_m_contexto* pcbproceso, int socket_cpu) {
@@ -319,14 +271,6 @@ void enviar_respuesta_read_memoria(uint32_t pid, uint32_t respuesta_leer, int so
         log_trace(logger_memoria,stderr, "Error: respuesta_leer es -1\n");
         return;
     }
-
-    // Asegurarse de que respuesta_leer está terminada en nulo
-    /*char* cadena = (char*) respuesta_leer;
-    size_t longitud = strlen(cadena);
-    if (cadena[longitud] != '\0') {
-        flog_trace(logger_memoria,stderr, "Error: la cadena no está correctamente terminada en nulo\n");
-        return;
-    }*/
 
 
     paquete_valor = crear_paquete(cod_ope);

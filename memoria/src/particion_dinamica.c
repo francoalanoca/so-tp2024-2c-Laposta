@@ -1,5 +1,8 @@
 #include "../include/particion_dinamica.h"
 
+
+//=================================== Funciones para la finalizacion de un proceso =============================
+
 int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
     int respuesta;
@@ -16,11 +19,10 @@ int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
 
 //Funcion que crea las estructuras del proceso
 int crear_proceso_dinamico(uint32_t proceso_pid, uint32_t tamanio_proceso){
+
     log_trace(logger_memoria,"ENTRA CREAR PROCESO DINAMICO\n");
-    //log_info(logger_memoria, "Creacion del proceso dinamico PID - %i \n", proceso_pid);
     log_trace(logger_memoria, "Iniciando estructura dinamica \n");
     
-    //t_particion_dinamica* particion_proceso = malloc(sizeof(t_particion_dinamica));
     int resutado_crear_proceso = asignar_memoria(proceso_pid, tamanio_proceso);
     
     return resutado_crear_proceso;
@@ -60,12 +62,11 @@ int asignar_memoria(uint32_t proceso_pid, uint32_t tamanio_proceso){
     // Divido la partición si es más grande que el tamaño del proceso
     dividir_particion(particion_resultante, tamanio_proceso);
 
-    //log_info(logger_memoria, "Creada particion \n");
-
     return INICIAR_PROCESO_RTA_OK;
 }
 
 
+//============================= Algoritmos de busqueda =================================
 
 //Funcion que busca la primer particion
 t_particion_dinamica *buscar_first_fit(uint32_t tamanio_proceso){
@@ -81,9 +82,6 @@ t_particion_dinamica *buscar_first_fit(uint32_t tamanio_proceso){
         if (!particion->ocupado && particion->tamanio >= tamanio_proceso) {
             return particion;
         }
-
-        //Actualizo la particion para poder avanzar
-        //particion = particion->siguiente;
     }
     return NULL;
 }
@@ -108,9 +106,6 @@ t_particion_dinamica *buscar_best_fit(uint32_t tamanio_proceso){
                 mejor_particion = particion;
             }
         }
-
-        //Actualizo la particion para poder avanzar
-        //particion = particion->siguiente;
     }
 
     //Retornamos la mejor o si no hay Null
@@ -139,9 +134,6 @@ t_particion_dinamica *buscar_worst_fit(uint32_t tamanio_proceso){
                 peor_particion = particion;
             }
         }
-
-        //Actualizo la particion para poder avanzar
-        //particion = particion->siguiente;
     }
 
     //Retornamos la peor o si no hay Null
@@ -172,40 +164,45 @@ void dividir_particion(t_particion_dinamica* particion, uint32_t tamanio_proceso
 
         //list_add(lista_particiones_dinamicas, particion); //VER
         log_trace(logger_memoria, "Asiganada una particion exacta al PID - %d \n", particion->pid);
-        //log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
+        
     }else{
+
+        // 1. Se crea una particion nueva libre con el espacio sobrante del proceso
+        
         log_trace(logger_memoria, "La particion es grande para el proceso \n");
-    log_trace(logger_memoria, "Ajustando el tamaño a la particion");
+        log_trace(logger_memoria, "Ajustando el tamaño a la particion");
 
-    //Creamos una nueva partición para la parte libre
-    t_particion_dinamica* nueva_particion = malloc(sizeof(t_particion_dinamica));
-    nueva_particion->inicio = particion->inicio + tamanio_proceso;      //Empieza a partir del fin del proceso anterior
-    nueva_particion->tamanio = particion->tamanio - tamanio_proceso;    //La nueva particion tiene tamaño = total- usado
-    nueva_particion->ocupado = false;                                   //La nueva particion esta libre
-    nueva_particion->pid = -1;                                           //No tiene proceso asignado (ver si va 0)
-    nueva_particion->tid = -1;                                           //No tiene hilo asignado (ver si va 0)
-    //nueva_particion->siguiente = particion->siguiente;
-    log_trace(logger_memoria, "Creada una particion libre con el sobrante \n");
-    log_trace(logger_memoria, "Tamanio de la nueva particion libre: %d", nueva_particion->tamanio);
+        //Creamos una nueva partición para la parte libre
+        t_particion_dinamica* nueva_particion = malloc(sizeof(t_particion_dinamica));
+        nueva_particion->inicio = particion->inicio + tamanio_proceso;      //Empieza a partir del fin del proceso anterior
+        nueva_particion->tamanio = particion->tamanio - tamanio_proceso;    //La nueva particion tiene tamaño = total- usado
+        nueva_particion->ocupado = false;                                   //La nueva particion esta libre
+        nueva_particion->pid = -1;                                           //No tiene proceso asignado (ver si va 0)
+        nueva_particion->tid = -1;                                           //No tiene hilo asignado (ver si va 0)
 
-    t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
-    proceso->pid = particion->pid;
-    proceso->base = particion->inicio;
-    proceso->limite = tamanio_proceso + particion->inicio;
-    proceso->hilos = list_create();
+        log_trace(logger_memoria, "Creada una particion libre con el sobrante \n");
+        log_trace(logger_memoria, "Tamanio de la nueva particion libre: %d", nueva_particion->tamanio);
 
-    //La partición original se reduce al tamaño del proceso
-    particion->tamanio = tamanio_proceso;
-    particion->ocupado = true;
-    //particion->siguiente = nueva_particion;
-    pthread_mutex_lock(&mutex_lista_miniPCBs);
-    list_add(lista_miniPCBs, proceso);
-    pthread_mutex_unlock(&mutex_lista_miniPCBs);
-    //list_add(lista_particiones_dinamicas, particion); //VER
-    pthread_mutex_lock(&mutex_lista_particiones_dinamicas);
-    list_add(lista_particiones_dinamicas, nueva_particion);
-    pthread_mutex_unlock(&mutex_lista_particiones_dinamicas);
-    //log_info(logger_memoria, "## Proceso Creado - PID: %d Tamanio: %d", particion->pid, tamanio_proceso);
+        // 2. Se crea el proceso y sus estructuras con su tamaño solicitado
+
+        t_miniPCB* proceso = malloc(sizeof(t_miniPCB));
+        proceso->pid = particion->pid;
+        proceso->base = particion->inicio;
+        proceso->limite = tamanio_proceso + particion->inicio;
+        proceso->hilos = list_create();
+
+        particion->tamanio = tamanio_proceso;
+        particion->ocupado = true;
+        
+        // 3. Se añade el proceso a la lista de procesos y la nueva particion a la lista de particiones
+
+        pthread_mutex_lock(&mutex_lista_miniPCBs);
+        list_add(lista_miniPCBs, proceso);
+        pthread_mutex_unlock(&mutex_lista_miniPCBs);
+        
+        pthread_mutex_lock(&mutex_lista_particiones_dinamicas);
+        list_add(lista_particiones_dinamicas, nueva_particion);
+        pthread_mutex_unlock(&mutex_lista_particiones_dinamicas);
     }
 
     
@@ -291,11 +288,11 @@ char* leer_memoria(uint32_t proceso_pid, uint32_t direccion_fisica, uint32_t tam
 
 
 
-//Funciones para la finalizacion de un proceso
+//=================================== Funciones para la finalizacion de un proceso =============================
 
 
 
-
+//Funcion que devuelve el indice de un proceso a partir de un PID
 int busco_indice_particion_dinamica_por_PID(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Buscando el indice de la particion por PID");
@@ -315,7 +312,7 @@ int busco_indice_particion_dinamica_por_PID(uint32_t proceso_pid){
     abort();
 }
 
-
+//Funcion que devuelve una particion dinamica segun un PID
 t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Buscando la particion por PID");
@@ -332,8 +329,6 @@ t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid){
             return particion;
         }
 
-        //Actualizo la particion para poder avanzar
-        //particion = particion->siguiente;
     }
 
     log_error(logger_memoria, "No se encontro la Particion relacionada al PID - %d", proceso_pid);
@@ -341,7 +336,7 @@ t_particion_dinamica *busco_particion_dinamica_por_PID(uint32_t proceso_pid){
 }
 
 
-
+//Funcion que devuelve un proceso segun un PID
 t_miniPCB *busco_proceso_por_PID(uint32_t proceso_pid){
 
     log_trace(logger_memoria, "Buscando el proceso por PID");
@@ -444,34 +439,21 @@ void finalizar_proceso_dinamico(uint32_t proceso_pid){
 
     int indice_particion = busco_indice_particion_dinamica_por_PID(proceso_pid);
     t_particion_dinamica *particion = busco_particion_dinamica_por_PID(proceso_pid);
-    t_miniPCB *proceso = busco_proceso_por_PID(proceso_pid);
-
-    //Recorremos la lista de hilos
-    /*for (int j = 0; j < list_size(proceso->hilos); j++){
-
-        //Sacamos la pagina de la lista
-        t_hilo *hilo = list_get(proceso->hilos, j);
-
-        list_destroy_and_destroy_elements(hilo->lista_de_instrucciones, free);
-        list_remove_element(proceso->hilos, hilo);
-        
-    }*/
+    //t_miniPCB *proceso = busco_proceso_por_PID(proceso_pid);
 
 
     log_trace(logger_memoria, "Log Obligatorio: \n");
     log_trace(logger_memoria, "Destruccion de particion: \n");
-   // log_info(logger_memoria, "## Proceso Destruido - PID: %d Tamanio: %d", proceso_pid, particion->tamanio);
 
     particion->ocupado = false;
 
     unificar_particiones_dinamicas(indice_particion);
     
-    //list_remove_element(lista_miniPCBs, proceso);
     eliminar_proceso_de_lista(proceso_pid);
 }
 
 
-
+//Funcion que a partir de PID finaliza el proceso sogun el tipo de config
 void finalizar_proceso(uint32_t proceso_pid){
 
 

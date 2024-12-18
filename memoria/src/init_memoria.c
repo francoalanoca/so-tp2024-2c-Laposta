@@ -39,18 +39,6 @@ pthread_mutex_t mutex_pids_por_bloque;
 
 
 //-------------------Configuraciones---------------------------
-/*
-int inicializar_configuraion(char* path_config){
-
-    if (!init(path_config) || !cargar_configuracion(path_config)) {
-
-        cerrar_programa();
-        printf("No se pudo inicializar Memoria");
-        return EXIT_FAILURE;
-    }
-}
-*/
-
 
 
 t_config_memoria *cfg_memoria_start(){
@@ -84,7 +72,6 @@ int checkProperties(char *path_config){
 
     //Si no pudo ser abierto el config sera informado por consola
     if (config == NULL) {
-        //printf("Ocurrió un error al intentar abrir el archivo config\n");
         return false;
     }
 
@@ -104,7 +91,6 @@ int checkProperties(char *path_config){
 
     //Verifico si falta alguna de las propiedades en confid
     if (!config_has_all_properties(config, properties)) {
-        //printf("Propiedades faltantes en el archivo de configuracion\n");
         return false;
     }
 
@@ -124,37 +110,26 @@ int cargar_configuracion(char *path_config){
 
     //Cargo en la variable tipo config las configuraciones iniciales
     cfg_memoria->PUERTO_ESCUCHA = strdup(config_get_string_value(file_cfg_memoria, "PUERTO_ESCUCHA"));
-   // printf("PUERTO_ESCUCHA cargado correctamente: %s\n", cfg_memoria->PUERTO_ESCUCHA);
 
     cfg_memoria->IP_FILESYSTEM = strdup(config_get_string_value(file_cfg_memoria, "IP_FILESYSTEM"));
-   // printf("IP_FILESYSTEM cargado correctamente: %s\n", cfg_memoria->IP_FILESYSTEM);
 
     cfg_memoria->PUERTO_FILESYSTEM = strdup(config_get_string_value(file_cfg_memoria, "PUERTO_FILESYSTEM"));
-   // printf("PUERTO_FILESYSTEM cargado correctamente: %s\n", cfg_memoria->PUERTO_FILESYSTEM);
 
     cfg_memoria->TAM_MEMORIA = config_get_int_value(file_cfg_memoria, "TAM_MEMORIA");
-   // printf("TAM_MEMORIA cargado correctamente: %d\n", cfg_memoria->TAM_MEMORIA);
 
     cfg_memoria->PATH_INSTRUCCIONES = strdup(config_get_string_value(file_cfg_memoria, "PATH_INSTRUCCIONES"));
-   //printf("PATH_INSTRUCCIONES cargado correctamente: %s\n", cfg_memoria->PATH_INSTRUCCIONES);
 
     cfg_memoria->RETARDO_RESPUESTA = config_get_int_value(file_cfg_memoria, "RETARDO_RESPUESTA");
-    //printf("RETARDO_RESPUESTA cargado correctamente: %d\n", cfg_memoria->RETARDO_RESPUESTA);
 
     cfg_memoria->ESQUEMA = strdup(config_get_string_value(file_cfg_memoria, "ESQUEMA"));
-    //printf("ESQUEMA cargado correctamente: %s\n", cfg_memoria->ESQUEMA);
 
     cfg_memoria->ALGORITMO_BUSQUEDA = strdup(config_get_string_value(file_cfg_memoria, "ALGORITMO_BUSQUEDA"));
-    //printf("ALGORITMO_BUSQUEDA cargado correctamente: %s\n", cfg_memoria->ALGORITMO_BUSQUEDA);
 
     cfg_memoria->PARTICIONES = config_get_array_value(file_cfg_memoria, "PARTICIONES");
 
     cfg_memoria->LOG_LEVEL = strdup(config_get_string_value(file_cfg_memoria, "LOG_LEVEL"));
-    //printf("LOG_LEVEL cargado correctamente: %s\n", cfg_memoria->LOG_LEVEL);
 
 
-
-    //printf("Archivo de configuracion cargado correctamente\n");
     config_destroy(file_cfg_memoria);
     return true;
 }
@@ -168,7 +143,6 @@ int inicializar_memoria(){
 
     //Si hubo un error al crear el logger se informara por consola
     if (logger_memoria == NULL) {
-        //printf("No pude crear el logger\n");
         return false;
     }
 	//memoria = malloc(cfg_memoria->TAM_MEMORIA);             //espacio del usuario
@@ -185,66 +159,6 @@ int inicializar_memoria(){
         
     }
     
-                 
-	/*
-	    //PRUEBA
-        
-        printf("Entro a prueba crear_proceso:%d\n", cantidad_particiones_memoria);
-        crear_proceso_fijas(100,lista_particiones,1);
-    
-        printf("Acualizo bitmap:\n");
-        print_bitarray(bitmap_particiones);
-
-        inicializar_proceso(1,64);
-        printf("Acualizo lista miniPCB:\n");
-        mostrar_lista_miniPCB(lista_miniPCBs); 
-
-        inicializar_hilo(1,1, "archivo_pseudocodigo");
-        printf("Acualizo lista miniPCB:\n");
-        mostrar_lista_miniPCB(lista_miniPCBs);
-
-        //PRUEBA ESCRIBIR Y LEER
-        printf("INICIO PRUEBA ESCRIBIR Y LEER\n");
-        t_escribir_leer* peticion_leer = malloc(sizeof(t_escribir_leer));
-        peticion_leer->pid = 1;
-        peticion_leer->direccion_fisica = 5;
-        peticion_leer->tamanio = 4;
-        peticion_leer->valor = "Hi!";
-
-        if(write_mem(peticion_leer->direccion_fisica, peticion_leer->valor, peticion_leer->tamanio)){
-				
-			 printf("Escritura exitosa: \"%s\" en la dirección %u\n", peticion_leer->valor, peticion_leer->direccion_fisica);
-         } 
-         else {
-             printf("Error al escribir en la dirección %u\n", peticion_leer->direccion_fisica);
-			}
-
-            //write_mem(6, "Hola", 5);
-
-        //LEER
-            char* respuesta_leer = malloc(4);
-            memset(respuesta_leer, 0, sizeof(respuesta_leer));
-			if(read_mem(peticion_leer->direccion_fisica,respuesta_leer)){
-			 printf("Lectura exitosa: \"%s\" desde la dirección %u\n", respuesta_leer, peticion_leer->direccion_fisica );
-            } 
-            else {
-              printf("Error al leer desde la dirección %u\n", peticion_leer->direccion_fisica );
-			}
-        //FIN ESCRIBIR Y LEER
-
-        eliminar_hilo_de_lista(lista_miniPCBs,1,1);
-        printf("Acualizo lista miniPCB:\n");
-        mostrar_lista_miniPCB(lista_miniPCBs);
-
-        finalizar_proceso_fijas(1);
-        printf("Acualizo bitmap:\n");
-        print_bitarray(bitmap_particiones);
-
-        eliminar_proceso_de_lista(lista_miniPCBs,1);
-        printf("Acualizo lista miniPCB:\n");
-        mostrar_lista_miniPCB(lista_miniPCBs);
-        //FIN PRUEBA
-       */ 
     return true;   
 }
 
@@ -316,7 +230,7 @@ t_bitarray *crear_bitmap(int entradas){
     for (int i = 0; i < bitarray_get_max_bit(bitmap); i++) {
         bitarray_clean_bit(bitmap, i);
     }
-log_trace(logger_memoria,"El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap, 2) ? 1 : 0);
+    log_trace(logger_memoria,"El valor del bit en la posicion %d es: %d\n", 1, bitarray_test_bit(bitmap, 2) ? 1 : 0);
     return bitmap;
 }
 
@@ -338,86 +252,7 @@ void cerrar_programa(){
     log_destroy(logger_memoria);
 }
 
-/*
-void inicializar_proceso(uint32_t pid, uint32_t tamanio_proceso){
-    t_miniPCB* nuevo_proceso = malloc(sizeof(t_miniPCB));
-    //t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
 
-    nuevo_proceso->pid = pid;
-    nuevo_proceso->hilos = list_create();
-
-    // nuevo_hilo->tid = 0;
-    // nuevo_hilo->registros.PC = 0;
-    // nuevo_hilo->registros.AX = 0;
-    // nuevo_hilo->registros.BX = 0;
-    // nuevo_hilo->registros.CX = 0;
-    // nuevo_hilo->registros.DX = 0;
-    // nuevo_hilo->registros.EX = 0;
-    // nuevo_hilo->registros.FX = 0;
-    // nuevo_hilo->registros.GX = 0;
-    // nuevo_hilo->registros.HX = 0;
-    // nuevo_hilo->lista_de_instrucciones = list_create();
-    // leer_instrucciones_particiones_fijas(archivo_pseudocodigo,nuevo_hilo);
-    //list_add(nuevo_proceso->hilos,nuevo_hilo);TODO: FIXME: se me creaba el primer sin instrucciones
-    
-
- 
-    uint32_t indice_bloque_a_liberar = buscar_indice_bloque_por_pid(pids_por_bloque,pid);
-
-    printf("El indice en la lista del bloque a liberar es: %d\n",indice_bloque_a_liberar);
-
-    t_pid_por_bloque* bloque_x_pid = list_get(pids_por_bloque,indice_bloque_a_liberar);
-
-    nuevo_proceso->base = calcular_base_proceso_fijas(bloque_x_pid->bloque, lista_particiones);
-
-    nuevo_proceso->limite = tamanio_proceso;
-
-    //list_add(nuevo_proceso->hilos,nuevo_hilo);
-
-    list_add(lista_miniPCBs,nuevo_proceso);
-}
-*/
-
-/*
-void inicializar_hilo(uint32_t pid, uint32_t tid, char* nombre_archivo){
-    t_hilo* nuevo_hilo = malloc(sizeof(t_hilo));
-
-    nuevo_hilo->tid = tid;
-    nuevo_hilo->registros.PC = 0;
-    nuevo_hilo->registros.AX = 0;
-    nuevo_hilo->registros.BX = 0;
-    nuevo_hilo->registros.CX = 0;
-    nuevo_hilo->registros.DX = 0;
-    nuevo_hilo->registros.EX = 0;
-    nuevo_hilo->registros.FX = 0;
-    nuevo_hilo->registros.GX = 0;
-    nuevo_hilo->registros.HX = 0;
-
-    nuevo_hilo->lista_de_instrucciones = list_create();
-    leer_instrucciones_particiones_fijas(nombre_archivo,nuevo_hilo);
-    asignar_hilo_a_proceso(nuevo_hilo,pid);
-    
-}
-
-void asignar_hilo_a_proceso(t_hilo* hilo, uint32_t pid){
-    bool encontrado = false;
-    for (int i = 0; i < list_size(lista_miniPCBs); i++){
-        t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
-
-        if (miniPCB->pid == pid){
-			list_add(miniPCB->hilos,hilo);
-            log_warning(logger_memoria,"Se agrega tid %d a proceso : %d",hilo->tid,pid);
-           // printf("Se agrega tid %d a proceso %d\n",hilo->tid, pid);
-            encontrado = true;
-        }
-    }
-    if(!encontrado){
-        printf("No se asigno hilo ya que no se encuentra el proceso %d\n", pid);
-    }
-
-    
-}
-*/
 
 // Función para convertir un char** en un t_list
 t_list* char_array_to_list(char** array) {
@@ -430,6 +265,10 @@ t_list* char_array_to_list(char** array) {
     
     return list;
 }
+
+
+
+//========================= Funciones de uso general para proceso =============================
 
 void eliminar_proceso_de_lista(uint32_t pid){
     uint32_t indice_a_eliminar = buscar_indice_pcb_por_pid(lista_miniPCBs,pid);
@@ -446,6 +285,7 @@ void eliminar_hilo_de_lista(t_list* lista_procesos, uint32_t pid, uint32_t tid){
 	list_remove_and_destroy_element(proceso_hilo_a_eliminar->hilos,indice_hilo_a_eliminar,(void*)liberar_hilo);
     log_trace(logger_memoria,"Se elimina tid %d correspondiente a pid %d\n",tid,pid);
 }
+
 
 void liberar_hilo(t_hilo *hilo) {
     if (hilo == NULL) return; // Verifica que no sea NULL
@@ -618,17 +458,17 @@ uint32_t buscar_tamanio_proceso_por_pid(uint32_t pid){
 // Función que busca un miniPCB con el pid y un hilo con el tid y devuelve el contexto asociado
 t_m_contexto* buscar_contexto_en_lista(uint32_t pid, uint32_t tid) {
     size_t cantidad_miniPCBs = list_size(lista_miniPCBs);
-log_trace(logger_memoria, "Entro buscar_contexto_en_lista\n");
-log_trace(logger_memoria, "Cantidad Procesos:%d\n",cantidad_miniPCBs);
+    log_trace(logger_memoria, "Entro buscar_contexto_en_lista\n");
+    log_trace(logger_memoria, "Cantidad Procesos:%d\n",cantidad_miniPCBs);
     for (size_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
-log_trace(logger_memoria, "PID:%d\n",miniPCB->pid);
+    log_trace(logger_memoria, "PID:%d\n",miniPCB->pid);
         if (miniPCB->pid == pid) {
             size_t cantidad_hilos = list_size(miniPCB->hilos);
 
             for (size_t j = 0; j < cantidad_hilos; j++) {
                 t_hilo* hilo = list_get(miniPCB->hilos, j);
-            log_trace(logger_memoria, "RECORRO LISTA PROCESOS E HILOS, PID:%d, TID:%d\n",miniPCB->pid,hilo->tid);
+                log_trace(logger_memoria, "RECORRO LISTA PROCESOS E HILOS, PID:%d, TID:%d\n",miniPCB->pid,hilo->tid);
                 if (hilo->tid == tid) {
                     t_m_contexto* contexto = malloc(sizeof(t_m_contexto));
                     contexto->registros = hilo->registros;  
@@ -645,6 +485,8 @@ log_trace(logger_memoria, "PID:%d\n",miniPCB->pid);
     return NULL;
 }
 
+
+
 // Función que actualiza los registros del hilo con el tid correspondiente dentro del miniPCB con el pid correspondiente
 bool actualizar_contexto(t_m_contexto* contexto) {
     log_trace(logger_memoria,"Entro a actualizar_contexto\n");
@@ -654,7 +496,7 @@ bool actualizar_contexto(t_m_contexto* contexto) {
     }
     // Iteramos sobre la lista de miniPCBs
     uint32_t cantidad_miniPCBs = list_size(lista_miniPCBs);
-     log_trace(logger_memoria,"Vamos a iterar %d veces",cantidad_miniPCBs);
+    log_trace(logger_memoria,"Vamos a iterar %d veces",cantidad_miniPCBs);
     for (uint32_t i = 0; i < cantidad_miniPCBs; i++) {
         t_miniPCB* miniPCB = list_get(lista_miniPCBs, i);
         log_trace(logger_memoria,"Obtengo miniPCB con pid:%d\n",miniPCB->pid);
@@ -686,6 +528,7 @@ bool actualizar_contexto(t_m_contexto* contexto) {
 }
 
 
+
 // Función que busca el miniPCB al que pertenece la dirección física
 t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     //for (int i = 0; i < list_size(lista_particiones); i++) { //CAMBIO lista_particiones por lista_miniPCBs
@@ -701,6 +544,8 @@ t_miniPCB* obtener_particion_proceso(uint32_t direccion_fisica) {
     }
     return NULL; // Si no se encuentra un proceso que contenga la dirección
 }
+
+
 
 bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
    // Obtenemos el proceso correspondiente a la dirección
@@ -732,6 +577,8 @@ bool write_mem(uint32_t direccion_fisica, uint32_t valor) {
 
     return true;  // La escritura fue exitosa
 }
+
+
 
 // Función para leer 4 bytes si la dirección está dentro del proceso
 bool read_mem(uint32_t direccion_fisica, uint32_t* resultado) {
@@ -787,32 +634,6 @@ bool read_mem(uint32_t direccion_fisica, uint32_t* resultado) {
 }
 
 
-/*
-int crear_proceso(uint32_t proceso_pid, uint32_t tamanio_proceso){
-
-    int respuesta;
-
-    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        respuesta = crear_proceso_dinamico(proceso_pid, tamanio_proceso);
-    }else{
-        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            respuesta = crear_proceso_fijas(tamanio_proceso,lista_particiones,proceso_pid);
-    }
-    return respuesta;
-}
-
-void finalizar_proceso(uint32_t proceso_pid){
-
-
-    if (strcmp(cfg_memoria->ESQUEMA, "DINAMICAS") == 0){
-        finalizar_proceso_dinamico(proceso_pid);
-    }else{
-        if (strcmp(cfg_memoria->ESQUEMA, "FIJAS") == 0)
-            finalizar_proceso_fijas(proceso_pid);
-    }
-
-}
-*/
 
 char* generar_nombre_archivo(uint32_t pid, uint32_t tid) {
     // Obtener el timestamp actual en segundos desde Epoch

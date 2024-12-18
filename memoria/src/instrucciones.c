@@ -70,12 +70,7 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hil
 //Funcion que asigna a la lista de instrucciones del hilo lo leido del archivo
 void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
 
-	//t_miniPCB *miniPCB = malloc(sizeof(t_miniPCB));
-    //t_hilo *hilo_proceso = malloc(sizeof(t_hilo));
-
-    //miniPCB->pid = proceso_pid;
-    //hilo_proceso->tid = hilo_tid;
-    //hilo_proceso->lista_de_instrucciones = list_create();
+	
 
 	//Creamos una variable que gurada el path entero: path_instrucciones/nombre
 	char* path_total = string_new();
@@ -144,16 +139,6 @@ int contador=0;
 
 //Funcion que busca una instruccion en base a un pid, tid y pc
 char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_counter){
-    //TODO: eliminar hardcodeo
-   //proceso_pid=hilo_tid=0;
-  /*log_info(logger_memoria,"cantidad de pids total: %d",list_size(lista_miniPCBs));
-    t_miniPCB* mini=(t_miniPCB*)list_get(lista_miniPCBs,0);
-     log_info(logger_memoria,"cantidad de hilos del pid 0 : %d",list_size(mini->hilos));
-  
-    t_hilo *th=(t_hilo*)list_get(mini->hilos,0);
-    char* instruc=(char* )list_get(th->lista_de_instrucciones,0);
-   log_info(logger_memoria,"primera isntrucicon : %s",instruc);*/
-
 
     //Buscamo el proceso
 	//Recorremos segun el tamaño de la lista de procesos
