@@ -32,13 +32,14 @@ void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
     int cod=-1;
     cod=recibir_operacion(socket_memoria);
-    recibir_paquete(socket_memoria);
+    t_list* paquete_respuesta_memoria = recibir_paquete(socket_memoria);
     log_info(logger_kernel,"recibi paquete de memoria");
+    list_destroy_and_destroy_elements(paquete_respuesta_memoria,free);
     return cod;
 
 }
 
-//int asignar_tid(t_pcb* pcb){
+//int asignar_tid(t_pcb* pcb)
 //    int tid_a_asignar=pcb->contador_AI_tids;
 //    list_add(pcb->lista_tids,&(tid_a_asignar));
 //    pcb->contador_AI_tids++;
