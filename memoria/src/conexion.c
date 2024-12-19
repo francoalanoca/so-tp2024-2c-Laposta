@@ -27,7 +27,7 @@ void iniciar_conexiones(){
     pthread_t hilo_cpu;
     //se crea un nuevo hilo que atiende al cliente
     pthread_create(&hilo_cpu, NULL, (void*) memoria_atender_cpu, NULL);
-    log_info(logger_memoria, "Conexion con Cpu exitosa");
+    log_trace(logger_memoria, "Conexion con Cpu exitosa");
     //se desacopla del hilo principal para no interferir
     pthread_detach(hilo_cpu);
 

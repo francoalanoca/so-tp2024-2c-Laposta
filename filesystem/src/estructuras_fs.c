@@ -234,9 +234,9 @@ t_list* asignar_bloques(uint32_t tamanio, char* nombre_archivo) {
    
     uint32_t cant_bloques_nuevos = dividir_redondear_hacia_arriba(tamanio , cfg_file_system->BLOCK_SIZE)+1;
     t_list* lista_punteros;
-    lista_punteros = malloc(sizeof(t_list));
+    lista_punteros =  list_create();
     int bloques_libres_actuales;
-    log_info(logger_file_system, "CANTIDAD DE BLOQUES NECESARIOS : %d",cant_bloques_nuevos);    
+    //log_info(logger_file_system, "CANTIDAD DE BLOQUES NECESARIOS : %d",cant_bloques_nuevos);    
 
     for (int i = 0; i < cant_bloques_nuevos; i++) {
         uint32_t posicion_bit_libre =  encontrar_bit_libre(bitarray);
@@ -356,9 +356,9 @@ void sincronizar_bitmap (){
     int resultado_fync= fsync(fd_bitmap);
     if (resultado_sync == -1 || resultado_fync == -1) {
         perror("Error al sincronizar el bitmap");        
-    } else {
+    } /*else {
         log_info(logger_file_system, "SINCRONIZACION DE BITMAP EXITOSA");
-    }
+    }*/
 }
 
 
@@ -371,9 +371,9 @@ bool hay_espacio_total_disponible(int espacio_necesario){
         }
     }
     bloques_necesarios =  dividir_redondear_hacia_arriba(espacio_necesario , cfg_file_system->BLOCK_SIZE)+1; // agrego el tamaño del bloque de punteros
-    log_info(logger_file_system,"Cantidad de bits %d:",  bitarray_get_max_bit(bitarray));
-    log_info(logger_file_system,"Bloques/bits libres %d:",  bloques_libres);
-    log_info(logger_file_system,"Espacio total disponible %d:",  bloques_libres*cfg_file_system->BLOCK_SIZE);
+   // log_info(logger_file_system,"Cantidad de bits %d:",  bitarray_get_max_bit(bitarray));
+    //log_info(logger_file_system,"Bloques/bits libres %d:",  bloques_libres);
+    //log_info(logger_file_system,"Espacio total disponible %d:",  bloques_libres*cfg_file_system->BLOCK_SIZE);
 return bloques_libres >= bloques_necesarios; 
 }   
 

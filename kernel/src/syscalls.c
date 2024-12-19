@@ -12,11 +12,13 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
          list_add(lista_new,pcb_nuevo);
     sem_post(&(semaforos->mutex_lista_new));
 
-    log_info(logger_kernel, "nuevo proceso con pid %d y prioridad %d",pcb_nuevo->pid,pcb_nuevo->prioridad_th_main);
+    log_trace(logger_kernel, "nuevo proceso con pid %d y prioridad %d",pcb_nuevo->pid,pcb_nuevo->prioridad_th_main);
+
+    log_info(logger_kernel,"## (<PID>:%d) Se crea el proceso - Estado: NEW",pcb_nuevo->pid);
 
     sem_post(&(semaforos->sem_procesos_new));
     
-    log_info(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
+    log_trace(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
 }
 
 t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
@@ -26,7 +28,7 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
     enviar_a_memoria_creacion_thread( tcb_th,pseudo_codigo, socket_memoria);
     int rta_memoria=recibir_resp_de_memoria_a_solicitud(socket_memoria);
     if(rta_memoria==INICIAR_HILO_RTA_OK){
-        log_info(logger_kernel,"memoria creo el hilo");
+        log_trace(logger_kernel,"memoria creo el hilo");
         close(socket_memoria);
         return tcb_th;
     }
@@ -36,6 +38,12 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
 //TODO: deberiamos tener un mutext para cada proceso.Aca modifico su estuctura
 void mutex_create(char* nombre_mutex,int pid_mutex){
     t_mutex* mutex_nuevo=malloc(sizeof(t_mutex));
+    //comprobar si se creo el mutex
+    if(mutex_nuevo==NULL){
+        log_error(logger_kernel,"no se pudo crear el mutex");
+        return;
+    }
+
     mutex_nuevo->recurso=nombre_mutex;
     mutex_nuevo->thread_asignado=NULL;
     mutex_nuevo->estado=SIN_ASIGNAR;//sin ASIGNAR
@@ -68,7 +76,7 @@ void ejecutar_io(int tiempo){
     t_tcb* tcb_io=list_get(lista_espera_io,0);
     sem_post(&(semaforos->mutex_lista_espera_io));
     
-    log_info(logger_kernel,"tcb en io: pid: %d tid: %d",tcb_io->pid,tcb_io->tid);
+    log_trace(logger_kernel,"tcb en io: pid: %d tid: %d",tcb_io->pid,tcb_io->tid);
 
     sem_post(&(semaforos->sem_io_solicitud));
     
@@ -98,6 +106,7 @@ void mutex_lock(char* recurso){
             /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));           
             agregar_a_lista(tcb_ejecutando,lista_blocked,&(semaforos->mutex_lista_blocked));*/
             list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);
+            log_info("## (<%d>:<%d>)- Bloqueado por MUTEX: <%s>",tcb_ejecutando->pid,tcb_ejecutando->tid,mutex->recurso);
             pasar_execute_a_blocked();
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
             sem_post(&(semaforos->espacio_en_cpu));
@@ -109,6 +118,7 @@ void mutex_lock(char* recurso){
             /* remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb_ejecutando,lista_exit,&(semaforos->mutex_lista_exit));*/
             thread_exit(tcb_ejecutando);
+            log_info(logger_kernel,"no hay mutex para lockear");
             //pasar_execute_a_exit();
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
 
@@ -123,7 +133,7 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
     t_mutex* mutex_existe=buscar_mutex(recurso,tcb->pid);
     if(mutex_existe!=NULL){
         mutex_a_desbloquear=quitar_mutex_a_thread(recurso,tcb);
-        log_info(logger_kernel,"Entre en MUTEX UNLOCK y existe recurso");
+        log_trace(logger_kernel,"Entre en MUTEX UNLOCK y existe recurso");
         if(mutex_a_desbloquear!=NULL){//si lo tenia asignado
         //asgino al primero que esperaba el mutex
             t_tcb* tcb_con_mutex=asignar_mutex_al_siguiente_thread(mutex_a_desbloquear);
@@ -145,7 +155,7 @@ void mutex_unlock(char* recurso, t_tcb* tcb){
             //no existe mutex-> mando hilo a exit y activo el planificador
             //remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             //agregar_a_lista(tcb,lista_exit,&(semaforos->mutex_lista_exit));
-            log_info(logger_kernel,"Entre en MUTEX UNLOCK y existe recurso");
+            log_trace(logger_kernel,"Entre en MUTEX UNLOCK y existe recurso");
             thread_exit(tcb);
 
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
@@ -167,17 +177,17 @@ void thread_exit(t_tcb *tcb){
     pthread_detach(hilo_manejo_exit);
     
     }else
-        log_info(logger_kernel, " EL hilo no existe o ya fue eliminado del proceso");
+        log_trace(logger_kernel, " EL hilo no existe o ya fue eliminado del proceso");
 }
 
 void thread_cancel(int tid_a_cancelar,int pid)
 {
     t_pcb* pcb=buscar_proceso_por(pid);
     int indice_de_tid=buscar_indice_de_tid_en_proceso(pcb,tid_a_cancelar);
-    log_info(logger_kernel,"hilo a cancelar: PID:%d, TID:%d",tid_a_cancelar,pid);
+    log_trace(logger_kernel,"hilo a cancelar: PID:%d, TID:%d",tid_a_cancelar,pid);
     if(indice_de_tid!=-1){//el tcb aun no se elimino
         //busco donde este el pcb}
-        log_info(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
+        log_trace(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
         t_tcb* tcb_a_cancelar=NULL;
         if(tcb_a_cancelar==NULL){//si se quiere cancelar el mimo hilo, aunque DIJERON QUE ESTE CASO NO LO EVALUAN
             tcb_a_cancelar=buscar_en_lista_y_cancelar(lista_exec,tid_a_cancelar,pid,&(semaforos->mutex_lista_exec));
@@ -192,7 +202,7 @@ void thread_cancel(int tid_a_cancelar,int pid)
             agregar_a_lista(tcb_a_cancelar,lista_exit,&(semaforos->mutex_lista_exit));
             thread_exit(tcb_a_cancelar);
             }
-    }else log_info(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
+    }else log_trace(logger_kernel,"NO SE ENCONTRO EL HILO A CANCELAR PID:%d, TID:%d",tid_a_cancelar,pid);
 
  //hace nada
 }
@@ -228,19 +238,19 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
 }
 
 void memory_dump()
-{    log_info(logger_kernel,"entro en memory_dump");
+{    log_trace(logger_kernel,"entro en memory_dump");
     pthread_t hilo_dump; 
     int result= pthread_create(&hilo_dump,NULL,atender_dump_memory,NULL);
     
-     log_info(logger_kernel,"cree hilo %d",result);
+     log_trace(logger_kernel,"cree hilo %d",result);
      pthread_detach(hilo_dump);
 }
 
 void* atender_dump_memory(){
     //Tomo el pcb actual y lo paso a blocked
-      log_info(logger_kernel,"antes del mutex pid:  ");
+      log_trace(logger_kernel,"antes del mutex pid:  ");
     sem_wait(&(semaforos->mutex_lista_exec));
-     log_info(logger_kernel,"Pase mutex en dump");
+     log_trace(logger_kernel,"Pase mutex en dump");
     t_tcb *thread_dump = list_get(lista_exec, 0);
     sem_post(&(semaforos->mutex_lista_exec));
     pasar_execute_a_blocked();
@@ -254,7 +264,7 @@ void* atender_dump_memory(){
    // falta esta funcion  enviar_dump_a_memoria(socket_conexion_memoria);
     int respuesta = recibir_operacion(socket_conexion_memoria);
     if (respuesta == PEDIDO_MEMORY_DUMP_RTA_ERROR){
-        log_info(logger_kernel,"Se recibio respuesta ERROR de dump para pid: %d tid:%d ",pid_actual, tid_actual);
+        log_trace(logger_kernel,"Se recibio respuesta ERROR de dump para pid: %d tid:%d ",pid_actual, tid_actual);
         //Paso a exit el hilo en blocked en caso de error del dump
         t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
 
@@ -266,7 +276,7 @@ void* atender_dump_memory(){
 
     }
     else if (respuesta == PEDIDO_MEMORY_DUMP_RTA_OK){
-        log_info(logger_kernel,"Se recibio respuesta OK de dump para  pid: %d tid:%d ",pid_actual, tid_actual);
+        log_trace(logger_kernel,"Se recibio respuesta OK de dump para  pid: %d tid:%d ",pid_actual, tid_actual);
         //Paso a ready el hilo en ready en caso de exito del dump para continuar con la ejecucion del mismo
         t_tcb *thread_en_cuestion = buscar_en_lista_y_cancelar(lista_blocked, tid_actual, pid_actual, &(semaforos->mutex_lista_blocked));
         agregar_a_lista(thread_en_cuestion, lista_ready, &(semaforos->mutex_lista_ready));
@@ -280,7 +290,7 @@ void enviar_a_memoria_memory_dump(int pid, int tid, int socket_conexion_memoria)
     agregar_a_paquete(paquete_dump,&(pid),sizeof(uint32_t));
     agregar_a_paquete(paquete_dump,&(tid),sizeof(uint32_t));
     enviar_paquete(paquete_dump,socket_conexion_memoria);
-    log_info(logger_kernel,"Se envio el pedido de dump a memoria");
+    log_trace(logger_kernel,"Se envio el pedido de dump a memoria");
     eliminar_paquete(paquete_dump);
 }
 

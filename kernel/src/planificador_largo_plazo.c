@@ -8,6 +8,8 @@ t_list* lista_blocked;
 t_list* lista_exit;
 t_list* lista_procesos_global;
 t_list* lista_espera_io;
+t_list* lista_mutex;
+
 void inicializar_listas() {
     lista_new = list_create();
     lista_ready = list_create();
@@ -16,6 +18,7 @@ void inicializar_listas() {
     lista_blocked = list_create();
     lista_procesos_global=list_create();
     lista_espera_io = list_create();
+    lista_mutex = list_create();
 }
 void inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);
@@ -47,21 +50,21 @@ void* planificar_procesos(){
             int respuesta=recibir_resp_de_memoria_a_solicitud(socket_memoria);
             close(socket_memoria);
             if(respuesta==INICIAR_PROCESO_RTA_OK){
-                log_info(logger_kernel,"recibi ok para crear proceso");
+                log_trace(logger_kernel,"recibi ok para crear proceso");
                t_tcb* tcb=thread_create(un_pcb->ruta_pseudocodigo,un_pcb->prioridad_th_main ,un_pcb->pid);//creo el thread main y lo envio a ready 
 
                 // pasar_new_a_ready();  TODO: no se puede usar por que en NEW hay procesos y en READY hay hilos
                 //FIXME: REMUEVO el pcb de new por fifo, el pcb aun esta en lista_global_procesos
                 remover_de_lista(lista_new,0,&(semaforos->mutex_lista_new));
                 agregar_a_lista(tcb,lista_ready,&(semaforos->mutex_lista_ready));
-                log_info(logger_kernel, "nuevo proceso con pid %d y tid %d",tcb->pid,tcb->tid);
+                log_trace(logger_kernel, "nuevo proceso con pid %d y tid %d",tcb->pid,tcb->tid);
                 t_tcb* prueba_tcb=(t_tcb*)list_get(lista_ready,0);
 
                 //Le avisamos a planif_corto_plazo que tiene un thread en ready
                 sem_post(&(semaforos->contador_threads_en_ready));
             }else{
-                log_info(logger_kernel, "No hay espacio en memoria para proc PCB:%d, se esperara liberacion por parte de otro proceso \n", un_pcb->pid);
-                log_info(logger_kernel, "Codigo de op recibido: %d", respuesta);
+                log_trace(logger_kernel, "No hay espacio en memoria para proc PCB:%d, se esperara liberacion por parte de otro proceso \n", un_pcb->pid);
+                log_trace(logger_kernel, "Codigo de op recibido: %d", respuesta);
                 //el proceso continua en new hasta que se elimine otro proceso(EXIT)
             }
                  
@@ -70,13 +73,14 @@ void* planificar_procesos(){
     return NULL; 
 }
 
+
 void manejo_liberacion_memoria(){
     while(1){
             sem_wait(&(semaforos->sem_espacio_liberado_por_proceso));
         if(list_is_empty(lista_new)){
-            log_info(logger_kernel,"No hay procesos en memoria para liberar \n");
+            log_trace(logger_kernel,"No hay procesos en memoria para liberar \n");
         }else{
-            log_info(logger_kernel,"Se libero espacio en memoria");
+            log_trace(logger_kernel,"Se libero espacio en memoria");
             sem_post(&(semaforos->sem_procesos_new));
         }
     }

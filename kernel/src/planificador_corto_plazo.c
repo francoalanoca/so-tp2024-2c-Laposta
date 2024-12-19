@@ -5,17 +5,17 @@ void inicializar_hilos_planificador()
 
     if (strcmp(config_kernel->algoritmo_planif, "FIFO") == 0)
     {
-        log_info(logger_kernel, "Planificador FIFO seleccionado");
+        log_trace(logger_kernel, "Planificador FIFO seleccionado");
         crear_hilo_planificador_fifo();
     }
     else if (strcmp(config_kernel->algoritmo_planif, "PRIORIDADES") == 0)
     {
-        log_info(logger_kernel, "Planificador por Prioridades seleccionado");
+        log_trace(logger_kernel, "Planificador por Prioridades seleccionado");
         crear_hilo_planificador_prioridades();
     }
     else if (strcmp(config_kernel->algoritmo_planif, "CMN") == 0)
     {
-        log_info(logger_kernel, "Planificador por Colas Multinivel seleccionado");
+        log_trace(logger_kernel, "Planificador por Colas Multinivel seleccionado");
         crear_hilo_planificador_colas_multinivel();
     }
     else
@@ -27,20 +27,20 @@ void crear_hilo_planificador_fifo()
 {
     pthread_create(&(hilos->hilo_fifo), NULL, planificar_fifo, NULL);
     pthread_detach(hilos->hilo_fifo);
-    log_info(logger_kernel, "Hilo de Planificador FIFO creado correctamente");
+    log_trace(logger_kernel, "Hilo de Planificador FIFO creado correctamente");
 }
 void crear_hilo_planificador_prioridades()
 {
     pthread_create(&(hilos->hilo_prioridades), NULL, planificar_prioridades, NULL);
     pthread_detach(hilos->hilo_prioridades);
-    log_info(logger_kernel, "Hilo de Planificador por Prioridades creado correctamente");
+    log_trace(logger_kernel, "Hilo de Planificador por Prioridades creado correctamente");
 }
 
 void crear_hilo_planificador_colas_multinivel()
 {
     pthread_create(&(hilos->hilo_colas_multinivel), NULL, planificar_colas_multinivel, NULL);
     pthread_detach(hilos->hilo_colas_multinivel);
-    log_info(logger_kernel, "Hilo de Planificador por Colas Multinivel creado correctamente");
+    log_trace(logger_kernel, "Hilo de Planificador por Colas Multinivel creado correctamente");
 }
 
 void *planificar_fifo()
@@ -60,6 +60,8 @@ void *planificar_fifo()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
+
+        log_trace(logger_kernel, "Paso a exec el tcb con pid:%d y tid:%d", tcb->pid, tcb->tid);
 
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
@@ -81,7 +83,7 @@ void *planificar_prioridades()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
-        log_info(logger_kernel,"Paso a exec el tcb con pid:%d y tid:%d",tcb->pid,tcb->tid);
+        log_trace(logger_kernel,"Paso a exec el tcb con pid:%d y tid:%d",tcb->pid,tcb->tid);
 
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
@@ -123,7 +125,7 @@ void *planificar_colas_multinivel()
         sem_wait(&(semaforos->mutex_lista_exec));
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
-        log_info(logger_kernel,"Paso a exec el tcb con pid:%d y tid:%d",tcb->pid,tcb->tid);
+        log_trace(logger_kernel,"Paso a exec el tcb con pid:%d y tid:%d",tcb->pid,tcb->tid);
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
         iniciar_quantum();//se inicia el contador de tiempo RR en un hilo
     }
@@ -136,7 +138,7 @@ void *planificar_colas_multinivel()
 //        // sem_wait(&(semaforos->sem_finalizacion_ejecucion_cpu));
 //         //Destruir hilo de quantum
 //        // pthread_cancel(hilos->hilo_quantum);
-//         log_info(logger_kernel,"Se finalizo el hilo de quantum");
+//         log_trace(logger_kernel,"Se finalizo el hilo de quantum");
 //     }
 // }
 void iniciar_quantum()
@@ -151,7 +153,7 @@ void *interrupcion_quantum(){
     sem_post(&(semaforos->mutex_lista_exec));
     usleep(config_kernel->quantum * 1000);
     enviar_interrumpir_cpu(tcb, FIN_DE_QUANTUM);
-    log_error(logger_kernel,"enviada interrupt, fin de Q de pid:%d, tid:%d",tcb->pid,tcb->tid);
+    log_error(logger_kernel,"## (<%d>:<%d>) - Desalojado por fin de Quantum",tcb->pid,tcb->tid);
     //TODO: que pasa si se interrumpe antes el tcb, por ej por IO
 
 }

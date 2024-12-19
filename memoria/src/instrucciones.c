@@ -17,7 +17,7 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hil
 
     //creamos una variable que guarda el archivo
     FILE* archivo = fopen(path_total, "r");		
-    log_info(logger_memoria, "%s", nombre_archivo);
+    log_trace(logger_memoria, "%s", nombre_archivo);
 
 	//Si no se puede abrir el archivo marca error
 	if (!archivo){
@@ -70,12 +70,7 @@ void leer_instrucciones(char* nombre_archivo, uint32_t proceso_pid, uint32_t hil
 //Funcion que asigna a la lista de instrucciones del hilo lo leido del archivo
 void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
 
-	//t_miniPCB *miniPCB = malloc(sizeof(t_miniPCB));
-    //t_hilo *hilo_proceso = malloc(sizeof(t_hilo));
-
-    //miniPCB->pid = proceso_pid;
-    //hilo_proceso->tid = hilo_tid;
-    //hilo_proceso->lista_de_instrucciones = list_create();
+	
 
 	//Creamos una variable que gurada el path entero: path_instrucciones/nombre
 	char* path_total = string_new();
@@ -85,7 +80,7 @@ void leer_instrucciones_particiones_fijas(char* nombre_archivo, t_hilo* hilo){
 
     //creamos una variable que guarda el archivo
     FILE* archivo = fopen(path_total, "r");		
-    log_info(logger_memoria, "leyendo archivo abierto: %s", nombre_archivo);
+    log_trace(logger_memoria, "leyendo archivo abierto: %s", nombre_archivo);
 
 	//Si no se puede abrir el archivo marca error
 	if (!archivo){
@@ -112,7 +107,7 @@ int contador=0;
             strcpy(linea2, linea);
             //Agregamos la linea a la lista de instrucciones
             list_add(hilo->lista_de_instrucciones, linea2);
-            log_info(logger_memoria,"instruccion: %s",(char*)list_get(hilo->lista_de_instrucciones,contador));
+            log_trace(logger_memoria,"instruccion: %s",(char*)list_get(hilo->lista_de_instrucciones,contador));
         }
         else{       //Si la línea leída no es "EXIT"
 
@@ -125,7 +120,7 @@ int contador=0;
 
             //Agregamos la linea a la lista de instrucciones
             list_add(hilo->lista_de_instrucciones, linea2);
-            log_info(logger_memoria,"instruccion: %s",(char*)list_get(hilo->lista_de_instrucciones,contador));
+            log_trace(logger_memoria,"instruccion: %s",(char*)list_get(hilo->lista_de_instrucciones,contador));
 
         } 
         contador++;
@@ -133,7 +128,7 @@ int contador=0;
         free(linea);
         linea = NULL;
 	}
-     log_warning(logger_memoria,"cantidad de instruc leidas: %d",list_size(hilo->lista_de_instrucciones));
+     log_trace(logger_memoria,"cantidad de instruc leidas: %d",list_size(hilo->lista_de_instrucciones));
 
     free(path_total);
     free(linea);
@@ -144,16 +139,6 @@ int contador=0;
 
 //Funcion que busca una instruccion en base a un pid, tid y pc
 char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_counter){
-    //TODO: eliminar hardcodeo
-   //proceso_pid=hilo_tid=0;
-  /*log_info(logger_memoria,"cantidad de pids total: %d",list_size(lista_miniPCBs));
-    t_miniPCB* mini=(t_miniPCB*)list_get(lista_miniPCBs,0);
-     log_info(logger_memoria,"cantidad de hilos del pid 0 : %d",list_size(mini->hilos));
-  
-    t_hilo *th=(t_hilo*)list_get(mini->hilos,0);
-    char* instruc=(char* )list_get(th->lista_de_instrucciones,0);
-   log_info(logger_memoria,"primera isntrucicon : %s",instruc);*/
-
 
     //Buscamo el proceso
 	//Recorremos segun el tamaño de la lista de procesos
@@ -165,7 +150,7 @@ char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_co
 		//Verificamos que sea igual al proceso buscado
         if (miniPCB->pid == proceso_pid){
 
-         log_info(logger_memoria,"pid encontrado para buscar instruccion: %d",miniPCB->pid);
+         log_trace(logger_memoria,"pid encontrado para buscar instruccion: %d",miniPCB->pid);
 
             //Buscamos el hilo
             //Recorremos segun el tamaño de la lista de hilos
@@ -175,7 +160,7 @@ char *buscar_instruccion(uint32_t proceso_pid, uint32_t hilo_tid, int program_co
             
                 //Verificamos que sea igual al hilo buscado
                 if (hilo_proceso->tid == hilo_tid){
-                 log_info(logger_memoria,"tamanio lista_instruciones: %d",list_size(hilo_proceso->lista_de_instrucciones));
+                 log_trace(logger_memoria,"tamanio lista_instruciones: %d",list_size(hilo_proceso->lista_de_instrucciones));
                     //Guardamos valor y lo retornamos
                     char *valor = list_get(hilo_proceso->lista_de_instrucciones, program_counter);
                     return valor;

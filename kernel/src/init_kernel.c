@@ -9,8 +9,8 @@ int pid_AI_global;
 //t_io *interfaz_io;
 int socket_cpu;
 void iniciar_modulo(char *ruta_config)
-{
-    logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
+{   
+    logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_TRACE);
     cargar_config_kernel(ruta_config);
     pid_AI_global = 0;
     semaforos = malloc(sizeof(t_semaforos));
@@ -35,7 +35,7 @@ void cargar_config_kernel(char *ruta_config)
     config_kernel->puerto_interrupt = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
     config_kernel->quantum = config_get_int_value(config, "QUANTUM");
 
-    log_info(logger_kernel, "configuracion cargada");
+    log_trace(logger_kernel, "configuracion cargada");
 }
 
 // void inicializar_hilo_verificacion_fin_de_ejecucion(){
@@ -79,14 +79,14 @@ void generar_conexiones_a_cpu()
 {
     pthread_t conexion_cpu_dispatch_hilo;
     pthread_t conexion_cpu_interrupt_hilo;
-    log_info(logger_kernel, "ip cpu:%s",config_kernel->ip_cpu);
+    log_trace(logger_kernel, "ip cpu:%s",config_kernel->ip_cpu);
 
-    log_info(logger_kernel, "ip cpu:%s",config_kernel->puerto_dispatch);
+    log_trace(logger_kernel, "ip cpu:%s",config_kernel->puerto_dispatch);
     // conecta a por dispatch a cpu
     config_kernel->conexion_cpu_dispatch = crear_conexion(
         logger_kernel, "CPU", config_kernel->ip_cpu, config_kernel->puerto_dispatch);
         if(config_kernel->conexion_cpu_dispatch>0)
-            log_info(logger_kernel, "conectado a cpu");
+            log_trace(logger_kernel, "conectado a cpu");
 
 
     // pthread_create(&conexion_cpu_dispatch_hilo, NULL, (void *)procesar_conexion_dispatch, (void *)&(config_kernel->conexion_cpu_dispatch));
@@ -108,7 +108,7 @@ void generar_conexiones_a_cpu()
 //     interfaz_io->threads_en_espera = list_create();
 // }
 void enviar_respuesta_syscall_a_cpu(int respuesta){
-    log_info(logger_kernel,"enviada respuesat de syscall");
+    log_trace(logger_kernel,"enviada respuesat de syscall");
     t_paquete *paquete=crear_paquete(RESPUESTA_SYSCALL);
     agregar_a_paquete(paquete, &respuesta,sizeof(int) );
     enviar_paquete(paquete,config_kernel->conexion_cpu_interrupt);
@@ -122,17 +122,18 @@ void procesar_conexion_dispatch()
 
         int fd_conexion_cpu = config_kernel->conexion_cpu_dispatch;
         int operacion = recibir_operacion(fd_conexion_cpu);
-        log_info(logger_kernel, "se recibio el codigo de operacion: %d", operacion);
+        log_trace(logger_kernel, "se recibio el codigo de operacion: %d", operacion);
         switch (operacion)
         {
         case SEGMENTATION_FAULT: // Sigo el mismo comportamiento que PROCESO_SALIR
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             t_list *params_proceso_seg_fault = recibir_paquete(fd_conexion_cpu);
-            log_info(logger_kernel, "se recibio instruccion SEGMENTATION_FAULT:");
 
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *proceso_a_finalizar_seg_fault = (t_tcb *)list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: SEGMENTATION_FAULT",proceso_a_finalizar_seg_fault->pid, proceso_a_finalizar_seg_fault->tid);
 
             cancelar_hilos_asociados(proceso_a_finalizar_seg_fault->pid);
 
@@ -140,10 +141,10 @@ void procesar_conexion_dispatch()
 
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
+            list_destroy_and_destroy_elements(params_proceso_seg_fault, free);
 
             break;
         case PROCESO_CREAR:
-            log_info(logger_kernel, "se recibio instruccion INICIAR PROCESO");
             t_list *params_para_creacion = recibir_paquete(fd_conexion_cpu);
             char *ruta_codigo = list_get(params_para_creacion, 0);
             int tamanio_proceso = *((int *)list_get(params_para_creacion, 1));
@@ -154,19 +155,23 @@ void procesar_conexion_dispatch()
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb* sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
             sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: PROCESO SALIR", sigue_ejecutando->pid, sigue_ejecutando->tid);
             
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
+            list_destroy_and_destroy_elements(params_para_creacion, free);
             break;
         case PROCESO_SALIR:
          t_list *params_proceso_salir = recibir_paquete(fd_conexion_cpu);
-                log_info(logger_kernel, "se recibio instruccion PROCESO SALIR:");
                 sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
                 //TODO: implementar la finalizacion de proceso: ELIMINACION DE HILOS RESTANTES (SI LOS HAY)
 
                 sem_wait(&(semaforos->mutex_lista_exec));
                 t_tcb *proceso_a_finalizar =(t_tcb*) list_get(lista_exec, 0);
                 sem_post(&(semaforos->mutex_lista_exec));
+
+                log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: PROCESO SALIR:", proceso_a_finalizar->pid, proceso_a_finalizar->tid);
 
                 cancelar_hilos_asociados (proceso_a_finalizar->pid);
                 
@@ -175,20 +180,24 @@ void procesar_conexion_dispatch()
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
                 sem_post(&(semaforos->espacio_en_cpu));
                 //sem_post(&(semaforos->sem_espacio_liberado_por_proceso));
+                list_destroy_and_destroy_elements(params_proceso_salir, free);
         	break;
         case HILO_CREAR:
-            log_info(logger_kernel, "se recibio instruccion INICIAR HILO");
             t_list *params_thread = recibir_paquete(fd_conexion_cpu);
             char *codigo_th = list_get(params_thread, 0);
             int prioridad_th = *((int *)list_get(params_thread, 1));
+
             sem_wait(&(semaforos->mutex_lista_exec));
             int pid_asociado=((t_tcb *)list_get(lista_exec, 0))->pid;
+            int tid_asociado=((t_tcb *)list_get(lista_exec, 0))->tid;
             sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: INICIAR HILO", pid_asociado, tid_asociado);
             
             t_tcb* nuevo_tcb=thread_create(codigo_th, prioridad_th, pid_asociado);
             agregar_a_lista(nuevo_tcb,lista_ready,&(semaforos->mutex_lista_ready));
             sem_post(&(semaforos->contador_threads_en_ready));
-            log_info(logger_kernel, "se agrego hilo a lista_ready");
+            log_info(logger_kernel, "## (<%d>:<%d>) Se crea el Hilo - Estado: READY",nuevo_tcb->pid,nuevo_tcb->tid);
  
            /* sem_wait(&(semaforos->mutex_lista_exec));
             sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
@@ -196,82 +205,107 @@ void procesar_conexion_dispatch()
             
             enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);*/
              enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
+             list_destroy_and_destroy_elements(params_thread,free);
             break;
         case MUTEX_CREAR: // recurso,pid
             t_list *params_mutex_create = recibir_paquete(fd_conexion_cpu);
-             int pid_mutex = *((int *)list_get(params_mutex_create, 0));
+            int pid_mutex = *((int *)list_get(params_mutex_create, 0));
             char *nombre_mutex = list_get(params_mutex_create, 1);
-            log_info(logger_kernel, "se recibio instruccion MUTEX_CREATE %s",nombre_mutex);
-           
-            mutex_create(nombre_mutex, pid_mutex);
             
             sem_wait(&(semaforos->mutex_lista_exec));
             sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
             sem_post(&(semaforos->mutex_lista_exec));
 
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: MUTEX_CREATE: %s", sigue_ejecutando->pid, sigue_ejecutando->tid, nombre_mutex);
+           
+            mutex_create(nombre_mutex, pid_mutex);
+
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
+            //list_destroy_and_destroy_elements(params_mutex_create,free);*
 
             break;
         case IO_EJECUTAR: // PID, TID, tiempo de io en milisegundos
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
-            log_info(logger_kernel, "se recibio instruccion IO");
+            
             t_list *params_io = recibir_paquete(fd_conexion_cpu);
-
             int tiempo_io = *((int *)list_get(params_io, 2));
+            
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *el_que_solicito_un_tiempo = list_get(lista_exec,0);
+            sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: IO", el_que_solicito_un_tiempo->pid, el_que_solicito_un_tiempo->tid);
+
             ejecutar_io(tiempo_io);
             //la respuesta a la syscall es enviar otro hilo a cpu-->replanificar
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
+            list_destroy_and_destroy_elements(params_io,free);
   
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
             t_list *params_lock = recibir_paquete(fd_conexion_cpu);
             char *recurso = list_get(params_lock, 0);
+
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *th_lock = list_get(lista_exec, 0);
+            sem_post(&(semaforos->mutex_lista_exec));
             
-            log_info(logger_kernel, "se recibio instruccion MUTEX_LOCK %s",recurso);
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: MUTEX_LOCK: %s",th_lock->pid, th_lock->tid,recurso);
 
             mutex_lock(recurso);
+            list_destroy_and_destroy_elements(params_lock,free);
 
             break;
         case MUTEX_DESBLOQUEAR://recurso. CPU me devuleve el control-> debo mandar algo a ejecutar
-            log_info(logger_kernel, "se recibio instruccion MUTEX_UNLOCK");
             t_list *params_unlock = recibir_paquete(fd_conexion_cpu);
             char *recurso_unlok = (char*)list_get(params_unlock, 2);
+
             sem_wait(&(semaforos->mutex_lista_exec));
-            t_tcb *th_unlock = (t_tcb *)list_get(lista_exec, 0);
+            t_tcb *th_unlock = list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: MUTEX_UNLOCK: %s", th_unlock->pid, th_unlock->tid, recurso_unlok);
+
             mutex_unlock(recurso_unlok,th_unlock);
+            list_destroy_and_destroy_elements(params_unlock,free);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
             t_list *params_juntar = recibir_paquete(fd_conexion_cpu);
             int tid_target = *((int *)list_get(params_juntar, 0));
-             sem_wait(&(semaforos->mutex_lista_exec));
+
+            sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *th_en_exec = (t_tcb *)list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
-            log_info(logger_kernel, "se recibio instruccion HILO_JUNTAR a tid:%d",tid_target);
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: HILO_JUNTAR a TID: %d",th_en_exec->pid,th_en_exec->tid, tid_target);
             
             thread_join(th_en_exec,tid_target);
+            list_destroy_and_destroy_elements(params_juntar,free);
         break;
 
         case HILO_SALIR:
-            log_info(logger_kernel, "se recibio instruccion FINALIZAR_HILO");
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
-            recibir_paquete(fd_conexion_cpu);// recibo el paquete para no tener basura en el socket
+            t_list *elpaquete_salir = recibir_paquete(fd_conexion_cpu);// recibo el paquete para no tener basura en el socket
             
             // quito de exec
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *thread_saliente = (t_tcb *)list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: FINALIZAR_HILO",thread_saliente->pid,thread_saliente->tid);
+
             thread_exit(thread_saliente);
 
             ///hacemos unicamente la eliminacion de la list
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *tid_en_exec = list_remove(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
-            log_info(logger_kernel, "Hilo con PID:%d y TID:%d salio de EXEC", tid_en_exec->pid, tid_en_exec->tid);
+
+            log_trace(logger_kernel, "Hilo con PID:%d y TID:%d salio de EXEC, es decir, finalizo :) ", tid_en_exec->pid, tid_en_exec->tid);
             //pasar_execute_a_exit(); este pasaje puede estar de mas, en thread exit ya se libera la memoria
 
-        //  log_info(logger_kernel, "HILO EN EXEC luego de desalojar...");
+        //  log_trace(logger_kernel, "HILO EN EXEC luego de desalojar...");
         //  mostrar_tcbs(lista_exec,logger_kernel);
             
             log_warning(logger_kernel, "HILOS PENDIENTES EN READY");
@@ -283,40 +317,55 @@ void procesar_conexion_dispatch()
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION); 
             //RTA A REPLANIFICACION        ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               
             sem_post(&(semaforos->espacio_en_cpu));
+            list_destroy_and_destroy_elements(elpaquete_salir,free);  //este es nuevo
             
             break;
         case HILO_CANCELAR:
-            log_info(logger_kernel, "se recibio instruccion CANCELAR_HILO");
             t_list *params_th_cancel = recibir_paquete(fd_conexion_cpu);
             int tid = *((int *)list_get(params_th_cancel, 0));
+
             sem_wait(&(semaforos->mutex_lista_exec));
             t_tcb *thread_asociado = (t_tcb *)list_get(lista_exec, 0);
             sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: CANCELAR_HILO con TID: %d",thread_asociado->pid,thread_asociado->tid, tid);
+
             thread_cancel(tid,thread_asociado->pid);
             //enviar_thread_a_cpu(thread_asociado,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
+            list_destroy_and_destroy_elements(params_th_cancel,free);
             
             break;
         case PEDIDO_MEMORY_DUMP:
             t_list* dump_args=recibir_paquete(fd_conexion_cpu);
-            log_info(logger_kernel, "se recibio instruccion DUMP_MEMORY");
+
+            sem_wait(&(semaforos->mutex_lista_exec));
+            t_tcb *thread_dump = (t_tcb *)list_get(lista_exec, 0);
+            sem_post(&(semaforos->mutex_lista_exec));
+
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: MEMORY_DUMP",thread_dump->pid,thread_dump->tid);
+
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
             memory_dump();
             sem_wait(&(semaforos->conexion_memoria_dump));
             // marca la cpu como libre
-            printf("Mande el DUMP Y SIGO\n");
+            //printf("Mande el DUMP Y SIGO\n");
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
+            list_destroy_and_destroy_elements(dump_args,free);
             break;
         case FIN_DE_QUANTUM://Interrupcion
-            log_info(logger_kernel, "se recibio instruccion FIN_DE_QUANTUM_OK");
             t_list *params_fin_q = recibir_paquete(fd_conexion_cpu);
             int pid_desalojo=*((int *)list_get(params_fin_q, 0));
-            int tid_desalojo=*((int *)list_get(params_fin_q, 1));          
+            int tid_desalojo=*((int *)list_get(params_fin_q, 1));  
+
+            log_trace(logger_kernel, "## (<%d>:<%d>) FIN_DE_QUANTUM_OK",pid_desalojo,tid_desalojo);
+                    
             manejar_interrupcion_fin_quantum();
+            list_destroy_and_destroy_elements(params_fin_q,free);
         break;
         default:
-            log_info(logger_kernel," OPERACION INVALIDA RECIBIDA DE CPU ");
+            log_trace(logger_kernel," OPERACION INVALIDA RECIBIDA DE CPU ");
             
             return EXIT_FAILURE;
          break;
