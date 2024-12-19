@@ -8,6 +8,8 @@ t_list* lista_blocked;
 t_list* lista_exit;
 t_list* lista_procesos_global;
 t_list* lista_espera_io;
+t_list* lista_mutex;
+
 void inicializar_listas() {
     lista_new = list_create();
     lista_ready = list_create();
@@ -16,6 +18,7 @@ void inicializar_listas() {
     lista_blocked = list_create();
     lista_procesos_global=list_create();
     lista_espera_io = list_create();
+    lista_mutex = list_create();
 }
 void inicializar_hilos_largo_plazo(){
     pthread_create(&(hilos->hilo_planif_largo_plazo),NULL,planificar_procesos,NULL);

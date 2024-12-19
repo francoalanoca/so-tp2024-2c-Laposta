@@ -9,7 +9,7 @@ int pid_AI_global;
 //t_io *interfaz_io;
 int socket_cpu;
 void iniciar_modulo(char *ruta_config)
-{
+{   
     logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_TRACE);
     cargar_config_kernel(ruta_config);
     pid_AI_global = 0;
@@ -141,7 +141,7 @@ void procesar_conexion_dispatch()
 
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
-            //list_destroy_and_destroy_elements(params_proceso_seg_fault, free);
+            list_destroy_and_destroy_elements(params_proceso_seg_fault, free);
 
             break;
         case PROCESO_CREAR:
@@ -160,7 +160,7 @@ void procesar_conexion_dispatch()
             
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
-            //list_destroy_and_destroy_elements(params_para_creacion, free);
+            list_destroy_and_destroy_elements(params_para_creacion, free);
             break;
         case PROCESO_SALIR:
          t_list *params_proceso_salir = recibir_paquete(fd_conexion_cpu);
@@ -180,7 +180,7 @@ void procesar_conexion_dispatch()
                 enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
                 sem_post(&(semaforos->espacio_en_cpu));
                 //sem_post(&(semaforos->sem_espacio_liberado_por_proceso));
-                //list_destroy_and_destroy_elements(params_proceso_salir, free);
+                list_destroy_and_destroy_elements(params_proceso_salir, free);
         	break;
         case HILO_CREAR:
             t_list *params_thread = recibir_paquete(fd_conexion_cpu);
@@ -205,7 +205,7 @@ void procesar_conexion_dispatch()
             
             enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);*/
              enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
-             //list_destroy_and_destroy_elements(params_thread,free);
+             list_destroy_and_destroy_elements(params_thread,free);
             break;
         case MUTEX_CREAR: // recurso,pid
             t_list *params_mutex_create = recibir_paquete(fd_conexion_cpu);
@@ -222,7 +222,7 @@ void procesar_conexion_dispatch()
 
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
-            //list_destroy_and_destroy_elements(params_mutex_create,free);
+            //list_destroy_and_destroy_elements(params_mutex_create,free);*
 
             break;
         case IO_EJECUTAR: // PID, TID, tiempo de io en milisegundos
@@ -240,7 +240,7 @@ void procesar_conexion_dispatch()
             ejecutar_io(tiempo_io);
             //la respuesta a la syscall es enviar otro hilo a cpu-->replanificar
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
-            //list_destroy_and_destroy_elements(params_io,free);
+            list_destroy_and_destroy_elements(params_io,free);
   
             break;
         case MUTEX_BLOQUEAR: // recurso.CPU me devuleve el control-> debo mandar algo a ejecutar
@@ -254,7 +254,7 @@ void procesar_conexion_dispatch()
             log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: MUTEX_LOCK: %s",th_lock->pid, th_lock->tid,recurso);
 
             mutex_lock(recurso);
-            //list_destroy_and_destroy_elements(params_lock,free);
+            list_destroy_and_destroy_elements(params_lock,free);
 
             break;
         case MUTEX_DESBLOQUEAR://recurso. CPU me devuleve el control-> debo mandar algo a ejecutar
@@ -268,7 +268,7 @@ void procesar_conexion_dispatch()
             log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: MUTEX_UNLOCK: %s", th_unlock->pid, th_unlock->tid, recurso_unlok);
 
             mutex_unlock(recurso_unlok,th_unlock);
-            //list_destroy_and_destroy_elements(params_unlock,free);
+            list_destroy_and_destroy_elements(params_unlock,free);
         break;
         case HILO_JUNTAR://tid_target. CPU me devuleve el control-> debo mandar algo a ejecutar
             t_list *params_juntar = recibir_paquete(fd_conexion_cpu);
@@ -281,12 +281,12 @@ void procesar_conexion_dispatch()
             log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: HILO_JUNTAR a TID: %d",th_en_exec->pid,th_en_exec->tid, tid_target);
             
             thread_join(th_en_exec,tid_target);
-            //list_destroy_and_destroy_elements(params_juntar,free);
+            list_destroy_and_destroy_elements(params_juntar,free);
         break;
 
         case HILO_SALIR:
             sem_post (&(semaforos->sem_finalizacion_ejecucion_cpu));
-            recibir_paquete(fd_conexion_cpu);// recibo el paquete para no tener basura en el socket
+            t_list *elpaquete_salir = recibir_paquete(fd_conexion_cpu);// recibo el paquete para no tener basura en el socket
             
             // quito de exec
             sem_wait(&(semaforos->mutex_lista_exec));
@@ -317,6 +317,7 @@ void procesar_conexion_dispatch()
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION); 
             //RTA A REPLANIFICACION        ACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA               
             sem_post(&(semaforos->espacio_en_cpu));
+            list_destroy_and_destroy_elements(elpaquete_salir,free);  //este es nuevo
             
             break;
         case HILO_CANCELAR:
@@ -332,7 +333,7 @@ void procesar_conexion_dispatch()
             thread_cancel(tid,thread_asociado->pid);
             //enviar_thread_a_cpu(thread_asociado,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
-            //list_destroy_and_destroy_elements(params_th_cancel,free);
+            list_destroy_and_destroy_elements(params_th_cancel,free);
             
             break;
         case PEDIDO_MEMORY_DUMP:
@@ -351,7 +352,7 @@ void procesar_conexion_dispatch()
             //printf("Mande el DUMP Y SIGO\n");
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
-            //list_destroy_and_destroy_elements(dump_args,free);
+            list_destroy_and_destroy_elements(dump_args,free);
             break;
         case FIN_DE_QUANTUM://Interrupcion
             t_list *params_fin_q = recibir_paquete(fd_conexion_cpu);
@@ -361,7 +362,7 @@ void procesar_conexion_dispatch()
             log_trace(logger_kernel, "## (<%d>:<%d>) FIN_DE_QUANTUM_OK",pid_desalojo,tid_desalojo);
                     
             manejar_interrupcion_fin_quantum();
-            //list_destroy_and_destroy_elements(params_fin_q,free);
+            list_destroy_and_destroy_elements(params_fin_q,free);
         break;
         default:
             log_trace(logger_kernel," OPERACION INVALIDA RECIBIDA DE CPU ");
