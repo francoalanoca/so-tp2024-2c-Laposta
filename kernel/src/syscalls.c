@@ -14,6 +14,8 @@ void process_create(char* ruta_instrucciones,int tam_proceso,int prioridad_hilo_
 
     log_trace(logger_kernel, "nuevo proceso con pid %d y prioridad %d",pcb_nuevo->pid,pcb_nuevo->prioridad_th_main);
 
+    log_info(logger_kernel,"## (<PID>:%d) Se crea el proceso - Estado: NEW",pcb_nuevo->pid);
+
     sem_post(&(semaforos->sem_procesos_new));
     
     log_trace(logger_kernel, "Crear proceso: %s",ruta_instrucciones);
@@ -36,6 +38,12 @@ t_tcb* thread_create(char* pseudo_codigo,int prioridad_th,int pid){
 //TODO: deberiamos tener un mutext para cada proceso.Aca modifico su estuctura
 void mutex_create(char* nombre_mutex,int pid_mutex){
     t_mutex* mutex_nuevo=malloc(sizeof(t_mutex));
+    //comprobar si se creo el mutex
+    if(mutex_nuevo==NULL){
+        log_error(logger_kernel,"no se pudo crear el mutex");
+        return;
+    }
+
     mutex_nuevo->recurso=nombre_mutex;
     mutex_nuevo->thread_asignado=NULL;
     mutex_nuevo->estado=SIN_ASIGNAR;//sin ASIGNAR
@@ -61,7 +69,7 @@ void ejecutar_io(int tiempo){
  
     //agrego a io
     agregar_a_lista(tcb,lista_espera_io,&(semaforos->mutex_lista_espera_io));
-    log_trace(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
+    log_info(logger_kernel,"## (<%d>:<%d>)- Bloqueado por: <IO>",tcb->pid,tcb->tid);
 
     //muestro el tcb agregado a la lista de espera de io
     sem_wait(&(semaforos->mutex_lista_espera_io));
@@ -98,6 +106,7 @@ void mutex_lock(char* recurso){
             /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));           
             agregar_a_lista(tcb_ejecutando,lista_blocked,&(semaforos->mutex_lista_blocked));*/
             list_add(mutex->lista_threads_bloquedos,tcb_ejecutando);
+            log_info("## (<%d>:<%d>)- Bloqueado por MUTEX: <%s>",tcb_ejecutando->pid,tcb_ejecutando->tid,mutex->recurso);
             pasar_execute_a_blocked();
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
             sem_post(&(semaforos->espacio_en_cpu));
@@ -109,6 +118,7 @@ void mutex_lock(char* recurso){
             /* remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb_ejecutando,lista_exit,&(semaforos->mutex_lista_exit));*/
             thread_exit(tcb_ejecutando);
+            log_info(logger_kernel,"no hay mutex para lockear");
             //pasar_execute_a_exit();
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);            
 

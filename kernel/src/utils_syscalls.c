@@ -32,9 +32,9 @@ void enviar_solicitud_espacio_a_memoria(t_pcb* pcb,int socket){
 int recibir_resp_de_memoria_a_solicitud(int socket_memoria){
     int cod=-1;
     cod=recibir_operacion(socket_memoria);
-    t_list* paquete_respuesta_memoria = recibir_paquete(socket_memoria);
+    recibir_paquete(socket_memoria);
     log_trace(logger_kernel,"recibi paquete de memoria");
-    list_destroy_and_destroy_elements(paquete_respuesta_memoria,free);
+    //list_destroy_and_destroy_elements(paquete_respuesta_memoria,free);
     return cod;
 
 }
@@ -205,7 +205,7 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
     int posicion_a_eliminar=buscar_indice_de_tid_en_proceso(pcb,tcb_saliente->tid);
     if(posicion_a_eliminar!=-1){
         list_remove(pcb->lista_tids,posicion_a_eliminar);
-        
+        log_info("## (<%d>:<%d>) FInaliza el hilo",tcb_saliente->pid,tcb_saliente->tid);
         exito_eliminando_de_pcb=true;
     }
         
@@ -324,8 +324,9 @@ void hilo_sleep_io() {
             sem_post(&(semaforos->mutex_lista_espera_io));
 
             int tiempo = tcb_usando_io->tiempo_de_io / 1000;
-            log_trace(logger_kernel, "## IO en uso por %d milisegundos", tiempo);
+            log_info(logger_kernel, "## IO en uso por %d milisegundos", tiempo);
             sleep(tiempo);
+            log_info(logger_kernel,"## (<%d><%d>) Finalizó IO y pasa a READY", tcb_usando_io->pid, tcb_usando_io->tid);
             sem_post(&(semaforos->sem_io_sleep_en_uso));
         } else {
             sem_post(&(semaforos->mutex_lista_espera_io));

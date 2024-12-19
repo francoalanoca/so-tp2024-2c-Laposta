@@ -61,6 +61,8 @@ void *planificar_fifo()
         list_add(lista_exec, tcb);
         sem_post(&(semaforos->mutex_lista_exec));
 
+        log_trace(logger_kernel, "Paso a exec el tcb con pid:%d y tid:%d", tcb->pid, tcb->tid);
+
         enviar_thread_a_cpu(tcb,config_kernel->conexion_cpu_dispatch);
     }
 }
@@ -151,7 +153,7 @@ void *interrupcion_quantum(){
     sem_post(&(semaforos->mutex_lista_exec));
     usleep(config_kernel->quantum * 1000);
     enviar_interrumpir_cpu(tcb, FIN_DE_QUANTUM);
-    log_error(logger_kernel,"enviada interrupt, fin de Q de pid:%d, tid:%d",tcb->pid,tcb->tid);
+    log_error(logger_kernel,"## (<%d>:<%d>) - Desalojado por fin de Quantum",tcb->pid,tcb->tid);
     //TODO: que pasa si se interrumpe antes el tcb, por ej por IO
 
 }
