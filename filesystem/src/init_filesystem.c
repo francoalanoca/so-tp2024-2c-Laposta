@@ -38,7 +38,7 @@ int cargar_configuracion(char *path) {
 
     file_cfg_file_system = config_create(path);
     
-    logger_file_system = log_create("file_system.log", "file_system", true, log_level_from_string(config_get_string_value(file_cfg_file_system,"LOG_LEVEL")));
+    logger_file_system = log_create("file_system.log", "file_system", true, log_level_from_string(strdup(config_get_string_value(file_cfg_file_system,"LOG_LEVEL"))));
     
     cfg_file_system->PUERTO_ESCUCHA = strdup(config_get_string_value(file_cfg_file_system, "PUERTO_ESCUCHA"));
     log_info(logger_file_system, "PUERTO_ESCUCHA cargado correctamente: %s", cfg_file_system->PUERTO_ESCUCHA);
@@ -72,13 +72,13 @@ int init(char *path_config) {
     cfg_file_system = cfg_file_system_start();
 
     
+  
+    //inicializo el archivo de configuracion
+    cargar_configuracion(path_config);
     if (logger_file_system == NULL) {
         printf("No pude crear el logger");
         return false;
     }
-    //inicializo el archivo de configuracion
-    cargar_configuracion(path_config);
-
     return checkProperties(path_config);
 }
 
