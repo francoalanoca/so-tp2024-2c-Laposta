@@ -1,13 +1,13 @@
 #include "../include/main.h"
 
-
+char *ip_fs;
 char *path_config;
 pthread_mutex_t mtx_file_system;
 
 int main(char argc, char *argv[]) {
 
     path_config = argv[1];
-
+    ip_fs = argv[2];
     printf("iniciando...\n");
 
     pthread_mutex_init(&mtx_file_system, NULL);
@@ -22,7 +22,7 @@ int main(char argc, char *argv[]) {
     pthread_create(&fs, NULL, (void *)iniciar_fs, NULL);
    
     pthread_t servidor_fs;
-    pthread_create(&servidor_fs, NULL, (void *)crear_servidor_fs, "127.0.0.0");
+    pthread_create(&servidor_fs, NULL, (void *)crear_servidor_fs, ip_fs);
     pthread_join (servidor_fs,NULL);
     pthread_join (fs,NULL);
    
