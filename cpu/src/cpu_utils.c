@@ -589,7 +589,7 @@ uint32_t mmu(uint32_t direccion_logica, t_proceso* proceso, int conexion, int co
              direccion_logica, proceso->registros_cpu.base, proceso->registros_cpu.limite);
 
     // Validación de límites de partición
-    if (proceso->registros_cpu.base + desplazamiento <= proceso->registros_cpu.limite) {
+    if (proceso->registros_cpu.base + desplazamiento+3 <= proceso->registros_cpu.limite) { // agrego 3 bytes porque cuento la posicion como el byte 1 de los 4 byte que tengo que grabar
         direccion_fisica_resultado = proceso->registros_cpu.base + desplazamiento;
         log_trace(logger_cpu, "MMU: Dirección Física válida - Dirección Física: %u", direccion_fisica_resultado);
         return direccion_fisica_resultado;
