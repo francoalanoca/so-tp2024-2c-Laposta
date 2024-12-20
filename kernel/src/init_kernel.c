@@ -10,7 +10,7 @@ int pid_AI_global;
 int socket_cpu;
 void iniciar_modulo(char *ruta_config)
 {   
-    logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_TRACE);
+    //logger_kernel = log_create("logs_kernel.log", "KERNEL", true, LOG_LEVEL_TRACE);
     cargar_config_kernel(ruta_config);
     pid_AI_global = 0;
     semaforos = malloc(sizeof(t_semaforos));
@@ -30,6 +30,7 @@ void cargar_config_kernel(char *ruta_config)
     config_kernel->ip_cpu = config_get_string_value(config, "IP_CPU");
     config_kernel->ip_memoria = config_get_string_value(config, "IP_MEMORIA");
     config_kernel->puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+    logger_kernel = log_create("logs_kernel.log", "KERNEL", true, log_level_from_string(strdup(config_get_string_value(config, "LOG_LEVEL"))));
     config_kernel->log_level = config_get_string_value(config, "LOG_LEVEL");
     config_kernel->puerto_dispatch = config_get_string_value(config, "PUERTO_CPU_DISPATCH");
     config_kernel->puerto_interrupt = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
