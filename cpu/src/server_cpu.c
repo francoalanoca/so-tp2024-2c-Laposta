@@ -7,9 +7,9 @@ int respuesta_syscall;
 //pcb *pcb_actual;
 
 void* crear_servidor_dispatch(char* ip_cpu){
-    log_info(logger_cpu, "empieza crear_servidor_dispatch");
+    log_trace(logger_cpu, "empieza crear_servidor_dispatch");
 
-    log_info(logger_cpu, "valor de PUERTO_ESCUCHA_DISPATCH: %s", cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
+    log_trace(logger_cpu, "valor de PUERTO_ESCUCHA_DISPATCH: %s", cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
     
 
     puerto_dispatch = malloc((strlen(cfg_cpu->PUERTO_ESCUCHA_DISPATCH) + 1) * sizeof(char));
@@ -17,28 +17,28 @@ if (puerto_dispatch != NULL) {
     strcpy(puerto_dispatch, cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
 }
 else{
-    log_info(logger_cpu,"error al asignar memoria a variable del puerto");
+    log_trace(logger_cpu,"error al asignar memoria a variable del puerto");
 }
     //strcpy(puerto_dispatch, cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
-    log_info(logger_cpu, "crea puerto_dispatch");
+    log_trace(logger_cpu, "crea puerto_dispatch");
     printf("El puerto_dispatch es: %s", puerto_dispatch);
     fd_mod2 = iniciar_servidor(logger_cpu, "SERVER CPU DISPATCH", ip_cpu,  puerto_dispatch);
-    log_info(logger_cpu, "inicio servidor");
+    log_trace(logger_cpu, "inicio servidor");
     if (fd_mod2 == 0) {
         log_error(logger_cpu, "Fallo al crear el servidor, cerrando cpu");
         return EXIT_FAILURE;
     }
     
 
-//log_info(logger_cpu, "POST SEMAFORO");
+//log_trace(logger_cpu, "POST SEMAFORO");
   //     sem_post(&sem_valor_instruccion);
     while (server_escuchar_dispatch(logger_cpu, "DISPATCH", (uint32_t)fd_mod2,&conexion_kernel_dispatch));
 }
 
 int server_escuchar_dispatch(t_log *logger, char *server_name, int server_socket, int *global_socket) {
-    log_info(logger_cpu, "entra a server escuchar");
+    log_trace(logger_cpu, "entra a server escuchar");
     int cliente_socket = esperar_cliente(logger, server_name, server_socket);
-    log_info(logger_cpu, "cliente conectado socket %d", cliente_socket);
+    log_trace(logger_cpu, "cliente conectado socket %d", cliente_socket);
     *global_socket = cliente_socket; 
     
     sem_post(&sem_conexion_dispatch_iniciado);
@@ -77,7 +77,7 @@ void procesar_conexion_dispatch(void *v_args){
     while (cliente_socket != -1) {
    
         if (recv(cliente_socket, &cop, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
-            log_info(logger_cpu, "DISCONNECT! KERNEL");
+            log_trace(logger_cpu, "DISCONNECT! KERNEL");
 
             break;
         }
@@ -92,7 +92,7 @@ void procesar_conexion_dispatch(void *v_args){
                // sem_wait(&sem_cpu_termino_ciclo);
                 t_list* lista_paquete_proceso_ejecutar = recibir_paquete(cliente_socket);
                 t_proceso* proceso = proceso_deserializar(lista_paquete_proceso_ejecutar); 
-                log_info(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
+                log_trace(logger_cpu, "Proceso a ejecutar: %d", proceso->pid);
                 //reinicio cpu para ejecutar otro proceso
                 pthread_mutex_lock(&mutex_interrupcion_kernel);  
                 interrupcion_kernel=false;
@@ -109,6 +109,7 @@ void procesar_conexion_dispatch(void *v_args){
                
                 proceso_actual = proceso;           
                 solicitar_contexto_a_memoria(proceso,socket_memoria);
+                log_info(logger_cpu, "## TID: <%d> - Solicito Contexto Ejecución",proceso->tid);
                 sem_wait(&sem_valor_base_particion);
                 pthread_mutex_unlock(&mutex_proceso_actual);
                 list_destroy_and_destroy_elements(lista_paquete_proceso_ejecutar,free);
@@ -141,7 +142,7 @@ void procesar_conexion_interrupt(void *v_args){
     
  
         if (recv(cliente_socket, &cop, sizeof(uint32_t), MSG_WAITALL) != sizeof(uint32_t)) {
-            log_info(logger_cpu, "DISCONNECT! KERNEL");
+            log_trace(logger_cpu, "DISCONNECT! KERNEL");
 
             break;
         }
@@ -156,9 +157,9 @@ void procesar_conexion_interrupt(void *v_args){
                 t_list *params_fin_q = recibir_paquete(cliente_socket);
                 int pid=*((int *)list_get(params_fin_q, 0));
                 int tid=*((int *)list_get(params_fin_q, 1));    
-                log_error(logger_cpu, "## Llega interrupción al puerto Interrupt para pid:%d tid:%d",pid, tid); // LOG OBLIGATORIO
+                log_info(logger_cpu, "## Llega interrupción al puerto Interrupt para pid:%d tid:%d",pid, tid); // LOG OBLIGATORIO
 
-                //log_warning(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
+                //log_trace(logger_cpu, "##EJECUTANDO PID:%d ,TID: %d",proceso_actual->pid, proceso_actual->tid); 
                 //pthread_mutex_lock(&mutex_proceso_actual);
                 //proceso_actual = NULL;//TODO: no deberia hacer: interrupcion_kernel=true en lugar del proceso?? 
                // pthread_mutex_unlock(&mutex_proceso_actual);
@@ -170,7 +171,7 @@ void procesar_conexion_interrupt(void *v_args){
             }
             case RESPUESTA_SYSCALL:
                 {
-                log_info(logger_cpu, "Recibiendo respuesta syscall");
+                log_trace(logger_cpu, "Recibiendo respuesta syscall");
                 t_list* params_syscall= (char*)recibir_paquete(cliente_socket);
 
                 respuesta_syscall=*((int*)list_get(params_syscall,0));
@@ -205,17 +206,17 @@ void atender_memoria(int *socket_mr) {
     while (socket_memoria_server != -1) {
 
         if (recv(socket_memoria_server, &cop, sizeof(int32_t), MSG_WAITALL) != sizeof(int32_t)) {
-            log_info(logger_cpu, "DISCONNECT! Atender memoria");
+            log_trace(logger_cpu, "DISCONNECT! Atender memoria");
 
             break;
         }
         switch (cop) {
 
 case SOLICITUD_INSTRUCCION_RTA:
-    log_info(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
+    log_trace(logger_cpu, "SE RECIBE INSTRUCCION DE MEMORIA");
 
     t_list* lista_paquete_instruccion_rec = recibir_paquete(socket_memoria_server);
-    log_info(logger_cpu, "Paquete recibido");
+    log_trace(logger_cpu, "Paquete recibido");
 
     instr_t* instruccion_recibida = instruccion_deserializar(lista_paquete_instruccion_rec);
 
@@ -226,7 +227,7 @@ case SOLICITUD_INSTRUCCION_RTA:
             prox_inst = NULL;
         }
         prox_inst = instruccion_recibida;
-        log_info(logger_cpu, "EL codigo de instrucción es %d ",prox_inst->id);
+        log_trace(logger_cpu, "EL codigo de instrucción es %d ",prox_inst->id);
 
         // Liberar lista después de su uso
         list_destroy_and_destroy_elements(lista_paquete_instruccion_rec, free);
@@ -264,7 +265,7 @@ case SOLICITUD_INSTRUCCION_RTA:
                 uint32_t tamanio_valor_registro_obtenido = *(uint32_t*) list_get(lista_paquete_memoria_leer_ok,1);
                 //proceso_actual->registros_cpu.DX = *(uint32_t*)list_get(lista_paquete_memoria_leer_ok,2);
                 valor_registro_obtenido = *(uint32_t*)list_get(lista_paquete_memoria_leer_ok,2);
-                log_info (logger_cpu, "Valor obtenido de memoria: %d",valor_registro_obtenido);
+                log_trace (logger_cpu, "Valor obtenido de memoria: %d",valor_registro_obtenido);
                 sem_post(&sem_valor_registro_recibido);
                 //sem_post(&sem_esperando_read_write_mem);
                 list_destroy_and_destroy_elements(lista_paquete_memoria_leer_ok,free);
@@ -278,7 +279,7 @@ case SOLICITUD_INSTRUCCION_RTA:
             
             break;
             case DEVOLUCION_CONTEXTO_RTA_OK: 
-             log_info(logger_cpu,"se actualizo correctamente el contexto");
+             log_trace(logger_cpu,"se actualizo correctamente el contexto");
                 t_list* lista_paquete_ctx_rta = recibir_paquete(socket_memoria_server);
                 int pid_v= *(uint32_t*)list_get(lista_paquete_ctx_rta,0);
                 int tid_v = *(uint32_t*)list_get(lista_paquete_ctx_rta,1);
@@ -286,7 +287,7 @@ case SOLICITUD_INSTRUCCION_RTA:
                 list_destroy_and_destroy_elements(lista_paquete_ctx_rta,free);
             break;
              case DEVOLUCION_CONTEXTO_RTA_ERROR:
-                log_info(logger_cpu,"error actualizando el contexto en memoria");
+                log_trace(logger_cpu,"error actualizando el contexto en memoria");
                 t_list* lista_paquete_ctx_rta_error = recibir_paquete(socket_memoria_server);
                 list_destroy(lista_paquete_ctx_rta_error);
              break;            
@@ -311,10 +312,10 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
     t_proceso *proceso_nuevo = malloc(sizeof(t_proceso));
    
     proceso_nuevo->pid = *((uint32_t*)list_get(lista_paquete_proceso, 0));
-    log_info(logger_cpu, "recibi el pid:%u",proceso_nuevo->pid);
+    log_trace(logger_cpu, "recibi el pid:%u",proceso_nuevo->pid);
 
     proceso_nuevo->tid = *((uint32_t*)list_get(lista_paquete_proceso, 1));
-    log_info(logger_cpu, "recibi el tid:%u",proceso_nuevo->tid);
+    log_trace(logger_cpu, "recibi el tid:%u",proceso_nuevo->tid);
 
     proceso_nuevo->registros_cpu.PC = 0;
     proceso_nuevo->registros_cpu.AX = 0;
@@ -331,9 +332,9 @@ t_proceso *proceso_deserializar(t_list*  lista_paquete_proceso ) {
 }
 
 int server_escuchar_interrupt(t_log *logger, char *server_name, int server_socket, int *global_socket) {
-    log_info(logger_cpu, "entra a server escuchar");
+    log_trace(logger_cpu, "entra a server escuchar");
     int cliente_socket = esperar_cliente(logger, server_name, server_socket);
-    log_info(logger_cpu, "sale de esperar_cliente");
+    log_trace(logger_cpu, "sale de esperar_cliente");
     *global_socket = cliente_socket;
     sem_post(&sem_conexion_interrupt_iniciado);
     if (cliente_socket != -1) {
@@ -352,9 +353,9 @@ int server_escuchar_interrupt(t_log *logger, char *server_name, int server_socke
 
 
 void* crear_servidor_interrupt(char* ip_cpu){
-    log_info(logger_cpu, "empieza crear_servidor_interrupt");
+    log_trace(logger_cpu, "empieza crear_servidor_interrupt");
 
-    log_info(logger_cpu, "valor de PUERTO_ESCUCHA_INTERRUPT: %s", cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
+    log_trace(logger_cpu, "valor de PUERTO_ESCUCHA_INTERRUPT: %s", cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
     
 
     puerto_interrupt = malloc((strlen(cfg_cpu->PUERTO_ESCUCHA_INTERRUPT) + 1) * sizeof(char));
@@ -362,18 +363,18 @@ if (puerto_interrupt != NULL) {
     strcpy(puerto_interrupt, cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
 }
 else{
-    log_info(logger_cpu,"error al asignar memoria a variable del puerto");
+    log_trace(logger_cpu,"error al asignar memoria a variable del puerto");
 }
     //strcpy(puerto_interrupt, cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
-    log_info(logger_cpu, "crea puerto_interrupt");
+    log_trace(logger_cpu, "crea puerto_interrupt");
     printf("El puerto_interrupt es: %s", puerto_interrupt);
     fd_mod3 = iniciar_servidor(logger_cpu, "SERVER CPU INTERRUPT", ip_cpu,  puerto_interrupt);
-    log_info(logger_cpu, "inicio servidor");
+    log_trace(logger_cpu, "inicio servidor");
     if (fd_mod3 == 0) {
         log_error(logger_cpu, "Fallo al crear el servidor, cerrando cpu");
         return EXIT_FAILURE;
     }
-log_info(logger_cpu, "va a escuchar");
+log_trace(logger_cpu, "va a escuchar");
     while (server_escuchar_interrupt(logger_cpu, "INTERRUPT", (uint32_t)fd_mod3,&conexion_kernel_interrupt));
 }
 
@@ -381,9 +382,9 @@ log_info(logger_cpu, "va a escuchar");
 
 instr_t* instruccion_deserializar(t_list* lista_paquete_inst){
     instr_t *instruccion_nueva = malloc(sizeof(instr_t));
-    log_info(logger_cpu, "Paquete recibido Entro en instruccion deserealizar");
+    log_trace(logger_cpu, "Paquete recibido Entro en instruccion deserealizar");
     char* instruccion = list_get(lista_paquete_inst, 0);
-    log_info(logger_cpu,"instruccioiin recibida: %s", instruccion);
+    log_trace(logger_cpu,"instruccioiin recibida: %s", instruccion);
     armar_instr(instruccion_nueva,instruccion);
   
 	return instruccion_nueva;
@@ -414,7 +415,7 @@ void armar_instr(instr_t *instr, const char *input) {
         return;
     }
 
-    log_info(logger_cpu, "El primer token es: %s", token);
+    log_trace(logger_cpu, "El primer token es: %s", token);
 
     // Inicialización completa de la estructura
     instr->id = -1;
@@ -436,7 +437,7 @@ void armar_instr(instr_t *instr, const char *input) {
 
     int param_count = 0;
     while ((token = strtok(NULL, " ")) != NULL) {
-        log_info(logger_cpu, "Parámetro %d: %s", param_count + 1, token);
+        log_trace(logger_cpu, "Parámetro %d: %s", param_count + 1, token);
         switch (param_count) {
             case 0:
                 instr->param1 = strdup(token);
@@ -459,7 +460,7 @@ void armar_instr(instr_t *instr, const char *input) {
                 instr->param5Length = strlen(token);
                 break;
             default:
-                log_warning(logger_cpu, "Parámetro extra ignorado: %s", token);
+                log_trace(logger_cpu, "Parámetro extra ignorado: %s", token);
                 break;
         }
         param_count++;
@@ -473,7 +474,7 @@ void armar_instr(instr_t *instr, const char *input) {
 void free_instr(instr_t *instr) {
     if (instr == NULL) return;
 
-    log_info(logger_cpu, "Liberando memoria de instr_t...");
+    log_trace(logger_cpu, "Liberando memoria de instr_t...");
     if (instr->param1) { free(instr->param1); instr->param1 = NULL; }
     if (instr->param2) { free(instr->param2); instr->param2 = NULL; }
     if (instr->param3) { free(instr->param3); instr->param3 = NULL; }
@@ -481,7 +482,7 @@ void free_instr(instr_t *instr) {
     if (instr->param5) { free(instr->param5); instr->param5 = NULL; }
 
     free(instr);
-    log_info(logger_cpu, "instr_t liberado correctamente.");
+    log_trace(logger_cpu, "instr_t liberado correctamente.");
 }
 
 void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){    
@@ -490,9 +491,9 @@ void deserializar_contexto_(t_proceso* proceso, t_list* lista_contexto){
    
     proceso->pid = *(uint32_t*)list_get(lista_contexto, 0);
     proceso->tid = *(uint32_t*)list_get(lista_contexto, 1);
-    log_warning(logger_cpu,"program counter recibido:%s",list_get(lista_contexto, 2));
+    log_trace(logger_cpu,"program counter recibido:%s",list_get(lista_contexto, 2));
     proceso->registros_cpu.PC = *(uint32_t*)list_get(lista_contexto, 2);
-    log_warning(logger_cpu,"program counter cargado:%d",proceso->registros_cpu.PC);
+    log_trace(logger_cpu,"program counter cargado:%d",proceso->registros_cpu.PC);
     proceso->registros_cpu.AX = *(uint32_t*)list_get(lista_contexto, 3);
     proceso->registros_cpu.BX = *(uint32_t*)list_get(lista_contexto, 4);
     proceso->registros_cpu.CX = *(uint32_t*)list_get(lista_contexto, 5);

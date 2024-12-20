@@ -94,17 +94,17 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    log_info(logger_cpu, "empieza el programa");
+    log_trace(logger_cpu, "empieza el programa");
     socket_memoria = crear_conexion(logger_cpu, "MEMORIA", cfg_cpu->IP_MEMORIA, cfg_cpu->PUERTO_MEMORIA);
-    log_info(logger_cpu, "cree la conexion con memoria");
+    log_trace(logger_cpu, "cree la conexion con memoria");
     if (hacer_handshake(socket_memoria) == HANDSHAKE_OK)
     {
-        log_info(logger_cpu, "Correcto en handshake con memoria");
+        log_trace(logger_cpu, "Correcto en handshake con memoria");
         sem_post(&sem_servidor_creado);
     }
     else
     {
-        log_info(logger_cpu, "Error en handshake con memoria");
+        log_trace(logger_cpu, "Error en handshake con memoria");
         liberar_memoria();
         return EXIT_FAILURE;
     }
@@ -112,10 +112,10 @@ int main(int argc, char *argv[])
 
    
   
-    log_info(logger_cpu,"conexion memoria %d",socket_memoria);
+    log_trace(logger_cpu,"conexion memoria %d",socket_memoria);
     pthread_create(&hilo_atender_memoria, NULL, (void *)atender_memoria, &socket_memoria);
     
-    log_info(logger_cpu,"conexion memoria %d",socket_memoria);
+    log_trace(logger_cpu,"conexion memoria %d",socket_memoria);
     printf("Paso  sem_servidor_creado\n");
     // Obtener tamaño de página
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
     pthread_t servidor_interrupt;
     pthread_create(&servidor_interrupt, NULL, (void *)crear_servidor_interrupt, ip_cpu);
    // pthread_detach(servidor_interrupt);
-    log_info(logger_cpu, "cree los hilos servidor");
+    log_trace(logger_cpu, "cree los hilos servidor");
 
 
     sem_wait(&sem_servidor_creado);
@@ -137,8 +137,8 @@ int main(int argc, char *argv[])
     sem_wait(&sem_conexion_interrupt_iniciado);
 
     pthread_t hilo_ejecutar_ciclo;
-    log_info(logger_cpu,"conexion memoria %d",socket_memoria);
-    log_info(logger_cpu,"voy a crear hilo");
+    log_trace(logger_cpu,"conexion memoria %d",socket_memoria);
+    log_trace(logger_cpu,"voy a crear hilo");
     int result = pthread_create(&hilo_ejecutar_ciclo, NULL, ejecutar_ciclo,NULL);
 
     pthread_join(servidor_dispatch, NULL);

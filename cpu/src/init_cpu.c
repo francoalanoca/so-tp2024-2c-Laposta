@@ -38,22 +38,22 @@ int cargar_configuracion(char *path) {
     file_cfg_cpu = config_create(path);
 
     cfg_cpu->IP_MEMORIA = strdup(config_get_string_value(file_cfg_cpu, "IP_MEMORIA"));
-    log_info(logger_cpu, "IP_MEMORIA cargado correctamente: %s", cfg_cpu->IP_MEMORIA);
+    log_trace(logger_cpu, "IP_MEMORIA cargado correctamente: %s", cfg_cpu->IP_MEMORIA);
 
     cfg_cpu->PUERTO_MEMORIA = strdup(config_get_string_value(file_cfg_cpu, "PUERTO_MEMORIA"));
-    log_info(logger_cpu, "PUERTO_MEMORIA cargado correctamente: %s", cfg_cpu->PUERTO_MEMORIA);
+    log_trace(logger_cpu, "PUERTO_MEMORIA cargado correctamente: %s", cfg_cpu->PUERTO_MEMORIA);
 
     cfg_cpu->PUERTO_ESCUCHA_DISPATCH = strdup(config_get_string_value(file_cfg_cpu, "PUERTO_ESCUCHA_DISPATCH"));
-    log_info(logger_cpu, "PUERTO_ESCUCHA_DISPATCH cargado correctamente: %s", cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
+    log_trace(logger_cpu, "PUERTO_ESCUCHA_DISPATCH cargado correctamente: %s", cfg_cpu->PUERTO_ESCUCHA_DISPATCH);
 
     cfg_cpu->PUERTO_ESCUCHA_INTERRUPT = strdup(config_get_string_value(file_cfg_cpu, "PUERTO_ESCUCHA_INTERRUPT"));
-    log_info(logger_cpu, "PUERTO_ESCUCHA_INTERRUPT cargado correctamente: %s", cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
+    log_trace(logger_cpu, "PUERTO_ESCUCHA_INTERRUPT cargado correctamente: %s", cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
 
     cfg_cpu-> LOG_LEVEL = strdup(config_get_string_value(file_cfg_cpu, "LOG_LEVEL"));
-    log_info(logger_cpu, "LOG LEVEL cargado correctamente: %s", cfg_cpu->LOG_LEVEL);
+    log_trace(logger_cpu, "LOG LEVEL cargado correctamente: %s", cfg_cpu->LOG_LEVEL);
 
 
-    log_info(logger_cpu, "Archivo de configuracion cargado correctamente");
+    log_trace(logger_cpu, "Archivo de configuracion cargado correctamente");
     config_destroy(file_cfg_cpu);
     return true;
 }
@@ -93,7 +93,7 @@ void cerrar_programa() {
     free(cfg_cpu->PUERTO_ESCUCHA_INTERRUPT);
     free(cfg_cpu);
 
-    log_info(logger_cpu,"TERMINADA_LA_CONFIG");
-    log_info(logger_cpu, "TERMINANDO_EL_LOG");
+    log_trace(logger_cpu,"TERMINADA_LA_CONFIG");
+    log_trace(logger_cpu, "TERMINANDO_EL_LOG");
     log_destroy(logger_cpu);
 }
