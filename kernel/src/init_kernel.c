@@ -157,7 +157,7 @@ void procesar_conexion_dispatch()
             t_tcb* sigue_ejecutando=(t_tcb*)list_get(lista_exec,0);
             sem_post(&(semaforos->mutex_lista_exec));
 
-            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: PROCESO SALIR", sigue_ejecutando->pid, sigue_ejecutando->tid);
+            log_info(logger_kernel, "## (<%d>:<%d>) - Solicitó syscall: PROCESO CREAR", sigue_ejecutando->pid, sigue_ejecutando->tid);
             
             //enviar_thread_a_cpu(sigue_ejecutando,fd_conexion_cpu);
             enviar_respuesta_syscall_a_cpu(CONTINUA_EJECUTANDO_HILO);
