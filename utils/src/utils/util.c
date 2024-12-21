@@ -5,7 +5,7 @@
 
 int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
     //printf("ip: %s, puerto: %s", ip, puerto);
-    log_info(logger, "comienza iniciar_servidor");
+    log_trace(logger, "comienza iniciar_servidor");
     
     int socket_servidor;
     struct addrinfo hints, *servinfo;
@@ -15,14 +15,14 @@ int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
-    log_info(logger, "hizo memset");
-    //log_info(logger, "ip:%s, puerto:%s", ip,puerto);
+    log_trace(logger, "hizo memset");
+    //log_trace(logger, "ip:%s, puerto:%s", ip,puerto);
     // Recibe los addrinfo
     getaddrinfo(ip, puerto, &hints, &servinfo);
-    log_info(logger, "hizo getaddrinfo");
+    log_trace(logger, "hizo getaddrinfo");
 
     bool conecto = false;
-    log_info(logger, "antes del for");
+    log_trace(logger, "antes del for");
     // Itera por cada addrinfo devuelto
     for (struct addrinfo *p = servinfo; p != NULL; p = p->ai_next) {
         socket_servidor = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
@@ -40,7 +40,7 @@ int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
         conecto = true;
         break;
     }
-     log_info(logger, "despues del for");
+     log_trace(logger, "despues del for");
 
     if(!conecto) {
         free(servinfo);
@@ -50,7 +50,7 @@ int iniciar_servidor(t_log* logger, const char* name, char* ip, char* puerto) {
     listen(socket_servidor, SOMAXCONN); // Escuchando (hasta SOMAXCONN conexiones simultaneas)
 
     // Aviso al logger
-    log_info(logger, "Escuchando en IP %s, puerto: %s (%s)\n", ip, puerto, name);
+    log_trace(logger, "Escuchando en IP %s, puerto: %s (%s)\n", ip, puerto, name);
 
     freeaddrinfo(servinfo);
 
@@ -64,7 +64,7 @@ int esperar_cliente(t_log* logger, const char* name, int socket_servidor) {
 
     int socket_cliente = accept(socket_servidor, (void*) &dir_cliente, &tam_direccion);
 
-    log_info(logger, "Cliente conectado (a %s)\n", name);
+    log_trace(logger, "Cliente conectado (a %s)\n", name);
 
     return socket_cliente;
 }
@@ -168,7 +168,7 @@ int crear_conexion(t_log* logger, const char* server_name, char* ip, char* puert
         freeaddrinfo(servinfo);
         return 0;
     } else
-        log_info(logger, "Cliente conectado en %s:%s (a %s)\n", ip, puerto, server_name);
+        log_trace(logger, "Cliente conectado en %s:%s (a %s)\n", ip, puerto, server_name);
 
     freeaddrinfo(servinfo);
 

@@ -4,6 +4,7 @@ int tamanioParams;
 int tamanioInterfaces;
 t_proceso* proceso_actual;
 
+bool flag_sementation_fault;
 instr_t* fetch(int conexion, t_proceso* proceso){
     
     pedir_instruccion(proceso, conexion); 
@@ -597,8 +598,9 @@ uint32_t mmu(uint32_t direccion_logica, t_proceso* proceso, int conexion, int co
         // SEG_FAULT
         log_error(logger_cpu, "MMU: SEG_FAULT - Dirección Lógica: %u, Dirección Física Calculada: %u, Límite: %u",
                   direccion_logica, proceso->registros_cpu.base + desplazamiento, proceso->registros_cpu.limite);
-
+        flag_sementation_fault = true;
         enviar_contexto_a_memoria(proceso, conexion);
+        sem_wait(&semaforo_sincro_contexto_syscall);
         enviar_segfault_a_kernel(proceso, conexion_kernel_dispatch);
     }
 }
@@ -972,7 +974,10 @@ bool ciclo_de_instrucciones(int *conexion_mer, t_proceso *proceso, int *socket_d
         proceso->registros_cpu.PC += 1;
     }
     
-    if(es_syscall(tipo_inst)){
+    if(es_syscall(tipo_inst) || flag_sementation_fault ){
+        if (flag_sementation_fault){
+            flag_sementation_fault = false;
+        }
         sem_wait(&semaforo_respuesta_syscall);// el post se hace con respuestas del puerto de interrupt
         if(respuesta_syscall==REPLANIFICACION){  // ISSUE: 4396
         log_trace(logger_cpu, "EL PROCESO ACTUAL desalojado por syscall, esperando otro...");
