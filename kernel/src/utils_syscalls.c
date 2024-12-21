@@ -143,11 +143,11 @@ void* enviar_a_memoria_thread_saliente(void* t){
 
     int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
     if(rta==FINALIZAR_HILO_RTA_OK){
-        log_trace(logger_kernel, "## (<%d>:<%d>) Finaliza el hilo",tcb->pid,tcb->tid);
+        log_info(logger_kernel, "## (<%d>:<%d>) Finalizo el hilo",tcb->pid,tcb->tid);
         sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); //EStO ACA NO
     }
     else{
-        log_trace(logger_kernel, "## (<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
+        log_trace(logger_kernel, "(<%d>:<%d>) MEMORIA no logro Finalizar el hilo",tcb->pid,tcb->tid);
     }
     close(fd_memoria); 
     eliminar_paquete(paquete);
@@ -165,7 +165,7 @@ void* enviar_a_memoria_proceso_saliente(void* t){
 
     int rta=recibir_resp_de_memoria_a_solicitud(fd_memoria);
     if(rta==FINALIZAR_PROCESO_RTA_OK){
-        log_trace(logger_kernel, "## Finaliza el proceso %d",tcb->pid);
+        log_info(logger_kernel, "## Finaliza el proceso %d",tcb->pid);
         sem_post(&(semaforos->sem_espacio_liberado_por_proceso)); //EStO ACA NO
     }
     else{
@@ -205,7 +205,7 @@ int buscar_indice_de_tid_en_proceso(t_pcb *pcb,int tid){
     int posicion_a_eliminar=buscar_indice_de_tid_en_proceso(pcb,tcb_saliente->tid);
     if(posicion_a_eliminar!=-1){
         list_remove(pcb->lista_tids,posicion_a_eliminar);
-        log_info("## (<%d>:<%d>) FInaliza el hilo",tcb_saliente->pid,tcb_saliente->tid);
+        log_info("## (<%d>:<%d>) Finaliza el hilo",tcb_saliente->pid,tcb_saliente->tid);
         exito_eliminando_de_pcb=true;
     }
         
