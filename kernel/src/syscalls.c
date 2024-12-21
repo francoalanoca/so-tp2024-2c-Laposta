@@ -227,6 +227,9 @@ void thread_join(t_tcb* tcb_en_exec, int tid_target){
             tcb_en_exec->thread_target=tcb_target;
             /*remover_de_lista(lista_exec,0,&(semaforos->mutex_lista_exec));
             agregar_a_lista(tcb_en_exec,lista_blocked,&(semaforos->mutex_lista_blocked));*/
+
+            log_info("logger_kernel, ## (<%d><%d>) Bloqueado por <PTHREAD_JOIN>",tcb_en_exec->pid,tcb_en_exec->tid);
+            
             pasar_execute_a_blocked();
             enviar_respuesta_syscall_a_cpu(REPLANIFICACION);
             sem_post(&(semaforos->espacio_en_cpu));
